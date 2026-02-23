@@ -6,6 +6,7 @@ import { useDocumentTitle } from '@/modules/focus/hooks/useDocumentTitle';
 import { usePomodoroSettings } from '@/modules/focus/hooks/usePomodoroSettings';
 import { usePomodoroTimer } from '@/modules/focus/hooks/usePomodoroTimer';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { useToast } from '@/hooks/useToast';
 import { FocusFullscreen } from './FocusFullscreen';
 import { FocusTicketCard } from './FocusTicketCard';
 import { PomodoroTimer } from './PomodoroTimer';
@@ -22,7 +23,11 @@ export function FocusZone({
   mode = 'full',
 }: FocusZoneProps) {
   const { settings } = usePomodoroSettings();
-  const timer = usePomodoroTimer(settings);
+  const { showToast } = useToast();
+  const timer = usePomodoroTimer(settings, {
+    onWorkComplete: () => showToast('Work session complete! Time for a break.'),
+    onBreakComplete: () => showToast('Break over! Ready to focus?'),
+  });
   const isExpanded = focusedData !== null;
   const isMobileLayout = useMediaQuery('(max-width: 1023px)');
   useDocumentTitle(timer.display, timer.phase, isExpanded);

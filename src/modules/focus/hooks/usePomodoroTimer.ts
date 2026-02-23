@@ -12,6 +12,11 @@ function phaseToSeconds(phase: PomodoroPhase, settings: PomodoroSettings): numbe
   }
 }
 
+interface TimerCallbacks {
+  onWorkComplete?: () => void;
+  onBreakComplete?: () => void;
+}
+
 interface TimerState {
   phase: PomodoroPhase;
   timeRemaining: number;
@@ -19,7 +24,7 @@ interface TimerState {
   completedSessions: number;
 }
 
-export function usePomodoroTimer(settings: PomodoroSettings) {
+export function usePomodoroTimer(settings: PomodoroSettings, callbacks?: TimerCallbacks) {
   const [state, setState] = useState<TimerState>(() => ({
     phase: 'work',
     timeRemaining: phaseToSeconds('work', settings),
@@ -35,12 +40,33 @@ export function usePomodoroTimer(settings: PomodoroSettings) {
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const settingsRef = useRef(settings);
+  const callbacksRef = useRef(callbacks);
   /** Wall-clock timestamp (ms) when the current phase ends. Set on start, cleared on pause/reset. */
   const endTimeRef = useRef<number | null>(null);
 
   useEffect(() => {
     settingsRef.current = settings;
   }, [settings]);
+
+  useEffect(() => {
+    callbacksRef.current = callbacks;
+  }, [callbacks]);
+
+  const prevPhaseRef = useRef<PomodoroPhase>('work');
+
+  useEffect(() => {
+    const currentPhase = state.phase;
+    const prevPhase = prevPhaseRef.current;
+
+    if (currentPhase !== prevPhase) {
+      if (prevPhase === 'work' && (currentPhase === 'shortBreak' || currentPhase === 'longBreak')) {
+        callbacksRef.current.onWorkComplete?.();
+      } else if ((prevPhase === 'shortBreak' || prevPhase === 'longBreak') && currentPhase === 'work') {
+        callbacksRef.current.onBreakComplete?.();
+      }
+      prevPhaseRef.current = currentPhase;
+    }
+  }, [state.phase]);
 
   const durationsChanged =
     settings.workDuration !== prevDurations.work ||

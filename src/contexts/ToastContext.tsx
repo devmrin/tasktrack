@@ -30,28 +30,28 @@ export function ToastProvider({ children }: { readonly children: React.ReactNode
             onOpenChange={(open) => {
               if (!open) removeToast(toast.id);
             }}
-            className="bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg shadow-lg px-4 py-3 flex items-start gap-3 data-[state=open]:animate-toast-slide-in data-[state=closed]:animate-toast-slide-out data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=cancel]:translate-x-0 data-[swipe=cancel]:transition-transform"
+            className="bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg shadow-lg px-3 py-2 flex items-start gap-2 max-w-sm data-[state=open]:animate-toast-slide-in data-[state=closed]:animate-toast-slide-out data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=cancel]:translate-x-0 data-[swipe=cancel]:transition-transform"
           >
             <div className="flex-1 min-w-0">
               <ToastPrimitive.Title className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
                 {toast.title}
               </ToastPrimitive.Title>
               {toast.description && (
-                <ToastPrimitive.Description className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+                <ToastPrimitive.Description className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">
                   {toast.description}
                 </ToastPrimitive.Description>
               )}
             </div>
             <ToastPrimitive.Close
               aria-label="Dismiss"
-              className="shrink-0 p-1 rounded-md text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
+              className="shrink-0 p-0.5 rounded-md text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
             >
-              <X className="size-4" aria-hidden />
+              <X className="size-3.5" aria-hidden />
             </ToastPrimitive.Close>
           </ToastPrimitive.Root>
         ))}
 
-        <ToastPrimitive.Viewport className="fixed bottom-0 right-0 z-[100] flex flex-col gap-2 p-4 w-96 max-w-[100vw] outline-none" />
+        <ToastPrimitive.Viewport className="fixed bottom-0 right-0 z-[100] flex flex-col gap-1.5 p-3 w-auto max-w-[100vw] outline-none" />
       </ToastPrimitive.Provider>
     </ToastContext>
   );
