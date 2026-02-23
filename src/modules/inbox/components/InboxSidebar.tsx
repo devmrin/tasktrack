@@ -44,6 +44,17 @@ import { sortInboxTickets } from "@/modules/inbox/utils/sortInboxTickets";
 const SIDEBAR_WIDTH = 320;
 const SIDEBAR_COLLAPSED_WIDTH = 48;
 
+function formatLastSynced(isoString: string | null): string {
+  if (!isoString) return "";
+  const date = new Date(isoString);
+  const day = date.getDate();
+  const month = date.toLocaleString("en-US", { month: "short" });
+  const year = date.getFullYear();
+  const hours = date.getHours().toString().padStart(2, "0");
+  const minutes = date.getMinutes().toString().padStart(2, "0");
+  return `${day} ${month} ${year}, ${hours}:${minutes}`;
+}
+
 export interface InboxSidebarHandle {
   openAddTicketForm: () => void;
 }
@@ -108,6 +119,10 @@ export function InboxSidebar({
     "tasktrack.inbox.sortMode",
     DEFAULT_INBOX_SORT_MODE,
   );
+  const [lastSyncedAt, setLastSyncedAt] = useLocalStorage<string | null>(
+    "tasktrack.inbox.lastSyncedAt",
+    null,
+  );
   const [gettingStartedOpen, setGettingStartedOpen] = useState(false);
   const resolvedSortMode = normalizeInboxSortMode(sortMode);
 
@@ -143,6 +158,7 @@ export function InboxSidebar({
           ? `Synced from JIRA: ${parts.join(", ")}`
           : "JIRA sync complete — everything up to date",
       );
+      setLastSyncedAt(new Date().toISOString());
     });
   };
 
@@ -454,7 +470,14 @@ export function InboxSidebar({
                 </Tooltip>
               )}
             </div>
+            {lastSyncedAt && jiraConnected && (
+              <div className="mt-1 text-right text-[10px] text-neutral-400 dark:text-neutral-500">
+                Last synced on {formatLastSynced(lastSyncedAt)}
+              </div>
+            )}
+          </div>
 
+          <div className="px-4 pt-3 pb-2 shrink-0 border-b border-neutral-100 dark:border-neutral-800">
             <div className="mt-2 flex items-center gap-2">
               <span className="text-[11px] font-medium uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
                 Sort by
