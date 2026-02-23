@@ -60,9 +60,9 @@ export function usePomodoroTimer(settings: PomodoroSettings, callbacks?: TimerCa
 
     if (currentPhase !== prevPhase) {
       if (prevPhase === 'work' && (currentPhase === 'shortBreak' || currentPhase === 'longBreak')) {
-        callbacksRef.current.onWorkComplete?.();
+        callbacksRef.current?.onWorkComplete?.();
       } else if ((prevPhase === 'shortBreak' || prevPhase === 'longBreak') && currentPhase === 'work') {
-        callbacksRef.current.onBreakComplete?.();
+        callbacksRef.current?.onBreakComplete?.();
       }
       prevPhaseRef.current = currentPhase;
     }
