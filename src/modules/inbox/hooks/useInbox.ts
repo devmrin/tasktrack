@@ -54,6 +54,7 @@ export function useInbox() {
     description?: string,
     customKey?: string,
     priority?: TicketPriority,
+    dueDate?: string,
     onSuccess?: () => void
   ) => {
     createTicketMutation.mutate(
@@ -64,6 +65,7 @@ export function useInbox() {
         type: 'local',
         columnId: INBOX_COLUMN_ID,
         customKey,
+        dueDate,
       },
       { onSuccess }
     );

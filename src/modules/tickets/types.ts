@@ -7,6 +7,7 @@ export type { TicketPriority };
 
 export interface JiraTicket extends Ticket {
   type: 'jira';
+  dueDate?: string;
   jiraData: {
     jiraId: string;
     jiraUrl: string;
@@ -20,6 +21,7 @@ export interface JiraTicket extends Ticket {
 
 export interface LocalTicket extends Ticket {
   type: 'local';
+  dueDate?: string;
   jiraData?: never;
   customKey?: string;
 }

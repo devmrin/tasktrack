@@ -117,6 +117,7 @@ export function InboxSidebar({
   const [addPriority, setAddPriority] = useState<TicketPriority | "none">(
     "none",
   );
+  const [addDueDate, setAddDueDate] = useState("");
   const [sortMode, setSortMode] = useLocalStorage<InboxSortMode>(
     "tasktrack.inbox.sortMode",
     DEFAULT_INBOX_SORT_MODE,
@@ -193,12 +194,14 @@ export function InboxSidebar({
         ? resolvedCustomKey
         : undefined;
     const resolvedPriority = addPriority === "none" ? undefined : addPriority;
+    const resolvedDueDate = addDueDate.trim() || undefined;
 
     addTicketToInbox(
       title,
       addDescription.trim() || undefined,
       finalKey,
       resolvedPriority,
+      resolvedDueDate,
       () => {
         setAddTitle("");
         setAddDescription("");
@@ -207,6 +210,7 @@ export function InboxSidebar({
         setCustomKeyInput("");
         setCustomKeyError("");
         setAddPriority("none");
+        setAddDueDate("");
         setShowAddForm(false);
       },
     );
@@ -802,6 +806,21 @@ export function InboxSidebar({
                     </Select.Portal>
                   </Select.Root>
                 </div>
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor="ticket-due-date"
+                    className="block text-xs font-medium text-neutral-500 dark:text-neutral-400"
+                  >
+                    Due date (optional)
+                  </label>
+                  <input
+                    id="ticket-due-date"
+                    type="date"
+                    value={addDueDate}
+                    onChange={(e) => setAddDueDate(e.target.value)}
+                    className="w-full px-3 py-1.5 border border-neutral-300 dark:border-neutral-600 rounded-md text-sm bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:ring-2 focus:ring-neutral-400 dark:focus:ring-neutral-500 focus:border-neutral-400 dark:focus:border-neutral-500"
+                  />
+                </div>
                 <div className="flex gap-2">
                   <button
                     type="submit"
@@ -821,6 +840,7 @@ export function InboxSidebar({
                       setCustomKeyInput("");
                       setCustomKeyError("");
                       setAddPriority("none");
+                      setAddDueDate("");
                     }}
                     className="px-3 py-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-md"
                   >

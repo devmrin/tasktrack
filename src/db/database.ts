@@ -9,6 +9,7 @@ export interface Ticket {
   title: string;
   description?: string;
   priority?: TicketPriority;
+  dueDate?: string;
   type: 'jira' | 'local';
   columnId: string;
   order: number;
@@ -176,6 +177,40 @@ export class TaskTrackDatabase extends Dexie {
       transactions:
         'id, createdAt, ticketId, eventType, [ticketId+createdAt], [createdAt+eventType]',
     });
+    this.version(7)
+      .stores({
+        tickets: 'id, columnId, type, createdAt, order, [columnId+order]',
+        columns: 'id, order',
+        settings: 'key',
+        transactions:
+          'id, createdAt, ticketId, eventType, [ticketId+createdAt], [createdAt+eventType]',
+      })
+      .upgrade(async (transaction) => {
+        type TicketWithOptionalDueDate = Omit<Ticket, 'dueDate'> & {
+          dueDate?: string | null;
+        };
+
+        const ticketsTable = transaction.table<TicketWithOptionalDueDate, string>('tickets');
+        const tickets = await ticketsTable.toArray();
+        const migratedTickets: Ticket[] = [];
+
+        for (const ticket of tickets) {
+          const normalizedDueDate = typeof ticket.dueDate === 'string'
+            ? ticket.dueDate.trim() || undefined
+            : undefined;
+          if (normalizedDueDate === ticket.dueDate) {
+            continue;
+          }
+          migratedTickets.push({
+            ...ticket,
+            dueDate: normalizedDueDate,
+          });
+        }
+
+        if (migratedTickets.length > 0) {
+          await ticketsTable.bulkPut(migratedTickets);
+        }
+      });
   }
 }
 

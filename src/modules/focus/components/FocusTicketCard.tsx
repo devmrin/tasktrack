@@ -1,6 +1,7 @@
 import { Tooltip } from "@/components/Tooltip";
 import type { Ticket } from "@/db/database";
 import { SanitizedHtml } from "@/modules/kanban/components/SanitizedHtml";
+import { formatDueDate } from "@/modules/tickets";
 
 interface FocusTicketCardProps {
   readonly ticket: Ticket;
@@ -8,6 +9,8 @@ interface FocusTicketCardProps {
 }
 
 export function FocusTicketCard({ ticket, onDismiss }: FocusTicketCardProps) {
+  const formattedDueDate = formatDueDate(ticket.dueDate);
+
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="order-2 lg:order-1 shrink-0 mt-3 lg:mt-0">
@@ -29,6 +32,11 @@ export function FocusTicketCard({ ticket, onDismiss }: FocusTicketCardProps) {
                 {ticket.jiraData.priority}
               </span>
             )}
+            {formattedDueDate && (
+              <span className="text-xs px-2 py-0.5 border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300 rounded font-medium break-words whitespace-normal max-w-full">
+                Due {formattedDueDate}
+              </span>
+            )}
           </div>
         )}
         {ticket.type === "local" && ticket.customKey && (
@@ -41,13 +49,25 @@ export function FocusTicketCard({ ticket, onDismiss }: FocusTicketCardProps) {
                 {ticket.priority}
               </span>
             )}
+            {formattedDueDate && (
+              <span className="text-xs px-2 py-0.5 border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300 rounded font-medium break-words whitespace-normal max-w-full">
+                Due {formattedDueDate}
+              </span>
+            )}
           </div>
         )}
-        {ticket.type === "local" && !ticket.customKey && ticket.priority && (
+        {ticket.type === "local" && !ticket.customKey && (ticket.priority || formattedDueDate) && (
           <div className="mt-1.5 flex flex-wrap items-start gap-2">
-            <span className="text-xs px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300 rounded font-medium break-words whitespace-normal max-w-full">
-              {ticket.priority}
-            </span>
+            {ticket.priority && (
+              <span className="text-xs px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300 rounded font-medium break-words whitespace-normal max-w-full">
+                {ticket.priority}
+              </span>
+            )}
+            {formattedDueDate && (
+              <span className="text-xs px-2 py-0.5 border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300 rounded font-medium break-words whitespace-normal max-w-full">
+                Due {formattedDueDate}
+              </span>
+            )}
           </div>
         )}
       </div>

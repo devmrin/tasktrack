@@ -14,6 +14,7 @@ import { useEffect, useState } from "react";
 import type { Ticket } from "@/db/database";
 import { registerTicket, unregisterTicket } from "@/contexts/ticketRegistry";
 import { useTicketDetail } from "@/hooks/useTicketDetail";
+import { formatDueDate } from "@/modules/tickets";
 import { stripHtml } from "@/utils/sanitizeHtml";
 import { DeleteConfirmationDialog } from "./DeleteConfirmationDialog";
 
@@ -82,6 +83,7 @@ export function TicketCard({
       ? moveTargets.filter((t) => t.id !== ticket.columnId)
       : [];
   const isFocusedTicket = focusedTicketId === ticket.id;
+  const formattedDueDate = formatDueDate(ticket.dueDate);
 
   const dragProps = showMenu ? {} : { ...attributes, ...listeners };
   const contentDragProps = showMenu ? { ...attributes, ...listeners } : {};
@@ -132,6 +134,11 @@ export function TicketCard({
                   {ticket.jiraData.priority}
                 </span>
               )}
+              {formattedDueDate && (
+                <span className="text-xs px-2 py-0.5 border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300 rounded font-medium break-words whitespace-normal max-w-full">
+                  Due {formattedDueDate}
+                </span>
+              )}
             </div>
           )}
           {ticket.type === "local" && ticket.customKey && (
@@ -144,13 +151,25 @@ export function TicketCard({
                   {ticket.priority}
                 </span>
               )}
+              {formattedDueDate && (
+                <span className="text-xs px-2 py-0.5 border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300 rounded font-medium break-words whitespace-normal max-w-full">
+                  Due {formattedDueDate}
+                </span>
+              )}
             </div>
           )}
-          {ticket.type === "local" && !ticket.customKey && ticket.priority && (
+          {ticket.type === "local" && !ticket.customKey && (ticket.priority || formattedDueDate) && (
             <div className="mt-2 flex items-start flex-wrap gap-2">
-              <span className="text-xs px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300 rounded font-medium break-words whitespace-normal max-w-full">
-                {ticket.priority}
-              </span>
+              {ticket.priority && (
+                <span className="text-xs px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300 rounded font-medium break-words whitespace-normal max-w-full">
+                  {ticket.priority}
+                </span>
+              )}
+              {formattedDueDate && (
+                <span className="text-xs px-2 py-0.5 border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300 rounded font-medium break-words whitespace-normal max-w-full">
+                  Due {formattedDueDate}
+                </span>
+              )}
             </div>
           )}
         </div>

@@ -84,6 +84,7 @@ async function issuesToTickets(
   for (const issue of issues) {
     const description = descriptionToHtml(issue);
     const comments = extractIssueComments(issue);
+    const dueDate = issue.fields.duedate?.trim() || undefined;
     const jiraData = {
       jiraId: issue.id,
       jiraUrl: `${config.instanceUrl}/browse/${issue.key}`,
@@ -101,6 +102,7 @@ async function issuesToTickets(
         title: issue.fields.summary,
         description,
         priority,
+        dueDate,
         jiraData: { ...existing.jiraData, ...jiraData },
       });
       updated.push({
@@ -108,6 +110,7 @@ async function issuesToTickets(
         title: issue.fields.summary,
         description,
         priority,
+        dueDate,
         jiraData: { ...existing.jiraData, ...jiraData },
       });
     } else {
@@ -115,6 +118,7 @@ async function issuesToTickets(
         title: issue.fields.summary,
         description,
         priority,
+        dueDate,
         type: 'jira',
         columnId: INBOX_COLUMN_ID,
         jiraData,
@@ -183,6 +187,7 @@ export interface JiraIssue {
   fields: {
     summary: string;
     description?: unknown;
+    duedate?: string;
     status: {
       name: string;
     };
@@ -329,7 +334,7 @@ export async function fetchJiraTickets(jql?: string): Promise<JiraSyncResult> {
     if (refreshed) config = refreshed;
   }
 
-  const defaultJql = jql || 'assignee = currentUser() AND status != Done ORDER BY updated DESC';
+  const defaultJql = jql || 'assignee = currentUser() ORDER BY updated DESC';
   const searchUrl = buildSearchUrl(config.cloudId, config.instanceUrl, defaultJql);
 
   const response = await fetch(searchUrl, {

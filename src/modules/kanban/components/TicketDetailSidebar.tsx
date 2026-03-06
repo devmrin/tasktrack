@@ -11,6 +11,7 @@ import { updateTicket } from "@/modules/tickets";
 import { isValidTicketKey } from "@/modules/tickets/utils/validateTicketKey";
 import { useJiraTicketsQuery } from "@/modules/tickets/hooks/useTicketsQuery";
 import { TICKET_PRIORITY_VALUES, type TicketPriority } from "@/modules/tickets";
+import { formatDueDate } from "@/modules/tickets";
 import { TicketDescriptionEditor } from "@/components/TicketDescriptionEditor";
 import { Tooltip } from "@/components/Tooltip";
 import { isEmptyEditorHtml } from "@/utils/editorHtml";
@@ -22,6 +23,13 @@ type EditablePriority = TicketPriority | "none";
 const ticketValidationSchema = Yup.object({
   title: Yup.string().trim().required("Title is required"),
   description: Yup.string().trim().optional(),
+  dueDate: Yup.string()
+    .trim()
+    .optional()
+    .test("iso-date", "Must be in YYYY-MM-DD format", (value) => {
+      if (!value) return true;
+      return /^\d{4}-\d{2}-\d{2}$/.test(value);
+    }),
   priority: Yup.mixed<EditablePriority>()
     .oneOf(["none", ...TICKET_PRIORITY_VALUES])
     .optional(),
@@ -384,6 +392,7 @@ export function TicketDetailSidebar({
   const isOpen = selectedTicket !== null;
   const isJira = selectedTicket?.type === "jira";
   const isEditable = !isJira;
+  const formattedDueDate = formatDueDate(selectedTicket?.dueDate);
   const linkedLocalJiraUrl = useMemo(() => {
     if (!selectedTicket || selectedTicket.type !== "local") {
       return undefined;
@@ -399,6 +408,7 @@ export function TicketDetailSidebar({
   const handleSave = async (values: {
     title: string;
     description: string;
+    dueDate: string;
     customKey: string;
     priority: EditablePriority;
   }) => {
@@ -407,17 +417,20 @@ export function TicketDetailSidebar({
     const rawDesc = values.description?.trim() ?? "";
     const description =
       rawDesc && !isEmptyEditorHtml(rawDesc) ? rawDesc : undefined;
+    const dueDate = values.dueDate?.trim() || undefined;
     const customKey = values.customKey?.trim().toUpperCase() || undefined;
     const priority = values.priority === "none" ? undefined : values.priority;
     const hasChanges =
       title !== selectedTicket.title ||
       description !== (selectedTicket.description ?? "") ||
+      dueDate !== (selectedTicket.dueDate ?? undefined) ||
       customKey !== (selectedTicket.customKey ?? undefined) ||
       priority !== selectedTicket.priority;
     if (hasChanges) {
       await updateTicket(selectedTicket.id, {
         title,
         description,
+        dueDate: dueDate ?? "",
         customKey: customKey ?? "",
         priority,
       });
@@ -426,6 +439,7 @@ export function TicketDetailSidebar({
         ...selectedTicket,
         title,
         description: description || undefined,
+        dueDate: dueDate || undefined,
         customKey: customKey || undefined,
         priority,
         updatedAt: Date.now(),
@@ -453,6 +467,7 @@ export function TicketDetailSidebar({
             initialValues={{
               title: selectedTicket.title,
               description: selectedTicket.description ?? "",
+              dueDate: selectedTicket.dueDate ?? "",
               customKey: selectedTicket.customKey ?? "",
               priority: selectedTicket.priority ?? "none",
             }}
@@ -698,8 +713,39 @@ export function TicketDetailSidebar({
                       />
                     </div>
                   )}
+                  {isEditable && (
+                    <div>
+                      <label
+                        htmlFor="ticket-due-date"
+                        className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5"
+                      >
+                        Due date (optional)
+                      </label>
+                      <Field
+                        id="ticket-due-date"
+                        name="dueDate"
+                        type="date"
+                        className="w-full rounded-md border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 px-3 py-2 text-sm focus:border-neutral-400 dark:focus:border-neutral-500 focus:ring-1 focus:ring-neutral-400 dark:focus:ring-neutral-500"
+                      />
+                      <ErrorMessage
+                        name="dueDate"
+                        component="p"
+                        className="text-xs text-red-600 dark:text-red-400 mt-1"
+                      />
+                    </div>
+                  )}
 
                   <div className="space-y-3">
+                    {formattedDueDate && (
+                      <div>
+                        <span className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">
+                          Due date
+                        </span>
+                        <p className="text-sm text-neutral-900 dark:text-neutral-200 break-words leading-tight">
+                          {formattedDueDate}
+                        </p>
+                      </div>
+                    )}
                     <div>
                       <span className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">
                         Updated
