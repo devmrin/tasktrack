@@ -1,4 +1,5 @@
-import type { JiraComment, Ticket } from '@/db/database';
+import type { JiraComment, Ticket, TransactionTicketRef } from '@/db/database';
+import { recordHistoryTransaction } from '@/modules/history/services/history.service';
 import type { AtlassianConfig } from '@/modules/settings';
 import { createTicket, updateTicket, getAllTickets, getJiraTickets, deleteTickets } from '@/modules/tickets';
 import {
@@ -40,21 +41,25 @@ function descriptionToHtml(issue: JiraIssue): string | undefined {
   return undefined;
 }
 
-async function removeStaleJiraTickets(freshJiraKeys: Set<string>): Promise<string[]> {
+async function removeStaleJiraTickets(
+  freshJiraKeys: Set<string>,
+): Promise<Ticket[]> {
   const existingJiraTickets = await getJiraTickets();
-  const staleIds = existingJiraTickets
-    .filter((t) => t.jiraData?.jiraKey && !freshJiraKeys.has(t.jiraData.jiraKey))
-    .map((t) => t.id);
+  const staleTickets = existingJiraTickets.filter(
+    (t) => t.jiraData?.jiraKey && !freshJiraKeys.has(t.jiraData.jiraKey),
+  );
+  const staleIds = staleTickets.map((t) => t.id);
   if (staleIds.length > 0) {
-    await deleteTickets(staleIds);
+    await deleteTickets(staleIds, { skipHistory: true });
   }
-  return staleIds;
+  return staleTickets;
 }
 
 export interface JiraSyncResult {
   created: Ticket[];
   updated: Ticket[];
   deleted: string[];
+  removedTickets: Ticket[];
 }
 
 async function issuesToTickets(
@@ -62,7 +67,8 @@ async function issuesToTickets(
   config: AtlassianConfig
 ): Promise<JiraSyncResult> {
   const freshJiraKeys = new Set(issues.map((i) => i.key));
-  const deleted = await removeStaleJiraTickets(freshJiraKeys);
+  const removedTickets = await removeStaleJiraTickets(freshJiraKeys);
+  const deleted = removedTickets.map((ticket) => ticket.id);
 
   const allTickets = await getAllTickets();
   const existingByJiraKey = new Map<string, Ticket>();
@@ -117,7 +123,16 @@ async function issuesToTickets(
     }
   }
 
-  return { created, updated, deleted };
+  return { created, updated, deleted, removedTickets };
+}
+
+function toTransactionTicketRef(ticket: Ticket): TransactionTicketRef {
+  return {
+    ticketId: ticket.id,
+    ticketType: ticket.type,
+    ticketTitle: ticket.title,
+    ticketKey: ticket.jiraData?.jiraKey ?? ticket.customKey,
+  };
 }
 
 function extractIssueComments(issue: JiraIssue): JiraComment[] | undefined {
@@ -333,5 +348,16 @@ export async function fetchJiraTickets(jql?: string): Promise<JiraSyncResult> {
 
   const data: JiraSearchResponse = await response.json();
   const issuesWithComments = await hydrateIssueComments(data.issues, config, accessToken);
-  return issuesToTickets(issuesWithComments, config);
+  const syncResult = await issuesToTickets(issuesWithComments, config);
+  await recordHistoryTransaction({
+    eventType: 'jira_sync_summary',
+    summary: `JIRA sync: ${syncResult.created.length} created, ${syncResult.updated.length} updated, ${syncResult.deleted.length} removed`,
+    jiraCreatedCount: syncResult.created.length,
+    jiraUpdatedCount: syncResult.updated.length,
+    jiraRemovedCount: syncResult.deleted.length,
+    jiraCreatedTickets: syncResult.created.map(toTransactionTicketRef),
+    jiraUpdatedTickets: syncResult.updated.map(toTransactionTicketRef),
+    jiraRemovedTickets: syncResult.removedTickets.map(toTransactionTicketRef),
+  });
+  return syncResult;
 }

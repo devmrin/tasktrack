@@ -11,6 +11,7 @@ export function useJiraSyncMutation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.tickets.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.tickets.jira });
+      queryClient.invalidateQueries({ queryKey: queryKeys.history.all });
     },
     onError: () => {
       showToast('JIRA sync failed. Please check your connection and try again.');

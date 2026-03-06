@@ -1,4 +1,5 @@
 import { db, type Column, type Ticket } from '@/db/database';
+import { recordHistoryTransaction } from '@/modules/history/services/history.service';
 
 function sortTicketsByOrder(a: Ticket, b: Ticket): number {
   if (a.order !== b.order) {
@@ -53,11 +54,19 @@ export async function deleteColumnAndMoveTickets(
   columnId: string,
   destinationColumnId: string
 ): Promise<void> {
+  let movedCount = 0;
+  let sourceColumnTitle: string | undefined;
+  let destinationColumnTitle: string | undefined;
   await db.transaction('rw', db.columns, db.tickets, async () => {
-    const [sourceTickets, destinationTickets] = await Promise.all([
+    const [sourceTickets, destinationTickets, sourceColumn, destinationColumn] = await Promise.all([
       db.tickets.where('columnId').equals(columnId).toArray(),
       db.tickets.where('columnId').equals(destinationColumnId).toArray(),
+      db.columns.get(columnId),
+      db.columns.get(destinationColumnId),
     ]);
+    movedCount = sourceTickets.length;
+    sourceColumnTitle = sourceColumn?.title;
+    destinationColumnTitle = destinationColumn?.title;
 
     const now = Date.now();
     const orderedDestinationTickets = [...destinationTickets].sort(sortTicketsByOrder);
@@ -82,6 +91,12 @@ export async function deleteColumnAndMoveTickets(
         });
       }
     }
+  });
+  await recordHistoryTransaction({
+    eventType: 'column_deleted_bulk_move',
+    fromColumnId: columnId,
+    toColumnId: destinationColumnId,
+    summary: `Deleted column "${sourceColumnTitle ?? 'Unknown'}" and moved ${movedCount} tickets to "${destinationColumnTitle ?? 'Unknown'}"`,
   });
 }
 

@@ -46,6 +46,7 @@ export function useCreateTicketMutation() {
       queryClient.invalidateQueries({ queryKey: queryKeys.tickets.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.tickets.column(variables.columnId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.tickets.jira });
+      queryClient.invalidateQueries({ queryKey: queryKeys.history.all });
       showToast('Ticket created');
     },
     onError: () => {
@@ -67,6 +68,7 @@ export function useUpdateTicketMutation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.tickets.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.tickets.jira });
+      queryClient.invalidateQueries({ queryKey: queryKeys.history.all });
     },
   });
 }
@@ -86,6 +88,7 @@ export function useMoveTicketMutation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.tickets.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.tickets.jira });
+      queryClient.invalidateQueries({ queryKey: queryKeys.history.all });
     },
   });
 }
@@ -118,6 +121,7 @@ export function useDeleteTicketMutation() {
       queryClient.invalidateQueries({ queryKey: queryKeys.tickets.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.tickets.jira });
       queryClient.invalidateQueries({ queryKey: queryKeys.tickets.inbox });
+      queryClient.invalidateQueries({ queryKey: queryKeys.history.all });
       showToast('Ticket deleted');
     },
     onError: () => {

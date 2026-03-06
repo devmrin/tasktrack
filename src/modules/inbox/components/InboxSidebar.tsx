@@ -7,6 +7,7 @@ import {
   ChevronDown,
   ChevronLeft,
   Check,
+  History,
   Info,
   Inbox,
   Moon,
@@ -17,6 +18,7 @@ import {
   Sun,
 } from "lucide-react";
 import { useImperativeHandle, useMemo, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import * as Select from "@/components/Select";
 import {
   GettingStartedDialog,
@@ -379,27 +381,25 @@ export function InboxSidebar({
           >
             <button
               type="button"
-              onClick={onClose}
-              className="text-lg font-semibold text-black bg-[#FDFC74] px-2 py-1 rounded-md hover:opacity-90 transition-opacity"
-              aria-label="Collapse sidebar"
+              onClick={onSearchOpen}
+              className="flex items-center gap-1.5 h-7 px-2 text-xs text-neutral-500 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-md transition-colors"
+              aria-label="Search tickets"
             >
-              tasktrack
+              <Search className="size-3.5" aria-hidden />
+              <span className="text-neutral-400 dark:text-neutral-500">Search</span>
+              <kbd className="ml-1 px-1 py-0.5 text-[10px] font-medium text-neutral-400 dark:text-neutral-500 bg-white dark:bg-neutral-700 border border-neutral-200 dark:border-neutral-600 rounded">
+                {SHORTCUT_DISPLAY.search}
+              </kbd>
             </button>
             <div className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={onSearchOpen}
-                className="flex items-center gap-1.5 h-7 px-2 text-xs text-neutral-500 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-md transition-colors"
-                aria-label="Search tickets"
+              <Link
+                to="/history"
+                className="flex items-center gap-1.5 h-7 px-2.5 text-xs font-medium text-neutral-700 dark:text-neutral-200 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-600 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded-md transition-colors"
+                aria-label="Open history page"
               >
-                <Search className="size-3.5" aria-hidden />
-                <span className="text-neutral-400 dark:text-neutral-500">
-                  Search
-                </span>
-                <kbd className="ml-1 px-1 py-0.5 text-[10px] font-medium text-neutral-400 dark:text-neutral-500 bg-white dark:bg-neutral-700 border border-neutral-200 dark:border-neutral-600 rounded">
-                  {SHORTCUT_DISPLAY.search}
-                </kbd>
-              </button>
+                <History className="size-3.5" aria-hidden />
+                <span>History</span>
+              </Link>
               <Tooltip
                 content={`Collapse sidebar (${SHORTCUT_DISPLAY.toggleSidebar})`}
                 side="bottom"

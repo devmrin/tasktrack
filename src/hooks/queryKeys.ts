@@ -10,4 +10,8 @@ export const queryKeys = {
     config: ['atlassian', 'config'] as const,
     connection: ['atlassian', 'connection'] as const,
   },
+  history: {
+    all: ['history'] as const,
+    list: (dateRange: string) => ['history', dateRange] as const,
+  },
 } as const;

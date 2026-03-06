@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import { X, Paintbrush, Plug, Timer, Keyboard } from 'lucide-react';
+import { X, Paintbrush, Plug, Timer, Keyboard, History } from 'lucide-react';
 import { AppearanceSettings } from './AppearanceSettings';
 import { JiraSettings } from './JiraSettings';
 import { KeyboardShortcutsSettings } from './KeyboardShortcutsSettings';
+import { HistorySettings } from './HistorySettings';
 import { FocusSettings } from '@/modules/focus/components/FocusSettings';
 
-export type SectionId = 'appearance' | 'focus' | 'jira' | 'keyboard';
+export type SectionId = 'appearance' | 'focus' | 'jira' | 'keyboard' | 'history';
 
 interface NavItem {
   id: SectionId;
@@ -21,6 +22,7 @@ const SECTIONS: Array<{ heading: string; items: NavItem[] }> = [
       { id: 'appearance', label: 'Appearance', icon: Paintbrush },
       { id: 'focus', label: 'Focus', icon: Timer },
       { id: 'keyboard', label: 'Keyboard Shortcuts', icon: Keyboard },
+      { id: 'history', label: 'History', icon: History },
     ],
   },
   {
@@ -34,6 +36,7 @@ const SECTION_TITLES: Record<SectionId, string> = {
   focus: 'Focus',
   jira: 'JIRA',
   keyboard: 'Keyboard Shortcuts',
+  history: 'History',
 };
 
 function SectionContent({ section }: { readonly section: SectionId }) {
@@ -46,6 +49,8 @@ function SectionContent({ section }: { readonly section: SectionId }) {
       return <JiraSettings />;
     case 'keyboard':
       return <KeyboardShortcutsSettings />;
+    case 'history':
+      return <HistorySettings />;
   }
 }
 

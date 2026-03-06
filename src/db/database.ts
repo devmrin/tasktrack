@@ -48,10 +48,45 @@ export interface Setting {
   value: string;
 }
 
+export type TransactionEventType =
+  | 'ticket_created_local'
+  | 'ticket_moved'
+  | 'ticket_deleted'
+  | 'jira_sync_summary'
+  | 'column_deleted_bulk_move';
+
+export interface TransactionRecord {
+  id: string;
+  createdAt: number;
+  eventType: TransactionEventType;
+  ticketId?: string;
+  ticketTitle?: string;
+  ticketKey?: string;
+  fromColumnId?: string;
+  fromColumnTitle?: string;
+  toColumnId?: string;
+  toColumnTitle?: string;
+  summary?: string;
+  jiraCreatedCount?: number;
+  jiraUpdatedCount?: number;
+  jiraRemovedCount?: number;
+  jiraCreatedTickets?: TransactionTicketRef[];
+  jiraUpdatedTickets?: TransactionTicketRef[];
+  jiraRemovedTickets?: TransactionTicketRef[];
+}
+
+export interface TransactionTicketRef {
+  ticketId: string;
+  ticketType: Ticket['type'];
+  ticketTitle: string;
+  ticketKey?: string;
+}
+
 export class TaskTrackDatabase extends Dexie {
   tickets!: Table<Ticket>;
   columns!: Table<Column>;
   settings!: Table<Setting>;
+  transactions!: Table<TransactionRecord>;
 
   constructor() {
     super('TaskTrackDB');
@@ -134,6 +169,13 @@ export class TaskTrackDatabase extends Dexie {
 
         await ticketsTable.bulkPut(migratedTickets);
       });
+    this.version(6).stores({
+      tickets: 'id, columnId, type, createdAt, order, [columnId+order]',
+      columns: 'id, order',
+      settings: 'key',
+      transactions:
+        'id, createdAt, ticketId, eventType, [ticketId+createdAt], [createdAt+eventType]',
+    });
   }
 }
 

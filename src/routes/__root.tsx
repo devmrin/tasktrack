@@ -1,4 +1,4 @@
-import { createRootRoute, Outlet } from '@tanstack/react-router';
+import { createRootRoute, Outlet, useRouterState } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { queryKeys } from '@/hooks/queryKeys';
@@ -44,6 +44,10 @@ function RootComponent() {
   );
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const inboxRef = useRef<InboxSidebarHandle>(null);
+  const pathname = useRouterState({
+    select: (state) => state.location.pathname,
+  });
+  const isHistoryRoute = pathname === '/history';
 
   const handleSearchOpen = useCallback(() => setIsSearchOpen(true), []);
   const handleSearchOpenChange = useCallback((open: boolean) => setIsSearchOpen(open), []);
@@ -109,36 +113,42 @@ function RootComponent() {
       <SettingsContext.Provider value={settingsContextValue}>
         <DndProvider>
           <div className="min-h-screen bg-neutral-100 dark:bg-neutral-900">
-            <InboxSidebar
-              isOpen={isInboxOpen}
-              isMobile={isMobileLayout}
-              onOpen={() => setIsInboxOpen(true)}
-              onClose={() => setIsInboxOpen(false)}
-              onSettingsOpen={handleSettingsOpen}
-              onSearchOpen={handleSearchOpen}
-              imperativeRef={inboxRef}
-            />
-            {isMobileLayout && isInboxOpen && (
-              <button
-                type="button"
-                aria-label="Close inbox sidebar"
-                className="fixed inset-0 z-40 bg-black/25"
-                onClick={() => setIsInboxOpen(false)}
-              />
-            )}
-            {isMobileLayout && !isInboxOpen && (
-              <button
-                type="button"
-                aria-label="Open inbox sidebar"
-                className="fixed bottom-3 left-3 z-[55] rounded-md bg-[#FDFC74] px-2.5 py-1.5 text-sm font-semibold text-black shadow-md transition-opacity hover:opacity-90"
-                onClick={() => setIsInboxOpen(true)}
-              >
-                tt
-              </button>
+            {!isHistoryRoute && (
+              <>
+                <InboxSidebar
+                  isOpen={isInboxOpen}
+                  isMobile={isMobileLayout}
+                  onOpen={() => setIsInboxOpen(true)}
+                  onClose={() => setIsInboxOpen(false)}
+                  onSettingsOpen={handleSettingsOpen}
+                  onSearchOpen={handleSearchOpen}
+                  imperativeRef={inboxRef}
+                />
+                {isMobileLayout && isInboxOpen && (
+                  <button
+                    type="button"
+                    aria-label="Close inbox sidebar"
+                    className="fixed inset-0 z-40 bg-black/25"
+                    onClick={() => setIsInboxOpen(false)}
+                  />
+                )}
+                {isMobileLayout && !isInboxOpen && (
+                  <button
+                    type="button"
+                    aria-label="Open inbox sidebar"
+                    className="fixed bottom-3 left-3 z-[55] rounded-md bg-[#FDFC74] px-2.5 py-1.5 text-sm font-semibold text-black shadow-md transition-opacity hover:opacity-90"
+                    onClick={() => setIsInboxOpen(true)}
+                  >
+                    tt
+                  </button>
+                )}
+              </>
             )}
             <main
               className={
-                isMobileLayout
+                isHistoryRoute
+                  ? 'ml-0 transition-[margin] duration-200'
+                  : isMobileLayout
                   ? 'ml-0 transition-[margin] duration-200'
                   : isInboxOpen
                   ? 'ml-80 transition-[margin] duration-200'
@@ -147,14 +157,18 @@ function RootComponent() {
             >
               <Outlet />
             </main>
-            <TicketDetailSidebar onSaved={handleTicketSaved} />
-            <SearchDialog open={isSearchOpen} onOpenChange={handleSearchOpenChange} />
-            <SettingsDialog
-              key={settingsSection ?? 'default'}
-              open={isSettingsOpen}
-              onOpenChange={handleSettingsOpenChange}
-              initialSection={settingsSection}
-            />
+            {!isHistoryRoute && (
+              <>
+                <TicketDetailSidebar onSaved={handleTicketSaved} />
+                <SearchDialog open={isSearchOpen} onOpenChange={handleSearchOpenChange} />
+                <SettingsDialog
+                  key={settingsSection ?? 'default'}
+                  open={isSettingsOpen}
+                  onOpenChange={handleSettingsOpenChange}
+                  initialSection={settingsSection}
+                />
+              </>
+            )}
           </div>
         </DndProvider>
       </SettingsContext.Provider>

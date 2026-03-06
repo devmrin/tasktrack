@@ -211,6 +211,7 @@ export function DndProvider({ children }: DndProviderProps) {
         }
 
         queryClient.invalidateQueries({ queryKey: queryKeys.tickets.all });
+        queryClient.invalidateQueries({ queryKey: queryKeys.history.all });
       })();
     },
     [activeColumnId, activeDragType, queryClient, resolveDropTarget],

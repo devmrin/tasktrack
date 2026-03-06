@@ -1,4 +1,5 @@
 import { db, type Ticket } from '@/db/database';
+import { recordHistoryTransaction } from '@/modules/history/services/history.service';
 import type { TicketPriority } from '@/utils/ticketPriority';
 import { dispatchTicketsRemoved } from '@/utils/ticketsRemoved';
 import { dispatchTicketMoved } from '@/utils/ticketsMoved';
@@ -44,6 +45,16 @@ export async function createTicket(ticket: CreateTicketInput): Promise<Ticket> {
     updatedAt: ticket.updatedAt ?? now,
   };
   await db.tickets.add(newTicket);
+  if (newTicket.type === 'local') {
+    await recordHistoryTransaction({
+      eventType: 'ticket_created_local',
+      ticketId: newTicket.id,
+      ticketTitle: newTicket.title,
+      ticketKey: newTicket.customKey,
+      toColumnId: newTicket.columnId,
+      summary: 'Created local ticket',
+    });
+  }
   return newTicket;
 }
 
@@ -72,13 +83,50 @@ export async function getJiraTickets(): Promise<Ticket[]> {
   return db.tickets.where('type').equals('jira').toArray();
 }
 
-export async function deleteTicket(id: string): Promise<void> {
+interface DeleteTicketOptions {
+  readonly skipHistory?: boolean;
+}
+
+export async function deleteTicket(
+  id: string,
+  options?: DeleteTicketOptions,
+): Promise<void> {
+  const existingTicket = options?.skipHistory ? undefined : await db.tickets.get(id);
   await db.tickets.delete(id);
+  if (!options?.skipHistory && existingTicket) {
+    await recordHistoryTransaction({
+      eventType: 'ticket_deleted',
+      ticketId: existingTicket.id,
+      ticketTitle: existingTicket.title,
+      ticketKey: existingTicket.jiraData?.jiraKey ?? existingTicket.customKey,
+      fromColumnId: existingTicket.columnId,
+      summary: 'Deleted ticket',
+    });
+  }
   dispatchTicketsRemoved([id]);
 }
 
-export async function deleteTickets(ids: string[]): Promise<void> {
+export async function deleteTickets(
+  ids: string[],
+  options?: DeleteTicketOptions,
+): Promise<void> {
+  const existingTickets = options?.skipHistory
+    ? []
+    : await db.tickets.bulkGet(ids);
   await db.tickets.bulkDelete(ids);
+  if (!options?.skipHistory) {
+    for (const ticket of existingTickets) {
+      if (!ticket) continue;
+      await recordHistoryTransaction({
+        eventType: 'ticket_deleted',
+        ticketId: ticket.id,
+        ticketTitle: ticket.title,
+        ticketKey: ticket.jiraData?.jiraKey ?? ticket.customKey,
+        fromColumnId: ticket.columnId,
+        summary: 'Deleted ticket',
+      });
+    }
+  }
   dispatchTicketsRemoved(ids);
 }
 
@@ -116,6 +164,14 @@ export async function moveTicket(
   targetTicketId?: string
 ): Promise<void> {
   let moved = false;
+  let movedTicketInfo:
+    | {
+        ticketId: string;
+        ticketTitle: string;
+        ticketKey?: string;
+        sourceColumnId: string;
+      }
+    | undefined;
   await db.transaction('rw', db.tickets, async () => {
     const movingTicket = await db.tickets.get(ticketId);
     if (!movingTicket) {
@@ -123,6 +179,12 @@ export async function moveTicket(
     }
 
     const sourceColumnId = movingTicket.columnId;
+    movedTicketInfo = {
+      ticketId: movingTicket.id,
+      ticketTitle: movingTicket.title,
+      ticketKey: movingTicket.jiraData?.jiraKey ?? movingTicket.customKey,
+      sourceColumnId,
+    };
     const destinationTickets = (
       await db.tickets.where('columnId').equals(newColumnId).toArray()
     )
@@ -167,6 +229,17 @@ export async function moveTicket(
   });
 
   if (moved) {
+    if (movedTicketInfo) {
+      await recordHistoryTransaction({
+        eventType: 'ticket_moved',
+        ticketId: movedTicketInfo.ticketId,
+        ticketTitle: movedTicketInfo.ticketTitle,
+        ticketKey: movedTicketInfo.ticketKey,
+        fromColumnId: movedTicketInfo.sourceColumnId,
+        toColumnId: newColumnId,
+        summary: 'Moved ticket',
+      });
+    }
     dispatchTicketMoved({ ticketId, newColumnId });
   }
 }
