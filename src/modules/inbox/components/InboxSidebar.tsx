@@ -269,7 +269,7 @@ export function InboxSidebar({
   return (
     <div
       ref={setInboxDropRef}
-      className={`fixed left-0 top-0 h-full bg-white dark:bg-neutral-900 shadow-xl z-50 flex flex-col border-r border-neutral-200 dark:border-neutral-700 transition-[width,transform,colors] duration-200 ${
+      className={`fixed left-0 top-0 h-full bg-white dark:bg-neutral-900 shadow-xl z-50 border-r border-neutral-200 dark:border-neutral-700 overflow-hidden transition-[width,transform,background-color,border-color] duration-300 ease-out will-change-[width,transform] ${
         !isOpen && isOver
           ? "ring-2 ring-blue-500 dark:ring-blue-400 ring-inset bg-blue-50/50 dark:bg-blue-950/30"
           : ""
@@ -282,8 +282,15 @@ export function InboxSidebar({
             : SIDEBAR_COLLAPSED_WIDTH,
       }}
     >
-      {!isOpen && !isMobile ? (
-        <>
+      {!isMobile && (
+        <div
+          className={`absolute inset-y-0 left-0 w-12 flex flex-col transition-[opacity,transform,filter] duration-200 ease-out will-change-[opacity,transform,filter] ${
+            isOpen
+              ? "opacity-0 pointer-events-none -translate-x-1 blur-[2px]"
+              : "opacity-100 translate-x-0 blur-0"
+          }`}
+          aria-hidden={isOpen}
+        >
           <div
             className="flex items-center justify-center shrink-0 border-b border-neutral-200 dark:border-neutral-700"
             style={{ height: 48 }}
@@ -376,9 +383,19 @@ export function InboxSidebar({
               </button>
             </Tooltip>
           </div>
-        </>
-      ) : (
-        <>
+        </div>
+      )}
+
+      <div
+        className={`absolute inset-y-0 left-0 flex h-full flex-col transition-[opacity,transform,filter] duration-200 ease-out will-change-[opacity,transform,filter] ${
+          isMobile ? "w-full" : "w-[320px]"
+        } ${
+          !isOpen && !isMobile
+            ? "opacity-0 pointer-events-none translate-x-2 blur-[3px]"
+            : "opacity-100 translate-x-0 blur-0"
+        }`}
+        aria-hidden={!isOpen && !isMobile}
+      >
           <div
             className="flex items-center justify-between px-4 border-b border-neutral-200 dark:border-neutral-700 shrink-0"
             style={{ height: 48 }}
@@ -918,12 +935,11 @@ export function InboxSidebar({
               </Tooltip>
             </div>
           </div>
-          <GettingStartedDialog
-            open={gettingStartedOpen}
-            onOpenChange={setGettingStartedOpen}
-          />
-        </>
-      )}
+      </div>
+      <GettingStartedDialog
+        open={gettingStartedOpen}
+        onOpenChange={setGettingStartedOpen}
+      />
     </div>
   );
 }
