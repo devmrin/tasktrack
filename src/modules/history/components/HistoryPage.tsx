@@ -158,24 +158,22 @@ export function HistoryPage() {
   return (
     <div className="h-screen overflow-y-auto px-6 py-6">
       <div className="mx-auto w-full max-w-5xl">
-        <div className="mb-5">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h1 className="flex items-center gap-2 text-xl font-semibold text-neutral-900 dark:text-neutral-100">
-                <History className="size-5" aria-hidden />
-                History
-              </h1>
-              <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-                Review ticket journeys and daily work summary.
-              </p>
-            </div>
-            <Link
-              to="/"
-              className="inline-flex h-9 items-center rounded-md border border-neutral-200 bg-white px-3 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700"
-            >
-              <ArrowLeft className="mr-1 size-4" aria-hidden />
-              Back to board
-            </Link>
+        <div className="mb-6 space-y-4">
+          <Link
+            to="/"
+            className="inline-flex h-9 items-center rounded-md border border-neutral-200 bg-white px-3 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700"
+          >
+            <ArrowLeft className="mr-1 size-4" aria-hidden />
+            Back to board
+          </Link>
+          <div>
+            <h1 className="flex items-center gap-2 text-xl font-semibold text-neutral-900 dark:text-neutral-100">
+              <History className="size-5" aria-hidden />
+              History
+            </h1>
+            <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+              Review ticket journeys and daily work summary.
+            </p>
           </div>
         </div>
 
@@ -387,4 +385,3 @@ export function HistoryPage() {
     </div>
   );
 }
-
