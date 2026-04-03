@@ -237,7 +237,6 @@ export async function moveTicket(
         ticketKey: movedTicketInfo.ticketKey,
         fromColumnId: movedTicketInfo.sourceColumnId,
         toColumnId: newColumnId,
-        summary: 'Moved ticket',
       });
     }
     dispatchTicketMoved({ ticketId, newColumnId });

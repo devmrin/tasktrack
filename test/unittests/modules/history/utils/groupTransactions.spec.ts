@@ -70,3 +70,15 @@ test('prefers summary message when available', () => {
   );
 });
 
+test('describes moved ticket source and destination columns', () => {
+  const transaction = createTransaction({
+    fromColumnTitle: 'Todo',
+    toColumnTitle: 'In Progress',
+  });
+
+  assert.equal(
+    formatTransactionMessage(transaction),
+    'Moved from Todo to In Progress',
+  );
+});
+
