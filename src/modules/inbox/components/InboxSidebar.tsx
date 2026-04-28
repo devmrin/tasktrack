@@ -539,15 +539,7 @@ export function InboxSidebar({
                     </Tooltip>
                   )}
                 </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => onSettingsOpen("jira")}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md text-neutral-700 dark:text-neutral-200 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-600 hover:bg-neutral-50 dark:hover:bg-neutral-700 transition-colors max-w-[10rem]"
-                >
-                  Enable JIRA for board
-                </button>
-              )}
+              ) : null}
             </div>
             {lastSyncedAt && boardJiraUi && (
               <div className="mt-1 text-right text-[10px] text-neutral-400 dark:text-neutral-500">
