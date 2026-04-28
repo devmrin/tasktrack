@@ -3,6 +3,7 @@ import { recordHistoryTransaction } from '@/modules/history/services/history.ser
 import type { TicketPriority } from '@/utils/ticketPriority';
 import { dispatchTicketsRemoved } from '@/utils/ticketsRemoved';
 import { dispatchTicketMoved } from '@/utils/ticketsMoved';
+import { dispatchTicketUpdated } from '@/utils/ticketsUpdated';
 
 type CreateTicketInput = Omit<Ticket, 'id' | 'createdAt' | 'updatedAt' | 'order' | 'priority'> & {
   id?: string;
@@ -85,6 +86,7 @@ export async function updateTicket(id: string, updates: Partial<Omit<Ticket, 'id
     ...updates,
     updatedAt: Date.now(),
   });
+  dispatchTicketUpdated({ ticketId: id });
 }
 
 export async function getJiraTickets(boardId: string): Promise<Ticket[]> {

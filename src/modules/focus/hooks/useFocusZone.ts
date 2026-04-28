@@ -4,6 +4,7 @@ import { INBOX_COLUMN_ID } from '@/modules/inbox/types';
 import { getTicket } from '@/modules/tickets/services/ticket.service';
 import { subscribeToTicketsRemoved } from '@/utils/ticketsRemoved';
 import { subscribeToTicketMoved } from '@/utils/ticketsMoved';
+import { subscribeToTicketUpdated } from '@/utils/ticketsUpdated';
 import { SETTING_KEYS } from '@/modules/focus/constants';
 import type { FocusedTicketData } from '@/modules/focus/types';
 
@@ -88,6 +89,25 @@ export function useFocusZone() {
       if (ticketId === focused.ticket.id && newColumnId === INBOX_COLUMN_ID) {
         void endFocusRef.current();
       }
+    });
+  }, []);
+
+  useEffect(() => {
+    return subscribeToTicketUpdated(({ ticketId }) => {
+      const focused = focusedDataRef.current;
+      if (!focused || ticketId !== focused.ticket.id) {
+        return;
+      }
+
+      void (async () => {
+        const ticket = await getTicket(ticketId);
+        if (!ticket) {
+          await clearPersistedFocus();
+          setFocusedData(null);
+          return;
+        }
+        setFocusedData((prev) => (prev ? { ...prev, ticket } : null));
+      })();
     });
   }, []);
 

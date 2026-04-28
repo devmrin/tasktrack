@@ -112,6 +112,7 @@ export function InboxSidebar({
   const columnsQuery = useColumnsQuery(activeBoardId);
   const columns = columnsQuery.data ?? [];
   const terminology = useBoardTerminology(activeBoard);
+  const isBoardJiraEnabled = activeBoard?.jiraEnabled ?? false;
   const boardJiraUi = jiraConnected && (activeBoard?.jiraEnabled ?? false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [addTitle, setAddTitle] = useState("");
@@ -466,86 +467,100 @@ export function InboxSidebar({
               </Tooltip>
             </div>
           </div>
+          {isBoardJiraEnabled ? (
+            <div className="px-4 pt-3 pb-2 shrink-0 border-b border-neutral-100 dark:border-neutral-800">
+              <div className="flex items-center justify-end gap-1.5">
+                {!jiraConnected ? (
+                  <button
+                    type="button"
+                    onClick={() => onSettingsOpen("jira")}
+                    className="flex h-7 items-center gap-1.5 px-2.5 text-xs font-medium rounded-md bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900 hover:opacity-90 transition-opacity"
+                    aria-label="Connect JIRA"
+                  >
+                    <Plug className="size-3.5" aria-hidden />
+                    Connect JIRA
+                  </button>
+                ) : boardJiraUi ? (
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <Tooltip
+                      content={`Quick open issue in JIRA (${SHORTCUT_DISPLAY.jiraQuickOpen})`}
+                      side="bottom"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setQuickOpenOpen(true)}
+                        className="flex h-7 items-center gap-1.5 px-2.5 text-xs font-medium rounded-md text-neutral-700 dark:text-neutral-200 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-600 hover:bg-neutral-50 dark:hover:bg-neutral-700 transition-colors"
+                        aria-label="Quick open JIRA issue"
+                      >
+                        <ExternalLink className="size-3.5" aria-hidden />
+                        Quick open
+                        <kbd className="ml-0.5 px-1 py-0.5 text-[10px] font-medium text-neutral-400 dark:text-neutral-500 bg-white dark:bg-neutral-700 border border-neutral-200 dark:border-neutral-600 rounded">
+                          {SHORTCUT_DISPLAY.jiraQuickOpen}
+                        </kbd>
+                      </button>
+                    </Tooltip>
+                    {!hasJiraTicketsInDb ? (
+                      <Tooltip
+                        content={`Fetch JIRA ${terminology.items} (${SHORTCUT_DISPLAY.syncJira})`}
+                        side="bottom"
+                      >
+                        <button
+                          type="button"
+                          disabled={syncing}
+                          onClick={handleSyncFromJira}
+                          className="flex h-7 items-center gap-1.5 px-2.5 text-xs font-medium rounded-md bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900 hover:opacity-90 transition-opacity disabled:opacity-50"
+                          aria-label={`Fetch JIRA ${terminology.items}`}
+                        >
+                          <RefreshCw
+                            className={`size-3.5 ${syncing ? "animate-spin" : ""}`}
+                            aria-hidden
+                          />
+                          {syncing ? "Fetching…" : `Fetch JIRA ${terminology.items}`}
+                          <kbd className="ml-0.5 px-1 py-0.5 text-[10px] font-medium text-white/80 dark:text-neutral-600 bg-white/20 dark:bg-neutral-300 border border-white/30 dark:border-neutral-400 rounded">
+                            {SHORTCUT_DISPLAY.syncJira}
+                          </kbd>
+                        </button>
+                      </Tooltip>
+                    ) : (
+                      <Tooltip
+                        content={`Sync JIRA (${SHORTCUT_DISPLAY.syncJira})`}
+                        side="bottom"
+                      >
+                        <button
+                          type="button"
+                          disabled={syncing}
+                          onClick={handleSyncFromJira}
+                          className="flex h-7 items-center gap-1.5 px-2.5 text-xs font-medium rounded-md bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900 hover:opacity-90 transition-opacity disabled:opacity-50"
+                          aria-label="Sync from JIRA"
+                        >
+                          <RefreshCw
+                            className={`size-3.5 ${syncing ? "animate-spin" : ""}`}
+                            aria-hidden
+                          />
+                          {syncing ? "Syncing…" : "Sync JIRA"}
+                          <kbd className="ml-0.5 px-1 py-0.5 text-[10px] font-medium text-white/80 dark:text-neutral-600 bg-white/20 dark:bg-neutral-300 border border-white/30 dark:border-neutral-400 rounded">
+                            {SHORTCUT_DISPLAY.syncJira}
+                          </kbd>
+                        </button>
+                      </Tooltip>
+                    )}
+                  </div>
+                ) : null}
+              </div>
+              {lastSyncedAt && boardJiraUi && (
+                <div className="mt-1 text-right text-[10px] text-neutral-400 dark:text-neutral-500">
+                  Last synced on {formatLastSynced(lastSyncedAt)}
+                </div>
+              )}
+            </div>
+          ) : null}
+
           <div className="px-4 pt-3 pb-2 shrink-0 border-b border-neutral-100 dark:border-neutral-800">
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-sm font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">
                 Inbox
               </h2>
-              {!jiraConnected ? (
-                <button
-                  type="button"
-                  onClick={() => onSettingsOpen("jira")}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900 hover:opacity-90 transition-opacity"
-                  aria-label="Connect JIRA"
-                >
-                  <Plug className="size-3.5" aria-hidden />
-                  Connect JIRA
-                </button>
-              ) : boardJiraUi ? (
-                <div className="flex items-center gap-1 shrink-0">
-                  <Tooltip
-                    content={`Quick open issue in JIRA (${SHORTCUT_DISPLAY.jiraQuickOpen})`}
-                    side="bottom"
-                  >
-                    <button
-                      type="button"
-                      onClick={() => setQuickOpenOpen(true)}
-                      className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md text-neutral-700 dark:text-neutral-200 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-600 hover:bg-neutral-50 dark:hover:bg-neutral-700 transition-colors"
-                      aria-label="Quick open JIRA issue"
-                    >
-                      <ExternalLink className="size-3.5" aria-hidden />
-                      Quick open
-                    </button>
-                  </Tooltip>
-                  {!hasJiraTicketsInDb ? (
-                    <Tooltip
-                      content={`Fetch JIRA ${terminology.items} (${SHORTCUT_DISPLAY.syncJira})`}
-                      side="bottom"
-                    >
-                      <button
-                        type="button"
-                        disabled={syncing}
-                        onClick={handleSyncFromJira}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900 hover:opacity-90 transition-opacity disabled:opacity-50"
-                        aria-label={`Fetch JIRA ${terminology.items}`}
-                      >
-                        <RefreshCw
-                          className={`size-3.5 ${syncing ? "animate-spin" : ""}`}
-                          aria-hidden
-                        />
-                        {syncing
-                          ? "Fetching…"
-                          : `Fetch JIRA ${terminology.items}`}
-                      </button>
-                    </Tooltip>
-                  ) : (
-                    <Tooltip
-                      content={`Sync JIRA (${SHORTCUT_DISPLAY.syncJira})`}
-                      side="bottom"
-                    >
-                      <button
-                        type="button"
-                        disabled={syncing}
-                        onClick={handleSyncFromJira}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900 hover:opacity-90 transition-opacity disabled:opacity-50"
-                        aria-label="Sync from JIRA"
-                      >
-                        <RefreshCw
-                          className={`size-3.5 ${syncing ? "animate-spin" : ""}`}
-                          aria-hidden
-                        />
-                        {syncing ? "Syncing…" : "Sync JIRA"}
-                      </button>
-                    </Tooltip>
-                  )}
-                </div>
-              ) : null}
             </div>
-            {lastSyncedAt && boardJiraUi && (
-              <div className="mt-1 text-right text-[10px] text-neutral-400 dark:text-neutral-500">
-                Last synced on {formatLastSynced(lastSyncedAt)}
-              </div>
-            )}
           </div>
 
           <div className="px-4 pt-3 pb-2 shrink-0 border-b border-neutral-100 dark:border-neutral-800">

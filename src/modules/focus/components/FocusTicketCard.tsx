@@ -81,7 +81,7 @@ export function FocusTicketCard({ ticket, onDismiss }: FocusTicketCardProps) {
         </div>
       )}
 
-      <div className="order-1 lg:order-3 mt-4 flex flex-wrap items-center gap-2 pb-3 border-b border-neutral-200 dark:border-neutral-700 lg:pb-0 lg:pt-3 lg:border-b-0 lg:border-t">
+      <div className="order-1 lg:order-3 mt-4 lg:mt-0 flex flex-wrap items-center gap-2 pb-3 border-b border-neutral-200 dark:border-neutral-700 lg:pb-0 lg:pt-0 lg:border-b-0 lg:border-t">
         <Tooltip content="Returns to column">
           <button
             type="button"
