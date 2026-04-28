@@ -14,6 +14,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 import type { Ticket } from "@/db/database";
 import { queryKeys } from "@/hooks/queryKeys";
+import { useActiveBoard } from "@/modules/boards/hooks/useActiveBoard";
+import { useBoardTerminology } from "@/modules/boards/hooks/useBoardTerminology";
 import { INBOX_COLUMN_ID } from "@/modules/inbox/types";
 import { getAllColumns, getColumn, reorderColumns } from "@/modules/kanban";
 import {
@@ -31,6 +33,8 @@ interface DndProviderProps {
 
 export function DndProvider({ children }: DndProviderProps) {
   const queryClient = useQueryClient();
+  const { activeBoardId, activeBoard } = useActiveBoard();
+  const terminology = useBoardTerminology(activeBoard);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeColumnId, setActiveColumnId] = useState<string | null>(null);
   const [activeColumnDragId, setActiveColumnDragId] = useState<string | null>(
@@ -55,8 +59,9 @@ export function DndProvider({ children }: DndProviderProps) {
       | undefined;
 
     if (dragType === "column") {
+      if (!activeBoardId) return closestCenter(args);
       const cachedColumns =
-        queryClient.getQueryData<Column[]>(queryKeys.columns) ?? [];
+        queryClient.getQueryData<Column[]>(queryKeys.columns(activeBoardId)) ?? [];
       const columnIds = new Set(cachedColumns.map((column) => column.id));
       const columnContainers = args.droppableContainers.filter(
         (container) => columnIds.has(String(container.id)),
@@ -71,7 +76,7 @@ export function DndProvider({ children }: DndProviderProps) {
     }
 
     return rectIntersection(args);
-  }, [queryClient]);
+  }, [queryClient, activeBoardId]);
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     const id = event.active.id as string;
@@ -157,10 +162,11 @@ export function DndProvider({ children }: DndProviderProps) {
 
       if (dragType === "column") {
         void (async () => {
+          if (!activeBoardId) return;
           const cachedColumns = queryClient.getQueryData<Column[]>(
-            queryKeys.columns,
+            queryKeys.columns(activeBoardId),
           );
-          const availableColumns = cachedColumns ?? (await getAllColumns());
+          const availableColumns = cachedColumns ?? (await getAllColumns(activeBoardId));
           const orderedColumnIds = [...availableColumns]
             .sort((a, b) => a.order - b.order)
             .map((column) => column.id);
@@ -177,7 +183,7 @@ export function DndProvider({ children }: DndProviderProps) {
           }
 
           await reorderColumns(arrayMove(orderedColumnIds, oldIndex, newIndex));
-          queryClient.invalidateQueries({ queryKey: queryKeys.columns });
+          queryClient.invalidateQueries({ queryKey: queryKeys.columns(activeBoardId) });
         })();
         return;
       }
@@ -210,11 +216,15 @@ export function DndProvider({ children }: DndProviderProps) {
           );
         }
 
-        queryClient.invalidateQueries({ queryKey: queryKeys.tickets.all });
+        if (activeBoardId) {
+          queryClient.invalidateQueries({ queryKey: queryKeys.tickets.all(activeBoardId) });
+        } else {
+          queryClient.invalidateQueries({ queryKey: ["tickets"] });
+        }
         queryClient.invalidateQueries({ queryKey: queryKeys.history.all });
       })();
     },
-    [activeColumnId, activeDragType, queryClient, resolveDropTarget],
+    [activeBoardId, activeColumnId, activeDragType, queryClient, resolveDropTarget],
   );
 
   const handleDragCancel = useCallback(() => {
@@ -226,9 +236,13 @@ export function DndProvider({ children }: DndProviderProps) {
 
   const activeTicket = activeId ? getTicketById(activeId) : null;
   const cachedColumns =
-    queryClient.getQueryData<Column[]>(queryKeys.columns) ?? [];
+    activeBoardId !== undefined && activeBoardId !== null
+      ? queryClient.getQueryData<Column[]>(queryKeys.columns(activeBoardId)) ?? []
+      : [];
   const cachedTickets =
-    queryClient.getQueryData<Ticket[]>(queryKeys.tickets.all) ?? [];
+    activeBoardId !== undefined && activeBoardId !== null
+      ? queryClient.getQueryData<Ticket[]>(queryKeys.tickets.all(activeBoardId)) ?? []
+      : [];
   const activeColumn =
     activeDragType === "column" && activeColumnDragId
       ? (cachedColumns.find((column) => column.id === activeColumnDragId) ??
@@ -236,7 +250,7 @@ export function DndProvider({ children }: DndProviderProps) {
       : null;
   const activeColumnTickets = activeColumn
     ? cachedTickets
-        .filter((ticket) => ticket.columnId === activeColumn.id)
+        .filter((ticket) => ticket.columnId === activeColumn.id && ticket.boardId === activeBoardId)
         .sort((a, b) => a.order - b.order)
     : [];
   let overlayContent: React.ReactNode = null;
@@ -264,7 +278,7 @@ export function DndProvider({ children }: DndProviderProps) {
             {activeColumn.title}
           </h2>
           <div className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
-            {activeColumnTickets.length} tickets
+            {`${activeColumnTickets.length} ${terminology.items}`}
           </div>
         </div>
         <div className="min-h-[8rem] rounded-md border-2 border-dashed border-neutral-200/60 dark:border-neutral-600/60 p-2">

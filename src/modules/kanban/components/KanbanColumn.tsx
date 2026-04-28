@@ -24,6 +24,8 @@ interface KanbanColumnProps {
   readonly onStartFocus?: (ticket: Ticket) => void;
   readonly focusActive?: boolean;
   readonly focusedTicketId?: string;
+  readonly itemPluralWord: string;
+  readonly itemSingularWord: string;
 }
 
 export function KanbanColumn({
@@ -39,6 +41,8 @@ export function KanbanColumn({
   onStartFocus,
   focusActive,
   focusedTicketId,
+  itemPluralWord,
+  itemSingularWord,
 }: KanbanColumnProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(column.title);
@@ -200,14 +204,14 @@ export function KanbanColumn({
               open={deleteDialogOpen}
               onOpenChange={setDeleteDialogOpen}
               title="Delete column?"
-              description={`"${column.title}" will be deleted and all tickets in this column will move to Inbox.`}
+              description={`"${column.title}" will be deleted and all ${itemPluralWord} in this column will move to Inbox.`}
               loading={deleting}
               onConfirm={handleDelete}
             />
           </div>
         )}
         <div className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
-          {tickets.length} tickets
+          {`${tickets.length} ${itemPluralWord}`}
         </div>
       </div>
 
@@ -235,7 +239,7 @@ export function KanbanColumn({
         {tickets.length === 0 && isTicketDropOver && (
           <div className="flex flex-col items-center justify-center min-h-[8rem] gap-2 text-sm text-blue-600 dark:text-blue-400 transition-colors">
             <span className="font-medium">Drop here</span>
-            <span className="text-xs">Release to move ticket</span>
+            <span className="text-xs">{`Release to move ${itemSingularWord}`}</span>
           </div>
         )}
       </div>

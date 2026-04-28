@@ -12,6 +12,9 @@ import { MAX_COLUMN_TITLE_LENGTH } from "@/modules/kanban/constants";
 import { INBOX_COLUMN_ID } from "@/modules/inbox/types";
 import { FocusZone, useFocusZone } from "@/modules/focus";
 import { useKanban } from "@/modules/kanban/hooks/useKanban";
+import { BoardSwitcher } from "@/modules/boards";
+import { useActiveBoard } from "@/modules/boards/hooks/useActiveBoard";
+import { useBoardTerminology } from "@/modules/boards/hooks/useBoardTerminology";
 import { KanbanColumn } from "./KanbanColumn";
 
 type MobileView = "focus" | "board";
@@ -30,6 +33,8 @@ export function KanbanBoard() {
     deletingTicket,
     loading,
   } = useKanban();
+  const { activeBoard } = useActiveBoard();
+  const terminology = useBoardTerminology(activeBoard);
   const { focusedData, focusActive, startFocus, endFocus } = useFocusZone();
   const isMobileLayout = useMediaQuery("(max-width: 1023px)");
   const [mobileView, setMobileView] = useState<MobileView>(() =>
@@ -84,9 +89,7 @@ export function KanbanBoard() {
   const renderBoardContent = () => (
     <>
       <div className="px-3 sm:px-4 lg:px-6 pt-3 sm:pt-4 pb-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 min-h-12">
-        <h1 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
-          Board
-        </h1>
+        <BoardSwitcher />
         {hasColumns && (
           <div className="w-full sm:w-auto sm:min-w-[22rem] sm:max-w-[28rem] flex sm:justify-end">
             {showCreateColumnInput ? (
@@ -168,6 +171,8 @@ export function KanbanBoard() {
                     onStartFocus={handleStartFocus}
                     focusActive={focusActive}
                     focusedTicketId={focusedData?.ticket.id}
+                    itemPluralWord={terminology.items}
+                    itemSingularWord={terminology.item}
                   />
                 </SortableContext>
               );

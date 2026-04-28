@@ -9,6 +9,8 @@ import { useTicketDetail } from "@/hooks/useTicketDetail";
 import { useAtlassianConfigQuery } from "@/modules/settings";
 import { updateTicket } from "@/modules/tickets";
 import { isValidTicketKey } from "@/modules/tickets/utils/validateTicketKey";
+import { useActiveBoard } from "@/modules/boards/hooks/useActiveBoard";
+import { useBoardTerminology } from "@/modules/boards/hooks/useBoardTerminology";
 import { useJiraTicketsQuery } from "@/modules/tickets/hooks/useTicketsQuery";
 import { TICKET_PRIORITY_VALUES, type TicketPriority } from "@/modules/tickets";
 import { formatDueDate } from "@/modules/tickets";
@@ -17,6 +19,7 @@ import { Tooltip } from "@/components/Tooltip";
 import { isEmptyEditorHtml } from "@/utils/editorHtml";
 import { JiraAdfRenderer } from "@/modules/kanban/components/JiraAdfRenderer";
 import { SanitizedHtml } from "@/modules/kanban/components/SanitizedHtml";
+import type { BoardTerminology } from "@/modules/boards/types/board.types";
 
 type EditablePriority = TicketPriority | "none";
 
@@ -42,7 +45,7 @@ const ticketValidationSchema = Yup.object({
     }),
 });
 
-function CopyButton({ text }: { readonly text: string }) {
+function CopyButton({ text, copyLabel }: { readonly text: string; readonly copyLabel: string }) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -60,7 +63,7 @@ function CopyButton({ text }: { readonly text: string }) {
       type="button"
       onClick={handleCopy}
       className="p-1 text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 rounded transition-colors"
-      aria-label="Copy ticket ID"
+      aria-label={copyLabel}
     >
       {copied ? <Check className="size-3" /> : <Copy className="size-3" />}
     </button>
@@ -82,8 +85,12 @@ function TicketDescriptionField({ id }: { readonly id?: string }) {
 
 function TicketKeyField({
   jiraKeyOptions,
+  terminology,
+  jiraEnabledForBoard,
 }: {
   readonly jiraKeyOptions: readonly string[];
+  readonly terminology: BoardTerminology;
+  readonly jiraEnabledForBoard: boolean;
 }) {
   const { setFieldValue, values, errors, touched } = useFormikContext<{
     customKey: string;
@@ -119,21 +126,25 @@ function TicketKeyField({
 
   const showError = touched.customKey && errors.customKey;
 
+  if (!jiraEnabledForBoard) {
+    return null;
+  }
+
   return (
     <div className="space-y-1.5">
       <div className="mb-1.5 flex items-center gap-1.5">
         <span className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
-          Relates to ticket ID (optional)
+          {`Relates to ${terminology.item} ID (optional)`}
         </span>
         <Tooltip
-          content="For reference only. You may optionally relate this ticket to an existing JIRA ticket for improved tracking"
+          content="For reference only. You may optionally relate this item to an existing JIRA issue for improved tracking"
           side="top"
         >
           <button
             type="button"
             tabIndex={-1}
             className="text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300"
-            aria-label="Ticket relation info"
+            aria-label="Relation info"
           >
             <Info className="size-3.5" aria-hidden />
           </button>
@@ -145,9 +156,9 @@ function TicketKeyField({
       >
         <Select.Trigger
           className="inline-flex w-full items-center justify-between px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md text-sm bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:ring-1 focus:ring-neutral-400 dark:focus:ring-neutral-500 focus:border-neutral-400 dark:focus:border-neutral-500 outline-none"
-          aria-label="Relates to ticket ID"
+          aria-label={`Relates to ${terminology.item} ID`}
         >
-          <Select.Value placeholder="No ticket ID" />
+          <Select.Value placeholder={`No ${terminology.item} ID`} />
           <Select.Icon>
             <ChevronDown
               className="size-3.5 text-neutral-500 dark:text-neutral-400"
@@ -158,7 +169,7 @@ function TicketKeyField({
         <Select.Portal>
           <Select.Content
             allowSearch
-            searchPlaceholder="Search ticket ID"
+            searchPlaceholder={`Search ${terminology.item} ID`}
             className="z-[60] overflow-hidden rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 shadow-lg"
             position="popper"
             sideOffset={4}
@@ -169,7 +180,7 @@ function TicketKeyField({
                 value="none"
                 className="flex items-center gap-2 px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 rounded cursor-pointer outline-none data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700"
               >
-                <Select.ItemText>No ticket ID</Select.ItemText>
+                <Select.ItemText>{`No ${terminology.item} ID`}</Select.ItemText>
                 <Select.ItemIndicator className="ml-auto">
                   <Check className="size-3.5" aria-hidden />
                 </Select.ItemIndicator>
@@ -177,7 +188,7 @@ function TicketKeyField({
               {jiraKeyOptions.length > 0 && (
                 <Select.Group>
                   <Select.Label className="px-3 py-1 text-[10px] font-medium text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">
-                    Synced JIRA tickets
+                    {`Synced JIRA ${terminology.items}`}
                   </Select.Label>
                   {jiraKeyOptions.map((key) => (
                     <Select.Item
@@ -379,8 +390,10 @@ export function TicketDetailSidebar({
 }) {
   const { selectedTicket, closeTicketDetail, openTicketDetail } =
     useTicketDetail();
+  const { activeBoardId, activeBoard } = useActiveBoard();
+  const terminology = useBoardTerminology(activeBoard);
   const atlassianConfigQuery = useAtlassianConfigQuery();
-  const jiraTicketsQuery = useJiraTicketsQuery();
+  const jiraTicketsQuery = useJiraTicketsQuery(activeBoardId);
   const jiraKeyOptions = useMemo(
     () =>
       (jiraTicketsQuery.data ?? [])
@@ -459,7 +472,7 @@ export function TicketDetailSidebar({
       )}
       <aside
         className={`fixed right-0 top-0 h-full w-full max-w-[26rem] bg-white dark:bg-neutral-900 shadow-2xl z-50 flex flex-col border-l border-neutral-200 dark:border-neutral-700 transition-transform duration-300 ease-in-out ${isOpen ? "translate-x-0" : "translate-x-full"}`}
-        aria-label="Ticket details"
+        aria-label={`${terminology.Item} details`}
       >
         {selectedTicket && (
           <Formik
@@ -479,7 +492,7 @@ export function TicketDetailSidebar({
               <Form className="flex flex-col h-full">
                 <div className="flex items-center justify-between px-4 sm:px-5 py-4 border-b border-neutral-200 dark:border-neutral-700 shrink-0">
                   <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100 truncate pr-2">
-                    {isJira ? "JIRA Ticket" : "Local ticket"}
+                    {isJira ? `JIRA ${terminology.Item}` : `Local ${terminology.item}`}
                   </h2>
                   <button
                     type="button"
@@ -499,7 +512,10 @@ export function TicketDetailSidebar({
                           <span className="text-sm px-2.5 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-md font-medium">
                             {selectedTicket.jiraData.jiraKey}
                           </span>
-                          <CopyButton text={selectedTicket.jiraData.jiraKey} />
+                          <CopyButton
+                            text={selectedTicket.jiraData.jiraKey}
+                            copyLabel={`Copy ${terminology.item} ID`}
+                          />
                         </div>
                         {selectedTicket.jiraData.jiraUrl && (
                           <a
@@ -536,7 +552,10 @@ export function TicketDetailSidebar({
                         <span className="text-sm px-2.5 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded-md font-medium">
                           {selectedTicket.customKey}
                         </span>
-                        <CopyButton text={selectedTicket.customKey} />
+                        <CopyButton
+                          text={selectedTicket.customKey}
+                          copyLabel={`Copy ${terminology.item} ID`}
+                        />
                       </div>
                       {linkedLocalJiraUrl && (
                         <a
@@ -618,7 +637,11 @@ export function TicketDetailSidebar({
                   </div>
 
                   {isEditable && (
-                    <TicketKeyField jiraKeyOptions={jiraKeyOptions} />
+                    <TicketKeyField
+                      jiraKeyOptions={jiraKeyOptions}
+                      terminology={terminology}
+                      jiraEnabledForBoard={activeBoard?.jiraEnabled ?? false}
+                    />
                   )}
 
                   {isEditable && (

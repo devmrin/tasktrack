@@ -1,10 +1,12 @@
 export const queryKeys = {
-  columns: ['columns'] as const,
+  boards: ['boards'] as const,
+  columns: (boardId: string) => ['columns', boardId] as const,
   tickets: {
-    all: ['tickets'] as const,
-    column: (columnId: string) => ['tickets', 'column', columnId] as const,
-    jira: ['tickets', 'jira'] as const,
-    inbox: ['tickets', 'inbox'] as const,
+    all: (boardId: string) => ['tickets', boardId] as const,
+    column: (boardId: string, columnId: string) =>
+      ['tickets', boardId, 'column', columnId] as const,
+    jira: (boardId: string) => ['tickets', boardId, 'jira'] as const,
+    inbox: (boardId: string) => ['tickets', boardId, 'inbox'] as const,
   },
   atlassian: {
     config: ['atlassian', 'config'] as const,

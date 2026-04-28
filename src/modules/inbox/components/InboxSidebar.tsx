@@ -18,7 +18,7 @@ import {
   Settings2,
   Sun,
 } from "lucide-react";
-import { useImperativeHandle, useMemo, useState } from "react";
+import { useEffect, useImperativeHandle, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import * as Select from "@/components/Select";
 import {
@@ -44,6 +44,7 @@ import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { TICKET_PRIORITY_VALUES, type TicketPriority } from "@/modules/tickets";
 import { sortInboxTickets } from "@/modules/inbox/utils/sortInboxTickets";
 import { JiraQuickOpenDialog } from "@/modules/inbox/components/JiraQuickOpenDialog";
+import { useBoardTerminology } from "@/modules/boards/hooks/useBoardTerminology";
 
 const SIDEBAR_WIDTH = 320;
 const SIDEBAR_COLLAPSED_WIDTH = 48;
@@ -92,9 +93,9 @@ export function InboxSidebar({
     id: INBOX_COLUMN_ID,
   });
   const { showToast } = useToast();
-  const columnsQuery = useColumnsQuery();
-  const columns = columnsQuery.data ?? [];
   const {
+    activeBoard,
+    activeBoardId,
     inboxTickets,
     loading,
     jiraConnected,
@@ -108,6 +109,10 @@ export function InboxSidebar({
     addTicketToInbox,
     syncFromJira,
   } = useInbox();
+  const columnsQuery = useColumnsQuery(activeBoardId);
+  const columns = columnsQuery.data ?? [];
+  const terminology = useBoardTerminology(activeBoard);
+  const boardJiraUi = jiraConnected && (activeBoard?.jiraEnabled ?? false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [addTitle, setAddTitle] = useState("");
   const [addDescription, setAddDescription] = useState("");
@@ -133,6 +138,15 @@ export function InboxSidebar({
   const [quickOpenOpen, setQuickOpenOpen] = useState(false);
   const resolvedSortMode = normalizeInboxSortMode(sortMode);
 
+  useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect -- add-ticket key fields are board-scoped; reset when board changes */
+    setTicketKeyMode("none");
+    setSelectedKey("");
+    setCustomKeyInput("");
+    setCustomKeyError("");
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, [activeBoard?.id]);
+
   useImperativeHandle(
     imperativeRef,
     () => ({
@@ -145,11 +159,15 @@ export function InboxSidebar({
           showToast("Connect JIRA in Settings to use Quick open");
           return;
         }
+        if (!activeBoard?.jiraEnabled) {
+          showToast("Enable JIRA for this board in Settings");
+          return;
+        }
         if (!isOpen) onOpen();
         setQuickOpenOpen(true);
       },
     }),
-    [isOpen, jiraConnected, onOpen, showToast],
+    [isOpen, jiraConnected, activeBoard?.jiraEnabled, onOpen, showToast],
   );
 
   const jiraKeyOptions = useMemo(
@@ -192,7 +210,7 @@ export function InboxSidebar({
     if (ticketKeyMode === "other") {
       const key = customKeyInput.trim().toUpperCase();
       if (!key) {
-        setCustomKeyError('Ticket ID is required when "Other" is selected');
+        setCustomKeyError('Issue key is required when "Other" is selected');
         return;
       }
       if (!isValidTicketKey(key)) {
@@ -251,7 +269,7 @@ export function InboxSidebar({
           Your inbox is empty
         </p>
         <p className="text-xs text-neutral-400/70 dark:text-neutral-500/70">
-          Add a ticket above, or drag one here to shelve it for later
+          {`Add a ${terminology.item} above, or drag one here to shelve it for later`}
         </p>
       </div>
     );
@@ -325,7 +343,7 @@ export function InboxSidebar({
                 type="button"
                 onClick={onSearchOpen}
                 className="p-2 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-neutral-100 rounded-md transition-colors"
-                aria-label="Search tickets"
+                aria-label={`Search ${terminology.items}`}
               >
                 <Search className="size-5" aria-hidden />
               </button>
@@ -416,7 +434,7 @@ export function InboxSidebar({
               type="button"
               onClick={onSearchOpen}
               className="flex items-center gap-1.5 h-7 px-2 text-xs text-neutral-500 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-md transition-colors"
-              aria-label="Search tickets"
+              aria-label={`Search ${terminology.items}`}
             >
               <Search className="size-3.5" aria-hidden />
               <span className="text-neutral-400 dark:text-neutral-500">Search</span>
@@ -463,7 +481,7 @@ export function InboxSidebar({
                   <Plug className="size-3.5" aria-hidden />
                   Connect JIRA
                 </button>
-              ) : (
+              ) : boardJiraUi ? (
                 <div className="flex items-center gap-1 shrink-0">
                   <Tooltip
                     content={`Quick open issue in JIRA (${SHORTCUT_DISPLAY.jiraQuickOpen})`}
@@ -481,7 +499,7 @@ export function InboxSidebar({
                   </Tooltip>
                   {!hasJiraTicketsInDb ? (
                     <Tooltip
-                      content={`Fetch JIRA tickets (${SHORTCUT_DISPLAY.syncJira})`}
+                      content={`Fetch JIRA ${terminology.items} (${SHORTCUT_DISPLAY.syncJira})`}
                       side="bottom"
                     >
                       <button
@@ -489,13 +507,15 @@ export function InboxSidebar({
                         disabled={syncing}
                         onClick={handleSyncFromJira}
                         className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900 hover:opacity-90 transition-opacity disabled:opacity-50"
-                        aria-label="Fetch JIRA tickets"
+                        aria-label={`Fetch JIRA ${terminology.items}`}
                       >
                         <RefreshCw
                           className={`size-3.5 ${syncing ? "animate-spin" : ""}`}
                           aria-hidden
                         />
-                        {syncing ? "Fetching…" : "Fetch JIRA tickets"}
+                        {syncing
+                          ? "Fetching…"
+                          : `Fetch JIRA ${terminology.items}`}
                       </button>
                     </Tooltip>
                   ) : (
@@ -519,9 +539,17 @@ export function InboxSidebar({
                     </Tooltip>
                   )}
                 </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => onSettingsOpen("jira")}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md text-neutral-700 dark:text-neutral-200 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-600 hover:bg-neutral-50 dark:hover:bg-neutral-700 transition-colors max-w-[10rem]"
+                >
+                  Enable JIRA for board
+                </button>
               )}
             </div>
-            {lastSyncedAt && jiraConnected && (
+            {lastSyncedAt && boardJiraUi && (
               <div className="mt-1 text-right text-[10px] text-neutral-400 dark:text-neutral-500">
                 Last synced on {formatLastSynced(lastSyncedAt)}
               </div>
@@ -541,7 +569,7 @@ export function InboxSidebar({
               >
                 <Select.Trigger
                   className="inline-flex h-8 flex-1 items-center justify-between rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 px-2.5 text-xs text-neutral-700 dark:text-neutral-300 outline-none hover:bg-neutral-50 dark:hover:bg-neutral-700/60"
-                  aria-label="Sort inbox tickets"
+                  aria-label={`Sort inbox ${terminology.items}`}
                 >
                   <Select.Value />
                   <Select.Icon>
@@ -635,7 +663,7 @@ export function InboxSidebar({
                 <textarea
                   value={addTitle}
                   onChange={(e) => setAddTitle(e.target.value)}
-                  placeholder="Ticket title"
+                  placeholder={`${terminology.Item} title`}
                   autoFocus
                   rows={1}
                   className="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md text-sm bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:ring-2 focus:ring-neutral-400 dark:focus:ring-neutral-500 focus:border-neutral-400 dark:focus:border-neutral-500 resize-none"
@@ -646,20 +674,21 @@ export function InboxSidebar({
                   placeholder="Description (optional)"
                   minHeight="4rem"
                 />
+                {activeBoard?.jiraEnabled ? (
                 <div className="space-y-1.5">
                   <div className="flex items-center gap-1.5">
                     <span className="block text-xs font-medium text-neutral-500 dark:text-neutral-400">
-                      Relates to ticket ID (optional)
+                      {`Relates to ${terminology.item} ID (optional)`}
                     </span>
                     <Tooltip
-                      content="For reference only. You may optionally relate this ticket to an existing JIRA ticket for improved tracking"
+                      content="For reference only. You may optionally relate this item to an existing JIRA issue for improved tracking"
                       side="top"
                     >
                       <button
                         type="button"
                         tabIndex={-1}
                         className="text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300"
-                        aria-label="Ticket relation info"
+                        aria-label="Relation info"
                       >
                         <Info className="size-3.5" aria-hidden />
                       </button>
@@ -687,9 +716,9 @@ export function InboxSidebar({
                   >
                     <Select.Trigger
                       className="inline-flex w-full items-center justify-between px-3 py-1.5 border border-neutral-300 dark:border-neutral-600 rounded-md text-sm bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:ring-2 focus:ring-neutral-400 dark:focus:ring-neutral-500 focus:border-neutral-400 dark:focus:border-neutral-500 outline-none"
-                      aria-label="Ticket ID"
+                      aria-label={`${terminology.Item} ID`}
                     >
-                      <Select.Value placeholder="No ticket ID" />
+                      <Select.Value placeholder={`No ${terminology.item} ID`} />
                       <Select.Icon>
                         <ChevronDown
                           className="size-3.5 text-neutral-500 dark:text-neutral-400"
@@ -700,7 +729,7 @@ export function InboxSidebar({
                     <Select.Portal>
                       <Select.Content
                         allowSearch
-                        searchPlaceholder="Search ticket ID"
+                        searchPlaceholder={`Search ${terminology.item} ID`}
                         className="z-[60] overflow-hidden rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 shadow-lg"
                         position="popper"
                         sideOffset={4}
@@ -711,7 +740,7 @@ export function InboxSidebar({
                             value="none"
                             className="flex items-center gap-2 px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 rounded cursor-pointer outline-none data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700"
                           >
-                            <Select.ItemText>No ticket ID</Select.ItemText>
+                            <Select.ItemText>{`No ${terminology.item} ID`}</Select.ItemText>
                             <Select.ItemIndicator className="ml-auto">
                               <Check className="size-3.5" aria-hidden />
                             </Select.ItemIndicator>
@@ -719,7 +748,7 @@ export function InboxSidebar({
                           {jiraKeyOptions.length > 0 && (
                             <Select.Group>
                               <Select.Label className="px-3 py-1 text-[10px] font-medium text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">
-                                Synced JIRA tickets
+                                {`Synced JIRA ${terminology.items}`}
                               </Select.Label>
                               {jiraKeyOptions.map((key) => (
                                 <Select.Item
@@ -797,6 +826,7 @@ export function InboxSidebar({
                     </div>
                   )}
                 </div>
+                ) : null}
                 <div className="space-y-1.5">
                   <span className="block text-xs font-medium text-neutral-500 dark:text-neutral-400">
                     Priority (optional)
@@ -897,7 +927,7 @@ export function InboxSidebar({
               </form>
             ) : (
               <Tooltip
-                content={`Add a local ticket (${SHORTCUT_DISPLAY.newLocalTicket})`}
+                content={`Add a local ${terminology.item} (${SHORTCUT_DISPLAY.newLocalTicket})`}
                 side="top"
               >
                 <button
@@ -905,7 +935,7 @@ export function InboxSidebar({
                   onClick={() => setShowAddForm(true)}
                   className="w-full px-3 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-md transition-colors"
                 >
-                  + Add a local ticket
+                  {`+ Add a local ${terminology.item}`}
                 </button>
               </Tooltip>
             )}

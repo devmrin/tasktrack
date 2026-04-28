@@ -43,8 +43,9 @@ function descriptionToHtml(issue: JiraIssue): string | undefined {
 
 async function removeStaleJiraTickets(
   freshJiraKeys: Set<string>,
+  boardId: string,
 ): Promise<Ticket[]> {
-  const existingJiraTickets = await getJiraTickets();
+  const existingJiraTickets = await getJiraTickets(boardId);
   const staleTickets = existingJiraTickets.filter(
     (t) => t.jiraData?.jiraKey && !freshJiraKeys.has(t.jiraData.jiraKey),
   );
@@ -64,13 +65,14 @@ export interface JiraSyncResult {
 
 async function issuesToTickets(
   issues: JiraIssue[],
-  config: AtlassianConfig
+  config: AtlassianConfig,
+  boardId: string,
 ): Promise<JiraSyncResult> {
   const freshJiraKeys = new Set(issues.map((i) => i.key));
-  const removedTickets = await removeStaleJiraTickets(freshJiraKeys);
+  const removedTickets = await removeStaleJiraTickets(freshJiraKeys, boardId);
   const deleted = removedTickets.map((ticket) => ticket.id);
 
-  const allTickets = await getAllTickets();
+  const allTickets = await getAllTickets(boardId);
   const existingByJiraKey = new Map<string, Ticket>();
   for (const t of allTickets) {
     if (t.type === 'jira' && t.jiraData?.jiraKey) {
@@ -120,6 +122,7 @@ async function issuesToTickets(
         priority,
         dueDate,
         type: 'jira',
+        boardId,
         columnId: INBOX_COLUMN_ID,
         jiraData,
       });
@@ -318,7 +321,7 @@ async function hydrateIssueComments(
   return hydratedIssues;
 }
 
-export async function fetchJiraTickets(jql?: string): Promise<JiraSyncResult> {
+export async function fetchJiraTickets(jql: string | undefined, boardId: string): Promise<JiraSyncResult> {
   let config = await getAtlassianConfig();
   if (!config) {
     throw new Error('Atlassian configuration not found');
@@ -353,9 +356,10 @@ export async function fetchJiraTickets(jql?: string): Promise<JiraSyncResult> {
 
   const data: JiraSearchResponse = await response.json();
   const issuesWithComments = await hydrateIssueComments(data.issues, config, accessToken);
-  const syncResult = await issuesToTickets(issuesWithComments, config);
+  const syncResult = await issuesToTickets(issuesWithComments, config, boardId);
   await recordHistoryTransaction({
     eventType: 'jira_sync_summary',
+    boardId,
     summary: `JIRA sync: ${syncResult.created.length} created, ${syncResult.updated.length} updated, ${syncResult.deleted.length} removed`,
     jiraCreatedCount: syncResult.created.length,
     jiraUpdatedCount: syncResult.updated.length,

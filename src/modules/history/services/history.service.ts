@@ -9,6 +9,7 @@ import type { HistoryDateRange } from '@/modules/history/types';
 
 interface RecordHistoryInput {
   readonly eventType: TransactionEventType;
+  readonly boardId?: string;
   readonly ticketId?: string;
   readonly ticketTitle?: string;
   readonly ticketKey?: string;
@@ -68,6 +69,7 @@ export async function recordHistoryTransaction(
   const record: TransactionRecord = {
     id: crypto.randomUUID(),
     createdAt: input.createdAt ?? Date.now(),
+    boardId: input.boardId,
     eventType: input.eventType,
     ticketId: input.ticketId,
     ticketTitle: input.ticketTitle,

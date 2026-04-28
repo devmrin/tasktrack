@@ -1,7 +1,6 @@
 import { createRootRoute, Outlet, useRouterState } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { queryKeys } from '@/hooks/queryKeys';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useTheme } from '@/hooks/useTheme';
@@ -16,6 +15,8 @@ import { TicketDetailSidebar } from '@/modules/kanban';
 import { SearchDialog } from '@/modules/search';
 import { SettingsDialog } from '@/modules/settings';
 import type { SectionId } from '@/modules/settings';
+import { useActiveBoard } from '@/modules/boards/hooks/useActiveBoard';
+import { useAtlassianConnectionQuery } from '@/modules/settings/hooks/useAtlassianQuery';
 
 function getNextTheme(current: 'light' | 'dark'): 'light' | 'dark' {
   return current === 'light' ? 'dark' : 'light';
@@ -35,7 +36,12 @@ function RootComponent() {
   const { theme, setTheme } = useTheme();
   const { showToast } = useToast();
   const isMobileLayout = useMediaQuery('(max-width: 1023px)');
-  const jiraSyncMutation = useJiraSyncMutation();
+  const { activeBoard, activeBoardId } = useActiveBoard();
+  const connectionQuery = useAtlassianConnectionQuery();
+  const jiraConnected = !!connectionQuery.data;
+  const jiraBoardShortcutsEnabled =
+    jiraConnected && !!(activeBoard?.jiraEnabled);
+  const jiraSyncMutation = useJiraSyncMutation(activeBoardId);
   const [isInboxOpen, setIsInboxOpen] = useLocalStorage<boolean>('inbox-sidebar-open', true);
   const oauthPending = hasOAuthCallback();
   const [isSettingsOpen, setIsSettingsOpen] = useState(oauthPending);
@@ -60,8 +66,28 @@ function RootComponent() {
       { key: '.', ctrlKey: true, handler: () => setIsSettingsOpen((prev) => !prev) },
       { key: '\\', metaKey: true, handler: () => setIsInboxOpen((prev) => !prev) },
       { key: '\\', ctrlKey: true, handler: () => setIsInboxOpen((prev) => !prev) },
-      { key: 'j', metaKey: true, handler: () => inboxRef.current?.openJiraQuickOpen() },
-      { key: 'j', ctrlKey: true, handler: () => inboxRef.current?.openJiraQuickOpen() },
+      {
+        key: 'j',
+        metaKey: true,
+        handler: () => {
+          if (!jiraBoardShortcutsEnabled) {
+            showToast('Enable JIRA for this board in Settings');
+            return;
+          }
+          inboxRef.current?.openJiraQuickOpen();
+        },
+      },
+      {
+        key: 'j',
+        ctrlKey: true,
+        handler: () => {
+          if (!jiraBoardShortcutsEnabled) {
+            showToast('Enable JIRA for this board in Settings');
+            return;
+          }
+          inboxRef.current?.openJiraQuickOpen();
+        },
+      },
       { key: 'm', metaKey: true, shiftKey: true, handler: () => setTheme(getNextTheme(theme)) },
       { key: 'm', ctrlKey: true, shiftKey: true, handler: () => setTheme(getNextTheme(theme)) },
       {
@@ -69,7 +95,11 @@ function RootComponent() {
         metaKey: true,
         shiftKey: true,
         handler: () => {
-          if (jiraSyncMutation.isPending) return;
+          if (!jiraBoardShortcutsEnabled) {
+            showToast('Enable JIRA for this board in Settings');
+            return;
+          }
+          if (jiraSyncMutation.isPending || !activeBoardId) return;
           jiraSyncMutation.mutate(undefined, {
             onSuccess: () => showToast('JIRA sync complete'),
           });
@@ -80,7 +110,11 @@ function RootComponent() {
         ctrlKey: true,
         shiftKey: true,
         handler: () => {
-          if (jiraSyncMutation.isPending) return;
+          if (!jiraBoardShortcutsEnabled) {
+            showToast('Enable JIRA for this board in Settings');
+            return;
+          }
+          if (jiraSyncMutation.isPending || !activeBoardId) return;
           jiraSyncMutation.mutate(undefined, {
             onSuccess: () => showToast('JIRA sync complete'),
           });
@@ -89,7 +123,15 @@ function RootComponent() {
       { key: 'c', metaKey: true, shiftKey: true, handler: () => inboxRef.current?.openAddTicketForm() },
       { key: 'c', ctrlKey: true, shiftKey: true, handler: () => inboxRef.current?.openAddTicketForm() },
     ],
-    [theme, setTheme, jiraSyncMutation, showToast, setIsInboxOpen],
+    [
+      theme,
+      setTheme,
+      jiraSyncMutation,
+      showToast,
+      setIsInboxOpen,
+      jiraBoardShortcutsEnabled,
+      activeBoardId,
+    ],
   );
   useKeyboardShortcuts(shortcuts);
 
@@ -102,7 +144,7 @@ function RootComponent() {
     if (!open) setSettingsSection(undefined);
   }, []);
   const handleTicketSaved = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: queryKeys.tickets.all });
+    void queryClient.invalidateQueries({ queryKey: ['tickets'] });
   }, [queryClient]);
 
   const settingsContextValue = useMemo(

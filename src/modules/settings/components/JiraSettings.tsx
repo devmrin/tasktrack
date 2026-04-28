@@ -12,6 +12,8 @@ import {
   useSaveAtlassianConfigMutation,
 } from '@/modules/settings/hooks/useAtlassianQuery';
 import { useJiraSyncMutation } from '@/modules/inbox/hooks/useJiraSyncMutation';
+import { useActiveBoard } from '@/modules/boards/hooks/useActiveBoard';
+import { useBoardsQuery, useSetBoardJiraEnabledMutation } from '@/modules/boards/hooks/useBoardsQuery';
 import { useToast } from '@/hooks/useToast';
 import { Tooltip } from '@/components/Tooltip';
 
@@ -189,7 +191,51 @@ interface JiraSettingsFormProps {
   readonly isConnected: boolean;
 }
 
+function JiraBoardScopeToggles({ isConnected }: { readonly isConnected: boolean }) {
+  const boardsQuery = useBoardsQuery();
+  const setJiraMutation = useSetBoardJiraEnabledMutation();
+  const boards = boardsQuery.data ?? [];
+
+  if (!isConnected || boards.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="rounded-lg border border-neutral-200 dark:border-neutral-700 p-4">
+      <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 mb-1">
+        Boards with JIRA features
+      </h3>
+      <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-3">
+        Choose which boards use JIRA sync, quick open, and ticket-style linking.
+      </p>
+      <ul className="space-y-2">
+        {boards.map((b) => (
+          <li key={b.id} className="flex items-start gap-2">
+            <input
+              id={`settings-jira-board-${b.id}`}
+              type="checkbox"
+              className="mt-0.5 rounded border-neutral-300 dark:border-neutral-600"
+              checked={b.jiraEnabled}
+              onChange={() => {
+                setJiraMutation.mutate({ boardId: b.id, enabled: !b.jiraEnabled });
+              }}
+              disabled={setJiraMutation.isPending}
+            />
+            <label
+              htmlFor={`settings-jira-board-${b.id}`}
+              className="text-sm text-neutral-800 dark:text-neutral-200 cursor-pointer"
+            >
+              {b.name}
+            </label>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function JiraSettingsForm({ config, isConnected }: JiraSettingsFormProps) {
+  const { activeBoardId } = useActiveBoard();
   const [clientId, setClientId] = useState(config?.clientId ?? '');
   const [clientSecret, setClientSecret] = useState(config?.clientSecret ?? '');
   const [instanceUrl, setInstanceUrl] = useState(config?.instanceUrl ?? '');
@@ -200,7 +246,7 @@ function JiraSettingsForm({ config, isConnected }: JiraSettingsFormProps) {
   const saveConfigMutation = useSaveAtlassianConfigMutation();
   const clearTokensMutation = useClearAtlassianTokensMutation();
   const oauthCompleteMutation = useOAuthCompleteMutation();
-  const jiraSyncMutation = useJiraSyncMutation();
+  const jiraSyncMutation = useJiraSyncMutation(activeBoardId);
 
   const isSaving =
     saveConfigMutation.isPending ||
@@ -277,6 +323,8 @@ function JiraSettingsForm({ config, isConnected }: JiraSettingsFormProps) {
 
   return (
     <div className="space-y-6">
+      <JiraBoardScopeToggles isConnected={isConnected} />
+
       <div>
         <h3 className="text-base font-semibold text-neutral-900 dark:text-neutral-100 mb-4">
           Configuration

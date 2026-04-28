@@ -22,8 +22,16 @@ function sortTicketsByOrder(a: Ticket, b: Ticket): number {
   return a.id.localeCompare(b.id);
 }
 
-async function getNextOrderForColumn(columnId: string): Promise<number> {
-  const columnTickets = await db.tickets.where('columnId').equals(columnId).toArray();
+async function getTicketsInBoardColumn(boardId: string, columnId: string): Promise<Ticket[]> {
+  return (await db.tickets
+    .where('boardId')
+    .equals(boardId)
+    .filter((t) => t.columnId === columnId)
+    .toArray()).sort(sortTicketsByOrder);
+}
+
+async function getNextOrderForColumn(boardId: string, columnId: string): Promise<number> {
+  const columnTickets = await getTicketsInBoardColumn(boardId, columnId);
   if (columnTickets.length === 0) {
     return 0;
   }
@@ -35,7 +43,7 @@ async function getNextOrderForColumn(columnId: string): Promise<number> {
 
 export async function createTicket(ticket: CreateTicketInput): Promise<Ticket> {
   const now = Date.now();
-  const nextOrder = ticket.order ?? (await getNextOrderForColumn(ticket.columnId));
+  const nextOrder = ticket.order ?? (await getNextOrderForColumn(ticket.boardId, ticket.columnId));
   const newTicket: Ticket = {
     ...ticket,
     priority: ticket.priority,
@@ -48,6 +56,7 @@ export async function createTicket(ticket: CreateTicketInput): Promise<Ticket> {
   if (newTicket.type === 'local') {
     await recordHistoryTransaction({
       eventType: 'ticket_created_local',
+      boardId: newTicket.boardId,
       ticketId: newTicket.id,
       ticketTitle: newTicket.title,
       ticketKey: newTicket.customKey,
@@ -62,14 +71,13 @@ export async function getTicket(id: string): Promise<Ticket | undefined> {
   return db.tickets.get(id);
 }
 
-export async function getAllTickets(): Promise<Ticket[]> {
-  const tickets = await db.tickets.toArray();
+export async function getAllTickets(boardId: string): Promise<Ticket[]> {
+  const tickets = await db.tickets.where('boardId').equals(boardId).toArray();
   return tickets.sort(sortTicketsByOrder);
 }
 
-export async function getTicketsByColumn(columnId: string): Promise<Ticket[]> {
-  const tickets = await db.tickets.where('columnId').equals(columnId).toArray();
-  return tickets.sort(sortTicketsByOrder);
+export async function getTicketsByColumn(boardId: string, columnId: string): Promise<Ticket[]> {
+  return getTicketsInBoardColumn(boardId, columnId);
 }
 
 export async function updateTicket(id: string, updates: Partial<Omit<Ticket, 'id' | 'createdAt'>>): Promise<void> {
@@ -79,8 +87,8 @@ export async function updateTicket(id: string, updates: Partial<Omit<Ticket, 'id
   });
 }
 
-export async function getJiraTickets(): Promise<Ticket[]> {
-  return db.tickets.where('type').equals('jira').toArray();
+export async function getJiraTickets(boardId: string): Promise<Ticket[]> {
+  return db.tickets.where('boardId').equals(boardId).filter((t) => t.type === 'jira').toArray();
 }
 
 interface DeleteTicketOptions {
@@ -96,6 +104,7 @@ export async function deleteTicket(
   if (!options?.skipHistory && existingTicket) {
     await recordHistoryTransaction({
       eventType: 'ticket_deleted',
+      boardId: existingTicket.boardId,
       ticketId: existingTicket.id,
       ticketTitle: existingTicket.title,
       ticketKey: existingTicket.jiraData?.jiraKey ?? existingTicket.customKey,
@@ -119,6 +128,7 @@ export async function deleteTickets(
       if (!ticket) continue;
       await recordHistoryTransaction({
         eventType: 'ticket_deleted',
+        boardId: ticket.boardId,
         ticketId: ticket.id,
         ticketTitle: ticket.title,
         ticketKey: ticket.jiraData?.jiraKey ?? ticket.customKey,
@@ -133,12 +143,16 @@ export async function deleteTickets(
 export async function reorderTicketInColumn(
   ticketId: string,
   overTicketId: string,
-  columnId: string
+  columnId: string,
 ): Promise<void> {
   await db.transaction('rw', db.tickets, async () => {
-    const columnTickets = (
-      await db.tickets.where('columnId').equals(columnId).toArray()
-    ).sort(sortTicketsByOrder);
+    const movingTicket = await db.tickets.get(ticketId);
+    if (!movingTicket) {
+      return;
+    }
+    const boardId = movingTicket.boardId;
+
+    const columnTickets = await getTicketsInBoardColumn(boardId, columnId);
 
     const oldIndex = columnTickets.findIndex((t) => t.id === ticketId);
     const newIndex = columnTickets.findIndex((t) => t.id === overTicketId);
@@ -170,6 +184,7 @@ export async function moveTicket(
         ticketTitle: string;
         ticketKey?: string;
         sourceColumnId: string;
+        boardId: string;
       }
     | undefined;
   await db.transaction('rw', db.tickets, async () => {
@@ -178,15 +193,17 @@ export async function moveTicket(
       return;
     }
 
+    const boardId = movingTicket.boardId;
     const sourceColumnId = movingTicket.columnId;
     movedTicketInfo = {
       ticketId: movingTicket.id,
       ticketTitle: movingTicket.title,
       ticketKey: movingTicket.jiraData?.jiraKey ?? movingTicket.customKey,
       sourceColumnId,
+      boardId,
     };
     const destinationTickets = (
-      await db.tickets.where('columnId').equals(newColumnId).toArray()
+      await getTicketsInBoardColumn(boardId, newColumnId)
     )
       .filter((ticket) => ticket.id !== ticketId)
       .sort(sortTicketsByOrder);
@@ -217,9 +234,7 @@ export async function moveTicket(
 
     moved = true;
 
-    const sourceTickets = (
-      await db.tickets.where('columnId').equals(sourceColumnId).toArray()
-    ).sort(sortTicketsByOrder);
+    const sourceTickets = (await getTicketsInBoardColumn(boardId, sourceColumnId)).sort(sortTicketsByOrder);
     for (const [index, ticket] of sourceTickets.entries()) {
       await db.tickets.update(ticket.id, {
         order: index,
@@ -232,6 +247,7 @@ export async function moveTicket(
     if (movedTicketInfo) {
       await recordHistoryTransaction({
         eventType: 'ticket_moved',
+        boardId: movedTicketInfo.boardId,
         ticketId: movedTicketInfo.ticketId,
         ticketTitle: movedTicketInfo.ticketTitle,
         ticketKey: movedTicketInfo.ticketKey,

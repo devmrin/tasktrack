@@ -18,6 +18,7 @@ import {
   useUpdateTicketMutation,
 } from '@/modules/tickets/hooks/useTicketsQuery';
 import type { TicketPriority } from '@/modules/tickets';
+import { useActiveBoard } from '@/modules/boards/hooks/useActiveBoard';
 
 function sortTicketsByOrder(a: Ticket, b: Ticket): number {
   if (a.order !== b.order) {
@@ -31,19 +32,21 @@ function sortTicketsByOrder(a: Ticket, b: Ticket): number {
 
 export function useKanban() {
   const queryClient = useQueryClient();
-  const columnsQuery = useColumnsQuery();
-  const ticketsQuery = useAllTicketsQuery();
-  const updateColumnMutation = useUpdateColumnMutation();
-  const createColumnMutation = useCreateColumnMutation();
-  const deleteColumnMutation = useDeleteColumnMutation();
-  const reorderColumnsMutation = useReorderColumnsMutation();
+  const { activeBoardId, isLoading: boardsLoading } = useActiveBoard();
+  const columnsQuery = useColumnsQuery(activeBoardId);
+  const ticketsQuery = useAllTicketsQuery(activeBoardId);
+  const updateColumnMutation = useUpdateColumnMutation(activeBoardId);
+  const createColumnMutation = useCreateColumnMutation(activeBoardId);
+  const deleteColumnMutation = useDeleteColumnMutation(activeBoardId);
+  const reorderColumnsMutation = useReorderColumnsMutation(activeBoardId);
   const moveTicketMutation = useMoveTicketMutation();
   const updateTicketMutation = useUpdateTicketMutation();
-  const deleteTicketMutation = useDeleteTicketMutation();
+  const deleteTicketMutation = useDeleteTicketMutation(activeBoardId);
 
   const columns: Column[] = columnsQuery.data ?? [];
   const tickets: Ticket[] = ticketsQuery.data ?? [];
-  const loading = columnsQuery.isLoading || ticketsQuery.isLoading;
+  const loading =
+    boardsLoading || columnsQuery.isLoading || ticketsQuery.isLoading || activeBoardId === undefined;
 
   const normalizeColumnTitle = (title: string): string =>
     title.trim().slice(0, MAX_COLUMN_TITLE_LENGTH);
@@ -91,14 +94,15 @@ export function useKanban() {
   };
 
   const getTicketsForColumn = (columnId: string): Ticket[] => {
-    return tickets
-      .filter((ticket) => ticket.columnId === columnId)
-      .sort(sortTicketsByOrder);
+    return tickets.filter((ticket) => ticket.columnId === columnId).sort(sortTicketsByOrder);
   };
 
   const refresh = () => {
-    queryClient.invalidateQueries({ queryKey: queryKeys.columns });
-    queryClient.invalidateQueries({ queryKey: queryKeys.tickets.all });
+    if (!activeBoardId) {
+      return;
+    }
+    void queryClient.invalidateQueries({ queryKey: queryKeys.columns(activeBoardId) });
+    void queryClient.invalidateQueries({ queryKey: queryKeys.tickets.all(activeBoardId) });
   };
 
   return {
@@ -117,5 +121,6 @@ export function useKanban() {
     creatingColumn: createColumnMutation.isPending,
     deletingColumn: deleteColumnMutation.isPending,
     deletingTicket: deleteTicketMutation.isPending,
+    activeBoardId,
   };
 }

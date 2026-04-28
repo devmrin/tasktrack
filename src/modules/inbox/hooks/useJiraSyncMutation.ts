@@ -3,15 +3,24 @@ import { queryKeys } from '@/hooks/queryKeys';
 import { useToast } from '@/hooks/useToast';
 import { fetchJiraTickets } from '@/modules/inbox/services/jira.service';
 
-export function useJiraSyncMutation() {
+export function useJiraSyncMutation(boardId: string | undefined) {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
   return useMutation({
-    mutationFn: (jql?: string) => fetchJiraTickets(jql),
+    mutationFn: (jql?: string) => {
+      if (!boardId) {
+        throw new Error('Board not ready');
+      }
+      return fetchJiraTickets(jql, boardId);
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.jira });
-      queryClient.invalidateQueries({ queryKey: queryKeys.history.all });
+      if (boardId) {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.tickets.all(boardId) });
+        void queryClient.invalidateQueries({ queryKey: queryKeys.tickets.jira(boardId) });
+      } else {
+        void queryClient.invalidateQueries({ queryKey: ['tickets'] });
+      }
+      void queryClient.invalidateQueries({ queryKey: queryKeys.history.all });
     },
     onError: () => {
       showToast('JIRA sync failed. Please check your connection and try again.');

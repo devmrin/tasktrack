@@ -13,17 +13,19 @@ import { useInboxTicketsQuery } from '@/modules/inbox/hooks/useInboxTicketsQuery
 import { useJiraSyncMutation } from '@/modules/inbox/hooks/useJiraSyncMutation';
 import { INBOX_COLUMN_ID } from '@/modules/inbox/types';
 import type { TicketPriority } from '@/modules/tickets';
+import { useActiveBoard } from '@/modules/boards/hooks/useActiveBoard';
 
 export function useInbox() {
   const queryClient = useQueryClient();
-  const inboxQuery = useInboxTicketsQuery();
+  const { activeBoardId, activeBoard } = useActiveBoard();
+  const inboxQuery = useInboxTicketsQuery(activeBoardId);
   const connectionQuery = useAtlassianConnectionQuery();
-  const jiraTicketsQuery = useJiraTicketsQuery();
+  const jiraTicketsQuery = useJiraTicketsQuery(activeBoardId);
   const moveTicketMutation = useMoveTicketMutation();
   const updateTicketMutation = useUpdateTicketMutation();
-  const deleteTicketMutation = useDeleteTicketMutation();
+  const deleteTicketMutation = useDeleteTicketMutation(activeBoardId);
   const createTicketMutation = useCreateTicketMutation();
-  const jiraSyncMutation = useJiraSyncMutation();
+  const jiraSyncMutation = useJiraSyncMutation(activeBoardId);
 
   const inboxTickets = inboxQuery.data ?? [];
   const loading = inboxQuery.isLoading;
@@ -57,12 +59,16 @@ export function useInbox() {
     dueDate?: string,
     onSuccess?: () => void
   ) => {
+    if (!activeBoardId) {
+      return;
+    }
     createTicketMutation.mutate(
       {
         title,
         description,
         priority,
         type: 'local',
+        boardId: activeBoardId,
         columnId: INBOX_COLUMN_ID,
         customKey,
         dueDate,
@@ -76,15 +82,23 @@ export function useInbox() {
   };
 
   const refresh = () => {
-    queryClient.invalidateQueries({ queryKey: queryKeys.tickets.inbox });
-    queryClient.invalidateQueries({ queryKey: queryKeys.tickets.all });
+    if (!activeBoardId) {
+      return;
+    }
+    void queryClient.invalidateQueries({ queryKey: queryKeys.tickets.inbox(activeBoardId) });
+    void queryClient.invalidateQueries({ queryKey: queryKeys.tickets.all(activeBoardId) });
   };
 
   const refreshJiraTicketsInDb = () => {
-    queryClient.invalidateQueries({ queryKey: queryKeys.tickets.jira });
+    if (!activeBoardId) {
+      return;
+    }
+    void queryClient.invalidateQueries({ queryKey: queryKeys.tickets.jira(activeBoardId) });
   };
 
   return {
+    activeBoard,
+    activeBoardId,
     inboxTickets,
     loading,
     jiraConnected,

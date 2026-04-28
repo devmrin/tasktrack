@@ -6,6 +6,8 @@ import { useDocumentTitle } from '@/modules/focus/hooks/useDocumentTitle';
 import { usePomodoroSettings } from '@/modules/focus/hooks/usePomodoroSettings';
 import { usePomodoroTimer } from '@/modules/focus/hooks/usePomodoroTimer';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { useActiveBoard } from '@/modules/boards/hooks/useActiveBoard';
+import { useBoardTerminology } from '@/modules/boards/hooks/useBoardTerminology';
 import { useToast } from '@/hooks/useToast';
 import { FocusFullscreen } from './FocusFullscreen';
 import { FocusTicketCard } from './FocusTicketCard';
@@ -22,6 +24,8 @@ export function FocusZone({
   onEndFocus,
   mode = 'full',
 }: FocusZoneProps) {
+  const { activeBoard } = useActiveBoard();
+  const terminology = useBoardTerminology(activeBoard);
   const { settings } = usePomodoroSettings();
   const { showToast } = useToast();
   const timer = usePomodoroTimer(settings, {
@@ -110,7 +114,7 @@ export function FocusZone({
             </div>
             <div className="h-px flex-1 bg-neutral-200 dark:bg-neutral-700" />
             <span className="text-xs text-neutral-400 dark:text-neutral-500">
-              click &quot;Focus&quot; on any ticket in board to begin
+              {`Click "Focus" on any ${terminology.item} on the board to begin`}
             </span>
           </div>
         )}

@@ -1,5 +1,7 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
+import { useActiveBoard } from "@/modules/boards/hooks/useActiveBoard";
+import { useBoardTerminology } from "@/modules/boards/hooks/useBoardTerminology";
 
 interface GettingStartedDialogProps {
   readonly open: boolean;
@@ -18,6 +20,9 @@ export function GettingStartedDialog({
   open,
   onOpenChange,
 }: GettingStartedDialogProps) {
+  const { activeBoard } = useActiveBoard();
+  const terminology = useBoardTerminology(activeBoard);
+
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
@@ -50,7 +55,8 @@ export function GettingStartedDialog({
               </h3>
               <p className="text-sm leading-6 text-neutral-700 dark:text-neutral-300">
                 tasktrack is a focused workspace for managing your assigned
-                work. It presents your tickets in a clean, local Kanban board
+                work.{" "}
+                {`It presents your ${terminology.items} in a clean, local Kanban board`}
                 designed for clarity, prioritization, and execution without the
                 typical overhead.
               </p>
@@ -62,8 +68,8 @@ export function GettingStartedDialog({
               </h3>
               <p className="text-sm leading-6 text-neutral-700 dark:text-neutral-300">
                 Opening JIRA often means navigating layers of UI before reaching
-                the work that matters. tasktrack removes that friction by giving
-                you a fast, distraction-free view of your tickets.
+                the work that matters. tasktrack removes that friction by giving you{" "}
+                {`a fast, distraction-free view of your ${terminology.items}.`}
               </p>
             </section>
 
@@ -84,13 +90,12 @@ export function GettingStartedDialog({
                   account
                 </li>
                 <li>
-                  <strong>read:work</strong> — used only to fetch assigned
-                  tickets
+                  <strong>read:work</strong> —{" "}
+                  {`used only to fetch assigned ${terminology.items}`}
                 </li>
               </ul>
               <p className="text-sm leading-6 text-neutral-700 dark:text-neutral-300">
-                Nothing performed inside tasktrack affects your actual JIRA
-                tickets.
+                {`Nothing performed inside tasktrack affects your actual JIRA ${terminology.items}.`}
               </p>
             </section>
 
@@ -99,9 +104,7 @@ export function GettingStartedDialog({
                 Core Workflow
               </h3>
               <p className="text-sm leading-6 text-neutral-700 dark:text-neutral-300">
-                Sync your JIRA tickets and organize them into a local Kanban
-                board. Prioritize what deserves attention, move items across
-                columns, and focus on execution.
+                {`Sync your JIRA ${terminology.items} and organize them into a local Kanban board. Prioritize what deserves attention, move items across columns, and focus on execution.`}
               </p>
             </section>
 
@@ -111,19 +114,19 @@ export function GettingStartedDialog({
               </h3>
               <ul className="list-disc pl-5 space-y-1 text-sm leading-6 text-neutral-700 dark:text-neutral-300">
                 <li>First-class Pomodoro support</li>
-                <li>Sort tickets by Updated, Created, or Priority</li>
+                <li>{`Sort ${terminology.items} by Updated, Created, or Priority`}</li>
                 <li>Fast search and keyboard navigation</li>
-                <li>Lightweight ticket details on demand</li>
+                <li>{`Lightweight ${terminology.item} details on demand`}</li>
               </ul>
             </section>
 
             <section className="space-y-1.5">
               <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
-                Local Tickets
+                {`Local ${terminology.Items}`}
               </h3>
               <p className="text-sm leading-6 text-neutral-700 dark:text-neutral-300">
                 Not all work originates in JIRA. tasktrack allows creation of
-                local-only tickets.
+                {`local-only ${terminology.items}.`}
               </p>
               <p className="text-sm leading-6 text-neutral-700 dark:text-neutral-300">
                 You can:
@@ -131,17 +134,16 @@ export function GettingStartedDialog({
               <ul className="list-disc pl-5 space-y-1 text-sm leading-6 text-neutral-700 dark:text-neutral-300">
                 <li>Add descriptions</li>
                 <li>Assign priority</li>
-                <li>Link them to JIRA tickets when needed</li>
+                <li>{`Link them to JIRA ${terminology.items} when needed`}</li>
               </ul>
             </section>
 
             <section className="space-y-1.5">
               <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
-                Ticket Details
+                {`${terminology.Item} Details`}
               </h3>
               <p className="text-sm leading-6 text-neutral-700 dark:text-neutral-300">
-                Click any ticket title to view its details instantly, without
-                leaving your workflow.
+                {`Click any ${terminology.item} title to view its details instantly, without leaving your workflow.`}
               </p>
             </section>
 
@@ -151,7 +153,7 @@ export function GettingStartedDialog({
               </h3>
               <ol className="list-decimal pl-5 space-y-1 text-sm leading-6 text-neutral-700 dark:text-neutral-300">
                 <li>Connect tasktrack to JIRA</li>
-                <li>Sync your assigned tickets</li>
+                <li>{`Sync your assigned ${terminology.items}`}</li>
                 <li>Prioritize and organize your board</li>
                 <li>Start focused execution</li>
               </ol>

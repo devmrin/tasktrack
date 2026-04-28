@@ -13,25 +13,36 @@ import {
   updateTicket,
 } from '@/modules/tickets/services/ticket.service';
 
-export function useAllTicketsQuery() {
+export function useAllTicketsQuery(boardId: string | undefined) {
   return useQuery({
-    queryKey: queryKeys.tickets.all,
-    queryFn: getAllTickets,
+    queryKey: boardId ? queryKeys.tickets.all(boardId) : ['tickets', 'none'],
+    queryFn: () => {
+      if (!boardId) throw new Error('boardId required');
+      return getAllTickets(boardId);
+    },
+    enabled: !!boardId,
   });
 }
 
-export function useTicketsByColumnQuery(columnId: string) {
+export function useTicketsByColumnQuery(boardId: string | undefined, columnId: string) {
   return useQuery({
-    queryKey: queryKeys.tickets.column(columnId),
-    queryFn: () => getTicketsByColumn(columnId),
-    enabled: !!columnId,
+    queryKey: boardId ? queryKeys.tickets.column(boardId, columnId) : ['tickets', 'none', columnId],
+    queryFn: () => {
+      if (!boardId) throw new Error('boardId required');
+      return getTicketsByColumn(boardId, columnId);
+    },
+    enabled: !!boardId && !!columnId,
   });
 }
 
-export function useJiraTicketsQuery() {
+export function useJiraTicketsQuery(boardId: string | undefined) {
   return useQuery({
-    queryKey: queryKeys.tickets.jira,
-    queryFn: getJiraTickets,
+    queryKey: boardId ? queryKeys.tickets.jira(boardId) : ['tickets', 'none', 'jira'],
+    queryFn: () => {
+      if (!boardId) throw new Error('boardId required');
+      return getJiraTickets(boardId);
+    },
+    enabled: !!boardId,
   });
 }
 
@@ -43,14 +54,16 @@ export function useCreateTicketMutation() {
   return useMutation({
     mutationFn: (input: CreateTicketInput) => createTicket(input),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.column(variables.columnId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.jira });
-      queryClient.invalidateQueries({ queryKey: queryKeys.history.all });
-      showToast('Ticket created');
+      const bid = variables.boardId;
+      void queryClient.invalidateQueries({ queryKey: queryKeys.tickets.all(bid) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.tickets.column(bid, variables.columnId) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.tickets.jira(bid) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.tickets.inbox(bid) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.history.all });
+      showToast('Saved');
     },
     onError: () => {
-      showToast('Failed to create ticket');
+      showToast('Failed to create item');
     },
   });
 }
@@ -65,10 +78,9 @@ export function useUpdateTicketMutation() {
       id: string;
       updates: Partial<Omit<Ticket, 'id' | 'createdAt'>>;
     }) => updateTicket(id, updates),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.jira });
-      queryClient.invalidateQueries({ queryKey: queryKeys.history.all });
+    onSuccess: async () => {
+      void queryClient.invalidateQueries({ queryKey: ['tickets'] });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.history.all });
     },
   });
 }
@@ -86,9 +98,8 @@ export function useMoveTicketMutation() {
       targetTicketId?: string;
     }) => moveTicket(ticketId, newColumnId, targetTicketId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.jira });
-      queryClient.invalidateQueries({ queryKey: queryKeys.history.all });
+      void queryClient.invalidateQueries({ queryKey: ['tickets'] });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.history.all });
     },
   });
 }
@@ -106,26 +117,29 @@ export function useReorderTicketInColumnMutation() {
       columnId: string;
     }) => reorderTicketInColumn(ticketId, overTicketId, columnId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.jira });
+      void queryClient.invalidateQueries({ queryKey: ['tickets'] });
     },
   });
 }
 
-export function useDeleteTicketMutation() {
+export function useDeleteTicketMutation(boardId: string | undefined) {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
   return useMutation({
     mutationFn: (ticketId: string) => deleteTicket(ticketId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.jira });
-      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.inbox });
-      queryClient.invalidateQueries({ queryKey: queryKeys.history.all });
-      showToast('Ticket deleted');
+      if (boardId) {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.tickets.all(boardId) });
+        void queryClient.invalidateQueries({ queryKey: queryKeys.tickets.jira(boardId) });
+        void queryClient.invalidateQueries({ queryKey: queryKeys.tickets.inbox(boardId) });
+      } else {
+        void queryClient.invalidateQueries({ queryKey: ['tickets'] });
+      }
+      void queryClient.invalidateQueries({ queryKey: queryKeys.history.all });
+      showToast('Item deleted');
     },
     onError: () => {
-      showToast('Failed to delete ticket');
+      showToast('Failed to delete item');
     },
   });
 }

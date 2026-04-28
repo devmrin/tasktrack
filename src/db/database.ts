@@ -4,6 +4,16 @@ import {
   type TicketPriority,
 } from '@/utils/ticketPriority';
 
+export interface Board {
+  id: string;
+  name: string;
+  order: number;
+  isDefault: boolean;
+  jiraEnabled: boolean;
+  createdAt: number;
+  updatedAt: number;
+}
+
 export interface Ticket {
   id: string;
   title: string;
@@ -11,6 +21,7 @@ export interface Ticket {
   priority?: TicketPriority;
   dueDate?: string;
   type: 'jira' | 'local';
+  boardId: string;
   columnId: string;
   order: number;
   jiraData?: {
@@ -38,6 +49,7 @@ export interface JiraComment {
 
 export interface Column {
   id: string;
+  boardId: string;
   title: string;
   order: number;
   createdAt: number;
@@ -59,6 +71,7 @@ export type TransactionEventType =
 export interface TransactionRecord {
   id: string;
   createdAt: number;
+  boardId?: string;
   eventType: TransactionEventType;
   ticketId?: string;
   ticketTitle?: string;
@@ -86,11 +99,15 @@ export interface TransactionTicketRef {
 export class TaskTrackDatabase extends Dexie {
   tickets!: Table<Ticket>;
   columns!: Table<Column>;
+  boards!: Table<Board>;
   settings!: Table<Setting>;
   transactions!: Table<TransactionRecord>;
 
   constructor() {
     super('TaskTrackDB');
+
+    const defaultBoardId = 'default';
+
     this.version(1).stores({
       tickets: 'id, columnId, type, createdAt',
       columns: 'id, order',
@@ -210,6 +227,38 @@ export class TaskTrackDatabase extends Dexie {
         if (migratedTickets.length > 0) {
           await ticketsTable.bulkPut(migratedTickets);
         }
+      });
+
+    this.version(8)
+      .stores({
+        boards: 'id, order, isDefault',
+        tickets:
+          'id, columnId, boardId, type, createdAt, order, [columnId+order], [boardId+columnId+order]',
+        columns: 'id, boardId, order, [boardId+order]',
+        settings: 'key',
+        transactions:
+          'id, createdAt, ticketId, eventType, boardId, [ticketId+createdAt], [createdAt+eventType]',
+      })
+      .upgrade(async (transaction) => {
+        const settingsTable = transaction.table<{ key: string; value: string }, string>('settings');
+        const tokenRow = await settingsTable.get('atlassian_access_token');
+        const hasToken =
+          typeof tokenRow?.value === 'string' && tokenRow.value.trim().length > 0;
+
+        const now = Date.now();
+        await transaction.table('boards').add({
+          id: defaultBoardId,
+          name: 'Board',
+          order: 0,
+          isDefault: true,
+          jiraEnabled: hasToken,
+          createdAt: now,
+          updatedAt: now,
+        });
+
+        await transaction.table('columns').toCollection().modify({ boardId: defaultBoardId });
+        await transaction.table('tickets').toCollection().modify({ boardId: defaultBoardId });
+        await transaction.table('transactions').toCollection().modify({ boardId: defaultBoardId });
       });
   }
 }

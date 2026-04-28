@@ -10,21 +10,29 @@ import {
 } from '@/modules/kanban/services/column.service';
 import type { Column } from '@/modules/kanban/types';
 
-export function useColumnsQuery() {
+export function useColumnsQuery(boardId: string | undefined) {
   return useQuery({
-    queryKey: queryKeys.columns,
-    queryFn: getAllColumns,
+    queryKey: boardId ? queryKeys.columns(boardId) : ['columns', 'none'],
+    queryFn: () => {
+      if (!boardId) throw new Error('boardId required');
+      return getAllColumns(boardId);
+    },
+    enabled: !!boardId,
   });
 }
 
-export function useUpdateColumnMutation() {
+export function useUpdateColumnMutation(boardId: string | undefined) {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
   return useMutation({
     mutationFn: ({ columnId, updates }: { columnId: string; updates: Partial<Omit<Column, 'id' | 'createdAt'>> }) =>
       updateColumn(columnId, updates),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.columns });
+      if (boardId) {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.columns(boardId) });
+      } else {
+        void queryClient.invalidateQueries({ queryKey: ['columns'] });
+      }
       showToast('Column renamed');
     },
     onError: () => {
@@ -33,23 +41,34 @@ export function useUpdateColumnMutation() {
   });
 }
 
-export function useReorderColumnsMutation() {
+export function useReorderColumnsMutation(boardId: string | undefined) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (columnIds: string[]) => reorderColumns(columnIds),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.columns });
+      if (boardId) {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.columns(boardId) });
+      } else {
+        void queryClient.invalidateQueries({ queryKey: ['columns'] });
+      }
     },
   });
 }
 
-export function useCreateColumnMutation() {
+export function useCreateColumnMutation(boardId: string | undefined) {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
   return useMutation({
-    mutationFn: (title: string) => createColumnWithNextOrder(title),
+    mutationFn: (title: string) => {
+      if (!boardId) throw new Error('boardId required');
+      return createColumnWithNextOrder(title, boardId);
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.columns });
+      if (boardId) {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.columns(boardId) });
+      } else {
+        void queryClient.invalidateQueries({ queryKey: ['columns'] });
+      }
       showToast('Column created');
     },
     onError: () => {
@@ -58,7 +77,7 @@ export function useCreateColumnMutation() {
   });
 }
 
-export function useDeleteColumnMutation() {
+export function useDeleteColumnMutation(boardId: string | undefined) {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
   return useMutation({
@@ -70,11 +89,16 @@ export function useDeleteColumnMutation() {
       destinationColumnId: string;
     }) => deleteColumnAndMoveTickets(columnId, destinationColumnId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.columns });
-      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.inbox });
-      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.jira });
-      queryClient.invalidateQueries({ queryKey: queryKeys.history.all });
+      if (boardId) {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.columns(boardId) });
+        void queryClient.invalidateQueries({ queryKey: queryKeys.tickets.all(boardId) });
+        void queryClient.invalidateQueries({ queryKey: queryKeys.tickets.inbox(boardId) });
+        void queryClient.invalidateQueries({ queryKey: queryKeys.tickets.jira(boardId) });
+      } else {
+        void queryClient.invalidateQueries({ queryKey: ['columns'] });
+        void queryClient.invalidateQueries({ queryKey: ['tickets'] });
+      }
+      void queryClient.invalidateQueries({ queryKey: queryKeys.history.all });
       showToast('Column deleted');
     },
     onError: () => {

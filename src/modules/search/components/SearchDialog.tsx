@@ -4,6 +4,8 @@ import Fuse, { type FuseResult, type FuseResultMatch, type IFuseOptions } from '
 import { Search, FileText, X } from 'lucide-react';
 import { useAllTicketsQuery } from '@/modules/tickets/hooks/useTicketsQuery';
 import { useColumnsQuery } from '@/modules/kanban/hooks/useColumnsQuery';
+import { useActiveBoard } from '@/modules/boards/hooks/useActiveBoard';
+import { useBoardTerminology } from '@/modules/boards/hooks/useBoardTerminology';
 import { useTicketDetail } from '@/hooks/useTicketDetail';
 import { stripHtml } from '@/utils/sanitizeHtml';
 import type { Ticket } from '@/db/database';
@@ -86,8 +88,10 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
   const listRef = useRef<HTMLDivElement>(null);
   const { openTicketDetail } = useTicketDetail();
 
-  const ticketsQuery = useAllTicketsQuery();
-  const columnsQuery = useColumnsQuery();
+  const { activeBoardId, activeBoard } = useActiveBoard();
+  const terminology = useBoardTerminology(activeBoard);
+  const ticketsQuery = useAllTicketsQuery(activeBoardId);
+  const columnsQuery = useColumnsQuery(activeBoardId);
   const tickets = ticketsQuery.data ?? EMPTY_TICKETS;
   const columnsData = columnsQuery.data;
 
@@ -190,9 +194,9 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
           className="fixed left-1/2 top-[20%] z-[101] -translate-x-1/2 w-[90vw] max-w-lg bg-white dark:bg-neutral-900 rounded-xl shadow-2xl flex flex-col overflow-hidden focus:outline-none"
           onKeyDown={handleKeyDown}
         >
-          <Dialog.Title className="sr-only">Search tickets</Dialog.Title>
+          <Dialog.Title className="sr-only">{`Search ${terminology.items}`}</Dialog.Title>
           <Dialog.Description className="sr-only">
-            Search all tickets by title or description
+            {`Search all ${terminology.items} by title or description`}
           </Dialog.Description>
 
           <div className="flex items-center gap-3 px-4 border-b border-neutral-200 dark:border-neutral-700">
@@ -202,7 +206,7 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
               type="text"
               value={query}
               onChange={(e) => handleQueryChange(e.target.value)}
-              placeholder="Search tickets..."
+              placeholder={`Search ${terminology.items}…`}
               className="flex-1 py-3 text-sm bg-transparent text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none"
             />
             {query && (
@@ -229,7 +233,7 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
             {results.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 gap-2 text-neutral-400 dark:text-neutral-500">
                 <Search className="size-8" aria-hidden />
-                <p className="text-sm">No tickets found</p>
+                <p className="text-sm">{`No ${terminology.items} found`}</p>
               </div>
             ) : (
               results.map(({ item, matches }, index) => {
