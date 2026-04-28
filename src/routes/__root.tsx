@@ -60,6 +60,8 @@ function RootComponent() {
       { key: '.', ctrlKey: true, handler: () => setIsSettingsOpen((prev) => !prev) },
       { key: '\\', metaKey: true, handler: () => setIsInboxOpen((prev) => !prev) },
       { key: '\\', ctrlKey: true, handler: () => setIsInboxOpen((prev) => !prev) },
+      { key: 'j', metaKey: true, handler: () => inboxRef.current?.openJiraQuickOpen() },
+      { key: 'j', ctrlKey: true, handler: () => inboxRef.current?.openJiraQuickOpen() },
       { key: 'm', metaKey: true, shiftKey: true, handler: () => setTheme(getNextTheme(theme)) },
       { key: 'm', ctrlKey: true, shiftKey: true, handler: () => setTheme(getNextTheme(theme)) },
       {

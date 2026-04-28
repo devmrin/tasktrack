@@ -7,6 +7,7 @@ import {
   ChevronDown,
   ChevronLeft,
   Check,
+  ExternalLink,
   History,
   Info,
   Inbox,
@@ -42,6 +43,7 @@ import { useToast } from "@/hooks/useToast";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { TICKET_PRIORITY_VALUES, type TicketPriority } from "@/modules/tickets";
 import { sortInboxTickets } from "@/modules/inbox/utils/sortInboxTickets";
+import { JiraQuickOpenDialog } from "@/modules/inbox/components/JiraQuickOpenDialog";
 
 const SIDEBAR_WIDTH = 320;
 const SIDEBAR_COLLAPSED_WIDTH = 48;
@@ -59,6 +61,7 @@ function formatLastSynced(isoString: string | null): string {
 
 export interface InboxSidebarHandle {
   openAddTicketForm: () => void;
+  openJiraQuickOpen: () => void;
 }
 
 interface InboxSidebarProps {
@@ -127,6 +130,7 @@ export function InboxSidebar({
     null,
   );
   const [gettingStartedOpen, setGettingStartedOpen] = useState(false);
+  const [quickOpenOpen, setQuickOpenOpen] = useState(false);
   const resolvedSortMode = normalizeInboxSortMode(sortMode);
 
   useImperativeHandle(
@@ -136,8 +140,16 @@ export function InboxSidebar({
         if (!isOpen) onOpen();
         setShowAddForm(true);
       },
+      openJiraQuickOpen: () => {
+        if (!jiraConnected) {
+          showToast("Connect JIRA in Settings to use Quick open");
+          return;
+        }
+        if (!isOpen) onOpen();
+        setQuickOpenOpen(true);
+      },
     }),
-    [isOpen, onOpen],
+    [isOpen, jiraConnected, onOpen, showToast],
   );
 
   const jiraKeyOptions = useMemo(
@@ -451,44 +463,62 @@ export function InboxSidebar({
                   <Plug className="size-3.5" aria-hidden />
                   Connect JIRA
                 </button>
-              ) : !hasJiraTicketsInDb ? (
-                <Tooltip
-                  content={`Fetch JIRA tickets (${SHORTCUT_DISPLAY.syncJira})`}
-                  side="bottom"
-                >
-                  <button
-                    type="button"
-                    disabled={syncing}
-                    onClick={handleSyncFromJira}
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900 hover:opacity-90 transition-opacity disabled:opacity-50"
-                    aria-label="Fetch JIRA tickets"
-                  >
-                    <RefreshCw
-                      className={`size-3.5 ${syncing ? "animate-spin" : ""}`}
-                      aria-hidden
-                    />
-                    {syncing ? "Fetching…" : "Fetch JIRA tickets"}
-                  </button>
-                </Tooltip>
               ) : (
-                <Tooltip
-                  content={`Sync JIRA (${SHORTCUT_DISPLAY.syncJira})`}
-                  side="bottom"
-                >
-                  <button
-                    type="button"
-                    disabled={syncing}
-                    onClick={handleSyncFromJira}
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900 hover:opacity-90 transition-opacity disabled:opacity-50"
-                    aria-label="Sync from JIRA"
+                <div className="flex items-center gap-1 shrink-0">
+                  <Tooltip
+                    content={`Quick open issue in JIRA (${SHORTCUT_DISPLAY.jiraQuickOpen})`}
+                    side="bottom"
                   >
-                    <RefreshCw
-                      className={`size-3.5 ${syncing ? "animate-spin" : ""}`}
-                      aria-hidden
-                    />
-                    {syncing ? "Syncing…" : "Sync JIRA"}
-                  </button>
-                </Tooltip>
+                    <button
+                      type="button"
+                      onClick={() => setQuickOpenOpen(true)}
+                      className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md text-neutral-700 dark:text-neutral-200 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-600 hover:bg-neutral-50 dark:hover:bg-neutral-700 transition-colors"
+                      aria-label="Quick open JIRA issue"
+                    >
+                      <ExternalLink className="size-3.5" aria-hidden />
+                      Quick open
+                    </button>
+                  </Tooltip>
+                  {!hasJiraTicketsInDb ? (
+                    <Tooltip
+                      content={`Fetch JIRA tickets (${SHORTCUT_DISPLAY.syncJira})`}
+                      side="bottom"
+                    >
+                      <button
+                        type="button"
+                        disabled={syncing}
+                        onClick={handleSyncFromJira}
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900 hover:opacity-90 transition-opacity disabled:opacity-50"
+                        aria-label="Fetch JIRA tickets"
+                      >
+                        <RefreshCw
+                          className={`size-3.5 ${syncing ? "animate-spin" : ""}`}
+                          aria-hidden
+                        />
+                        {syncing ? "Fetching…" : "Fetch JIRA tickets"}
+                      </button>
+                    </Tooltip>
+                  ) : (
+                    <Tooltip
+                      content={`Sync JIRA (${SHORTCUT_DISPLAY.syncJira})`}
+                      side="bottom"
+                    >
+                      <button
+                        type="button"
+                        disabled={syncing}
+                        onClick={handleSyncFromJira}
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900 hover:opacity-90 transition-opacity disabled:opacity-50"
+                        aria-label="Sync from JIRA"
+                      >
+                        <RefreshCw
+                          className={`size-3.5 ${syncing ? "animate-spin" : ""}`}
+                          aria-hidden
+                        />
+                        {syncing ? "Syncing…" : "Sync JIRA"}
+                      </button>
+                    </Tooltip>
+                  )}
+                </div>
               )}
             </div>
             {lastSyncedAt && jiraConnected && (
@@ -940,6 +970,7 @@ export function InboxSidebar({
         open={gettingStartedOpen}
         onOpenChange={setGettingStartedOpen}
       />
+      <JiraQuickOpenDialog open={quickOpenOpen} onOpenChange={setQuickOpenOpen} />
     </div>
   );
 }

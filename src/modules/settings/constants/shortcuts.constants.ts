@@ -19,6 +19,7 @@ export const SHORTCUT_DISPLAY = {
   settings: formatShortcut([MOD_KEY, '.']),
   toggleSidebar: formatShortcut([MOD_KEY, '\\']),
   toggleTheme: formatShortcut([MOD_KEY, 'Shift', 'M']),
+  jiraQuickOpen: formatShortcut([MOD_KEY, 'J']),
   syncJira: formatShortcut([MOD_KEY, 'Shift', 'J']),
   newLocalTicket: formatShortcut([MOD_KEY, 'Shift', 'C']),
 } as const;

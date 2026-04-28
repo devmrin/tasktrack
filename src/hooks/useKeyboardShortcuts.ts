@@ -1,5 +1,13 @@
 import { useEffect } from 'react';
 
+/**
+ * Registers global keydown shortcuts. Shortcut chords are matched with modifier flags;
+ * omitting `shiftKey` / `ctrlKey` / `metaKey` requires those modifiers to be **off**.
+ *
+ * App shortcuts (registered in `routes/__root.tsx`) include Search (⌘K), Settings (⌘.),
+ * sidebar (⌘\\), theme (⌘⇧M), Quick open JIRA (⌘J), Sync JIRA (⌘⇧J), new local ticket (⌘⇧C).
+ */
+
 interface ShortcutConfig {
   readonly key: string;
   readonly metaKey?: boolean;
