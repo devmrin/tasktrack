@@ -508,7 +508,7 @@ export function InboxSidebar({
                           type="button"
                           disabled={syncing}
                           onClick={handleSyncFromJira}
-                          className="flex h-7 items-center gap-1.5 px-2.5 text-xs font-medium rounded-md bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900 hover:opacity-90 transition-opacity disabled:opacity-50"
+                          className="flex h-7 items-center gap-1.5 px-2.5 text-xs font-medium rounded-md bg-[#0052CC] text-white hover:bg-[#0747A6] transition-colors disabled:opacity-50"
                           aria-label={`Fetch JIRA ${terminology.items}`}
                         >
                           <RefreshCw
@@ -516,7 +516,7 @@ export function InboxSidebar({
                             aria-hidden
                           />
                           {syncing ? "Fetching…" : `Fetch JIRA ${terminology.items}`}
-                          <kbd className="ml-0.5 px-1 py-0.5 text-[10px] font-medium text-white/80 dark:text-neutral-600 bg-white/20 dark:bg-neutral-300 border border-white/30 dark:border-neutral-400 rounded">
+                          <kbd className="ml-0.5 px-1 py-0.5 text-[10px] font-medium text-white/85 bg-white/20 border border-white/30 rounded">
                             {SHORTCUT_DISPLAY.syncJira}
                           </kbd>
                         </button>
@@ -530,7 +530,7 @@ export function InboxSidebar({
                           type="button"
                           disabled={syncing}
                           onClick={handleSyncFromJira}
-                          className="flex h-7 items-center gap-1.5 px-2.5 text-xs font-medium rounded-md bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900 hover:opacity-90 transition-opacity disabled:opacity-50"
+                          className="flex h-7 items-center gap-1.5 px-2.5 text-xs font-medium rounded-md bg-[#0052CC] text-white hover:bg-[#0747A6] transition-colors disabled:opacity-50"
                           aria-label="Sync from JIRA"
                         >
                           <RefreshCw
@@ -538,7 +538,7 @@ export function InboxSidebar({
                             aria-hidden
                           />
                           {syncing ? "Syncing…" : "Sync JIRA"}
-                          <kbd className="ml-0.5 px-1 py-0.5 text-[10px] font-medium text-white/80 dark:text-neutral-600 bg-white/20 dark:bg-neutral-300 border border-white/30 dark:border-neutral-400 rounded">
+                          <kbd className="ml-0.5 px-1 py-0.5 text-[10px] font-medium text-white/85 bg-white/20 border border-white/30 rounded">
                             {SHORTCUT_DISPLAY.syncJira}
                           </kbd>
                         </button>
