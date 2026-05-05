@@ -7,6 +7,7 @@ import { subscribeToTicketMoved } from '@/utils/ticketsMoved';
 import { subscribeToTicketUpdated } from '@/utils/ticketsUpdated';
 import { SETTING_KEYS } from '@/modules/focus/constants';
 import type { FocusedTicketData } from '@/modules/focus/types';
+import { useActiveBoard } from '@/modules/boards/hooks/useActiveBoard';
 
 async function loadFocusState(): Promise<FocusedTicketData | null> {
   const [ticketIdRow, originalColumnRow] = await Promise.all([
@@ -42,6 +43,7 @@ async function clearPersistedFocus(): Promise<void> {
 }
 
 export function useFocusZone() {
+  const { activeBoardId } = useActiveBoard();
   const [focusedData, setFocusedData] = useState<FocusedTicketData | null>(null);
   const [loaded, setLoaded] = useState(false);
 
@@ -70,6 +72,17 @@ export function useFocusZone() {
     endFocusRef.current = endFocus;
     focusedDataRef.current = focusedData;
   }, [endFocus, focusedData]);
+
+  useEffect(() => {
+    if (!focusedData || !activeBoardId) {
+      return;
+    }
+    if (focusedData.ticket.boardId !== activeBoardId) {
+      queueMicrotask(() => {
+        void endFocusRef.current();
+      });
+    }
+  }, [focusedData, activeBoardId]);
 
   useEffect(() => {
     return subscribeToTicketsRemoved((ticketIds) => {
