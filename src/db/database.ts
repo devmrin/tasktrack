@@ -72,6 +72,8 @@ export interface TransactionRecord {
   id: string;
   createdAt: number;
   boardId?: string;
+  /** Snapshot of board name when the transaction was recorded. */
+  boardTitle?: string;
   eventType: TransactionEventType;
   ticketId?: string;
   ticketTitle?: string;
@@ -259,6 +261,39 @@ export class TaskTrackDatabase extends Dexie {
         await transaction.table('columns').toCollection().modify({ boardId: defaultBoardId });
         await transaction.table('tickets').toCollection().modify({ boardId: defaultBoardId });
         await transaction.table('transactions').toCollection().modify({ boardId: defaultBoardId });
+      });
+
+    this.version(9)
+      .stores({
+        boards: 'id, order, isDefault',
+        tickets:
+          'id, columnId, boardId, type, createdAt, order, [columnId+order], [boardId+columnId+order]',
+        columns: 'id, boardId, order, [boardId+order]',
+        settings: 'key',
+        transactions:
+          'id, createdAt, ticketId, eventType, boardId, [ticketId+createdAt], [createdAt+eventType]',
+      })
+      .upgrade(async (transaction) => {
+        const txTable = transaction.table<TransactionRecord, string>('transactions');
+        const boardsTable = transaction.table<Board, string>('boards');
+        const txs = await txTable.toArray();
+        const boards = await boardsTable.toArray();
+        const boardNameById = new Map(boards.map((b) => [b.id, b.name]));
+        const updated: TransactionRecord[] = [];
+
+        for (const t of txs) {
+          if (t.boardTitle || !t.boardId) {
+            continue;
+          }
+          const snapshot = boardNameById.get(t.boardId);
+          if (snapshot !== undefined) {
+            updated.push({ ...t, boardTitle: snapshot });
+          }
+        }
+
+        if (updated.length > 0) {
+          await txTable.bulkPut(updated);
+        }
       });
   }
 }

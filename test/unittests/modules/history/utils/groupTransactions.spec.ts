@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import type { TransactionRecord } from '@/db/database';
+import { DEFAULT_BOARD_ID } from '@/modules/boards/constants/board.constants';
 import {
   formatTransactionMessage,
   groupTransactionsByDate,
@@ -70,6 +71,58 @@ test('prefers summary message when available', () => {
   );
 });
 
+test('appends board name to summaries when snapshot is stored', () => {
+  const transaction = createTransaction({
+    summary: 'JIRA sync: 3 created, 4 updated, 1 removed',
+    eventType: 'jira_sync_summary',
+    boardTitle: 'Sprint planning',
+    boardId: 'board-a',
+  });
+  assert.equal(
+    formatTransactionMessage(transaction),
+    'JIRA sync: 3 created, 4 updated, 1 removed in Sprint planning',
+  );
+});
+
+test('uses home-style suffix when board label is the legacy default slug', () => {
+  assert.equal(
+    formatTransactionMessage(
+      createTransaction({
+        summary: 'JIRA sync: 3 created, 4 updated, 1 removed',
+        eventType: 'jira_sync_summary',
+        boardId: DEFAULT_BOARD_ID,
+      }),
+    ),
+    'JIRA sync: 3 created, 4 updated, 1 removed in Home',
+  );
+});
+
+test('shows board snapshot when legacy default board was renamed', () => {
+  assert.equal(
+    formatTransactionMessage(
+      createTransaction({
+        summary: 'JIRA sync: 3 created',
+        eventType: 'jira_sync_summary',
+        boardId: DEFAULT_BOARD_ID,
+        boardTitle: 'Board',
+      }),
+    ),
+    'JIRA sync: 3 created in Board',
+  );
+});
+
+test('falls back to board id in message when snapshot is absent', () => {
+  const transaction = createTransaction({
+    summary: 'Created local ticket',
+    eventType: 'ticket_created_local',
+    boardId: 'legacy-board',
+  });
+  assert.equal(
+    formatTransactionMessage(transaction),
+    'Created local ticket in legacy-board',
+  );
+});
+
 test('describes moved ticket source and destination columns', () => {
   const transaction = createTransaction({
     fromColumnTitle: 'Todo',
@@ -79,6 +132,20 @@ test('describes moved ticket source and destination columns', () => {
   assert.equal(
     formatTransactionMessage(transaction),
     'Moved from Todo to In Progress',
+  );
+});
+
+test('appends board to move description when recorded', () => {
+  const transaction = createTransaction({
+    fromColumnTitle: 'Todo',
+    toColumnTitle: 'In Progress',
+    boardTitle: 'Engineering',
+    boardId: 'b1',
+  });
+
+  assert.equal(
+    formatTransactionMessage(transaction),
+    'Moved from Todo to In Progress in Engineering',
   );
 });
 

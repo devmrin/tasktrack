@@ -1,13 +1,21 @@
 import { useMemo, useState } from 'react';
-import { ArrowLeft, ChevronDown, ChevronRight, Check, History } from 'lucide-react';
+import {
+  ArrowLeft,
+  ChevronDown,
+  ChevronRight,
+  Check,
+  History,
+  SquareKanban,
+} from 'lucide-react';
 import { Link } from '@tanstack/react-router';
 import * as Select from '@/components/Select';
 import type { TransactionRecord, TransactionTicketRef } from '@/db/database';
 import { useHistoryTransactionsQuery } from '@/modules/history/hooks/useHistory';
 import type { HistoryDateRange, HistoryGroupMode } from '@/modules/history/types';
 import {
-  formatTransactionMessage,
+  formatTransactionMessageWithoutBoard,
   formatTransactionTime,
+  getHistoryBoardPresentation,
   getJiraSyncTicketDetails,
   groupTransactionsByDate,
   groupTransactionsByTicket,
@@ -34,6 +42,47 @@ function getTransactionTicketLabel(ticket: TransactionTicketRef): string {
     return `Local-${ticket.ticketId.slice(0, 8)}`;
   }
   return ticket.ticketId.slice(0, 8);
+}
+
+function HistoryBoardKanbanBadge({
+  name,
+}: {
+  readonly name: string;
+}) {
+  return (
+    <span
+      className="inline-flex shrink-0 items-center gap-0.5 text-neutral-600 dark:text-neutral-300"
+      aria-label={`Board: ${name}`}
+    >
+      <SquareKanban className="size-3.5 shrink-0 text-neutral-500 dark:text-neutral-400" aria-hidden />
+      <span className="font-medium">{name}</span>
+    </span>
+  );
+}
+
+function HistoryBoardContextInline({
+  transaction,
+}: {
+  readonly transaction: TransactionRecord;
+}) {
+  const body = formatTransactionMessageWithoutBoard(transaction);
+  const board = getHistoryBoardPresentation(transaction);
+
+  if (!board) {
+    return body;
+  }
+
+  const displayName = board.kind === 'home' ? 'Home' : board.name;
+
+  return (
+    <span className="inline-flex max-w-full min-w-0 flex-wrap items-center gap-x-1 gap-y-0.5 text-neutral-900 dark:text-neutral-100">
+      <span className="min-w-0 truncate">{body}</span>
+      <span className="inline-flex shrink-0 -translate-y-1-px items-center gap-1 whitespace-nowrap">
+        <span className="text-neutral-900 dark:text-neutral-100">in</span>
+        <HistoryBoardKanbanBadge name={displayName} />
+      </span>
+    </span>
+  );
 }
 
 function TicketBadge({
@@ -306,7 +355,7 @@ export function HistoryPage() {
                               />
                               <div className="min-w-0">
                                 <span className="truncate text-neutral-900 dark:text-neutral-100">
-                                  {formatTransactionMessage(transaction)}
+                                  <HistoryBoardContextInline transaction={transaction} />
                                 </span>
                               </div>
                             </div>
@@ -325,7 +374,7 @@ export function HistoryPage() {
                             <div className="flex items-center gap-2">
                               <TicketBadge ticketLabel={transaction.ticketKey} />
                               <span className="truncate text-neutral-900 dark:text-neutral-100">
-                                {formatTransactionMessage(transaction)}
+                                <HistoryBoardContextInline transaction={transaction} />
                               </span>
                             </div>
                             {transaction.ticketTitle && (
@@ -369,7 +418,7 @@ export function HistoryPage() {
                       className="flex items-start justify-between gap-4 px-4 py-3 text-sm"
                     >
                       <span className="min-w-0 truncate text-neutral-900 dark:text-neutral-100">
-                        {formatTransactionMessage(transaction)}
+                        <HistoryBoardContextInline transaction={transaction} />
                       </span>
                       <span className="shrink-0 tabular-nums text-xs text-neutral-400 dark:text-neutral-500">
                         {new Date(transaction.createdAt).toLocaleString()}

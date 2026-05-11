@@ -1,4 +1,5 @@
 import type { TransactionRecord, TransactionTicketRef } from '@/db/database';
+import { DEFAULT_BOARD_ID } from '@/modules/boards/constants/board.constants';
 import type { DateGroup, TicketGroup } from '@/modules/history/types';
 
 function getStartOfDay(timestamp: number): number {
@@ -110,7 +111,35 @@ function formatTimestamp(timestamp: number): string {
   });
 }
 
-export function formatTransactionMessage(transaction: TransactionRecord): string {
+export type HistoryBoardPresentation =
+  | { readonly kind: 'home' }
+  | { readonly kind: 'named'; readonly name: string };
+
+/** Resolves how the History UI should refer to the board (Home replaces legacy slug "default"). */
+export function getHistoryBoardPresentation(
+  transaction: TransactionRecord,
+): HistoryBoardPresentation | null {
+  const rawTitle = transaction.boardTitle?.trim();
+  const rawId = transaction.boardId?.trim();
+  const label =
+    rawTitle && rawTitle.length > 0
+      ? rawTitle
+      : rawId && rawId.length > 0
+        ? rawId
+        : undefined;
+
+  if (!label) {
+    return null;
+  }
+
+  if (label.toLowerCase() === DEFAULT_BOARD_ID) {
+    return { kind: 'home' };
+  }
+
+  return { kind: 'named', name: label };
+}
+
+function buildTransactionMessageBody(transaction: TransactionRecord): string {
   if (transaction.summary) {
     return transaction.summary;
   }
@@ -131,6 +160,26 @@ export function formatTransactionMessage(transaction: TransactionRecord): string
     default:
       return 'Updated ticket';
   }
+}
+
+function appendBoardContextPlain(transaction: TransactionRecord, body: string): string {
+  const board = getHistoryBoardPresentation(transaction);
+  if (!board) {
+    return body;
+  }
+  const boardLabel = board.kind === 'home' ? 'Home' : board.name;
+  return `${body} in ${boardLabel}`;
+}
+
+/** Action text without board suffix (History UI renders board separately when using Home + icon). */
+export function formatTransactionMessageWithoutBoard(
+  transaction: TransactionRecord,
+): string {
+  return buildTransactionMessageBody(transaction);
+}
+
+export function formatTransactionMessage(transaction: TransactionRecord): string {
+  return appendBoardContextPlain(transaction, buildTransactionMessageBody(transaction));
 }
 
 export function formatTransactionTime(timestamp: number): string {

@@ -61,15 +61,27 @@ async function resolveColumnTitle(
   return column?.title;
 }
 
+async function resolveBoardTitleSnapshot(
+  boardId: string | undefined,
+): Promise<string | undefined> {
+  if (!boardId) {
+    return undefined;
+  }
+  const board = await db.boards.get(boardId);
+  return board?.name;
+}
+
 export async function recordHistoryTransaction(
   input: RecordHistoryInput,
 ): Promise<void> {
   const fromColumnTitle = await resolveColumnTitle(input.fromColumnId);
   const toColumnTitle = await resolveColumnTitle(input.toColumnId);
+  const boardTitle = await resolveBoardTitleSnapshot(input.boardId);
   const record: TransactionRecord = {
     id: crypto.randomUUID(),
     createdAt: input.createdAt ?? Date.now(),
     boardId: input.boardId,
+    boardTitle,
     eventType: input.eventType,
     ticketId: input.ticketId,
     ticketTitle: input.ticketTitle,
