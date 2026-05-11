@@ -119,6 +119,9 @@
   .ticket-description-editor li > p {
     @apply mb-0;
   }
+  .ticket-description-editor img {
+    @apply max-w-full h-auto rounded-md my-2;
+  }
   .ticket-description-editor p.is-editor-empty:first-child::before {
     content: attr(data-placeholder);
     @apply text-neutral-400 dark:text-neutral-500 float-left h-0 pointer-events-none;
@@ -131,6 +134,9 @@
   }
   .ticket-description-content p:empty {
     @apply min-h-[1em];
+  }
+  .ticket-description-content img {
+    @apply max-w-full h-auto rounded-md my-2;
   }
   .ticket-description-content h1,
   .ticket-description-content h2,

@@ -1,9 +1,69 @@
-import { useEditor, EditorContent } from '@tiptap/react';
+import { useEditor, EditorContent, type Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Typography from '@tiptap/extension-typography';
 import Placeholder from '@tiptap/extension-placeholder';
+import Image from '@tiptap/extension-image';
+import FileHandler from '@tiptap/extension-file-handler';
 import { useEffect, useRef } from 'react';
 import { isEmptyEditorHtml } from '@/utils/editorHtml';
+
+/** Raster / common clipboard types for paste and drag-drop (excludes SVG in data URLs). */
+const CLIPBOARD_IMAGE_MIME_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'image/avif',
+  'image/bmp',
+  'image/heic',
+  'image/heif',
+] as const;
+
+function readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        resolve(reader.result);
+      } else {
+        reject(new Error('readFileAsDataUrl: unexpected result'));
+      }
+    };
+    reader.onerror = () => {
+      reject(reader.error ?? new Error('readFileAsDataUrl: read failed'));
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function filesToImageContent(files: File[]) {
+  const imageFiles = files.filter((f) => f.type.startsWith('image/'));
+  return Promise.all(
+    imageFiles.map(async (file) => ({
+      type: 'image' as const,
+      attrs: {
+        src: await readFileAsDataUrl(file),
+        alt: file.name || 'Image',
+      },
+    })),
+  );
+}
+
+function scheduleInsertImagesFromPaste(editor: Editor, files: File[]) {
+  void (async () => {
+    const content = await filesToImageContent(files);
+    if (content.length === 0) return;
+    editor.chain().focus().insertContent(content).run();
+  })();
+}
+
+function scheduleInsertImagesAtDrop(editor: Editor, pos: number, files: File[]) {
+  void (async () => {
+    const content = await filesToImageContent(files);
+    if (content.length === 0) return;
+    editor.chain().focus().insertContentAt(pos, content).run();
+  })();
+}
 
 export interface TicketDescriptionEditorProps {
   readonly value: string;
@@ -30,6 +90,23 @@ export function TicketDescriptionEditor({
     extensions: [
       StarterKit,
       Typography,
+      Image.configure({
+        allowBase64: true,
+        HTMLAttributes: {
+          class: 'max-w-full h-auto rounded-md my-2',
+          loading: 'lazy',
+          decoding: 'async',
+        },
+      }),
+      FileHandler.configure({
+        allowedMimeTypes: [...CLIPBOARD_IMAGE_MIME_TYPES],
+        onPaste: (ed, files) => {
+          scheduleInsertImagesFromPaste(ed, files);
+        },
+        onDrop: (ed, files, pos) => {
+          scheduleInsertImagesAtDrop(ed, pos, files);
+        },
+      }),
       Placeholder.configure({ placeholder }),
     ],
     content: value || '<p></p>',

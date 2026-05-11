@@ -5,10 +5,10 @@ const ALLOWED_TAGS = [
   'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
   'ul', 'ol', 'li', 'blockquote',
   'a', 'table', 'thead', 'tbody', 'tr', 'th', 'td',
-  'hr', 'div', 'span',
+  'hr', 'div', 'span', 'img',
 ];
 
-const ALLOWED_ATTR = ['href', 'rel', 'target', 'class'];
+const ALLOWED_ATTR = ['href', 'rel', 'target', 'class', 'src', 'alt', 'title', 'width', 'height', 'loading', 'decoding'];
 
 /**
  * Sanitizes HTML for safe rendering. Allows common formatting tags used in
