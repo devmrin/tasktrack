@@ -38,11 +38,15 @@
   .dark.scrollbar-thin *::-webkit-scrollbar-thumb:hover {
     background: rgb(82 82 82);
   }
-  ::selection {
-    @apply bg-neutral-800 text-neutral-100;
+  html ::selection,
+  html ::-moz-selection {
+    background-color: theme('colors.neutral.300');
+    color: theme('colors.neutral.900');
   }
-  .dark ::selection {
-    @apply bg-neutral-300 text-neutral-900;
+  html.dark ::selection,
+  html.dark ::-moz-selection {
+    background-color: theme('colors.neutral.600');
+    color: theme('colors.neutral.100');
   }
   input:disabled,
   textarea:disabled,

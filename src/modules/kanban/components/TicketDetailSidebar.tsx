@@ -605,7 +605,7 @@ export function TicketDetailSidebar({
                         />
                       </>
                     ) : (
-                      <p className="text-sm text-neutral-900 dark:text-neutral-200 bg-neutral-50 dark:bg-neutral-800/50 rounded-md px-3 py-2 border border-neutral-200 dark:border-neutral-700 cursor-not-allowed select-text">
+                      <p className="text-sm text-neutral-900 dark:text-neutral-200 bg-neutral-50 dark:bg-neutral-800/50 rounded-md px-3 py-2 border border-neutral-200 dark:border-neutral-700 cursor-auto select-text">
                         {selectedTicket.title}
                       </p>
                     )}
@@ -621,7 +621,7 @@ export function TicketDetailSidebar({
                     {isEditable ? (
                       <TicketDescriptionField id="ticket-description" />
                     ) : (
-                      <div className="text-sm bg-neutral-50 dark:bg-neutral-800/50 rounded-md px-3 py-2 border-l-4 border-neutral-300 dark:border-neutral-600 min-h-[5rem] overflow-hidden cursor-not-allowed select-text [&_.ticket-description-content]:text-neutral-900 [&_.ticket-description-content]:dark:text-neutral-200">
+                      <div className="text-sm bg-neutral-50 dark:bg-neutral-800/50 rounded-md px-3 py-2 border-l-4 border-neutral-300 dark:border-neutral-600 min-h-[5rem] overflow-hidden cursor-auto select-text [&_.ticket-description-content]:text-neutral-900 [&_.ticket-description-content]:dark:text-neutral-200">
                         {selectedTicket.description ? (
                           <SanitizedHtml
                             html={selectedTicket.description}
