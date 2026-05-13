@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Crosshair } from 'lucide-react';
 import { FOCUS_ZONE_COLLAPSED_HEIGHT, FOCUS_ZONE_EXPANDED_HEIGHT } from '@/modules/focus/constants';
 import type { useFocusZone } from '@/modules/focus/hooks/useFocusZone';
@@ -9,9 +9,11 @@ import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useActiveBoard } from '@/modules/boards/hooks/useActiveBoard';
 import { useBoardTerminology } from '@/modules/boards/hooks/useBoardTerminology';
 import { useToast } from '@/hooks/useToast';
+import { usePomodoroDocumentPictureInPicture } from '@/modules/focus/hooks/usePomodoroDocumentPictureInPicture';
 import { FocusFullscreen } from './FocusFullscreen';
 import { FocusTicketCard } from './FocusTicketCard';
 import { PomodoroTimer } from './PomodoroTimer';
+import { PomodoroTimerPipPlaceholder } from './PomodoroTimerPipPlaceholder';
 
 interface FocusZoneProps {
   readonly focusedData: ReturnType<typeof useFocusZone>['focusedData'];
@@ -36,13 +38,54 @@ export function FocusZone({
   const isMobileLayout = useMediaQuery('(max-width: 1023px)');
   useDocumentTitle(timer.display, timer.phase, isExpanded);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const documentPip = usePomodoroDocumentPictureInPicture();
+
+  const pomodoroDocumentPipProps = useMemo(
+    () => ({
+      phase: timer.phase,
+      display: timer.display,
+      running: timer.running,
+      completedSessions: timer.completedSessions,
+      settings,
+      onStart: timer.start,
+      onPause: timer.pause,
+      onReset: timer.reset,
+      onSwitchPhase: timer.switchPhase,
+    }),
+    [
+      timer.phase,
+      timer.display,
+      timer.running,
+      timer.completedSessions,
+      settings,
+      timer.start,
+      timer.pause,
+      timer.reset,
+      timer.switchPhase,
+    ],
+  );
+
+  useEffect(() => {
+    if (!documentPip.isOpen) return;
+    documentPip.renderTimer(pomodoroDocumentPipProps);
+  }, [documentPip, pomodoroDocumentPipProps]);
+
+  const handleOpenDocumentPictureInPicture = useCallback(() => {
+    void (async () => {
+      const ok = await documentPip.open(pomodoroDocumentPipProps);
+      if (!ok) {
+        showToast('Could not open picture-in-picture. Check browser support or try again.');
+      }
+    })();
+  }, [documentPip, pomodoroDocumentPipProps, showToast]);
 
   const handleDismiss = useCallback(async () => {
     if (!focusedData) return;
+    documentPip.close();
     timer.resetAll();
     setIsFullscreen(false);
     await onEndFocus();
-  }, [focusedData, timer, onEndFocus]);
+  }, [documentPip, focusedData, timer, onEndFocus]);
 
   const handleExitFullscreen = useCallback(() => {
     setIsFullscreen(false);
@@ -65,6 +108,10 @@ export function FocusZone({
             onReset={timer.reset}
             onSwitchPhase={timer.switchPhase}
             onExit={handleExitFullscreen}
+            onOpenDocumentPictureInPicture={
+              documentPip.isSupported ? handleOpenDocumentPictureInPicture : undefined
+            }
+            documentPictureInPictureActive={documentPip.isOpen}
           />
         )}
       </>
@@ -84,26 +131,33 @@ export function FocusZone({
         }}
       >
         {isExpanded ? (
-          <div className="flex h-full flex-col lg:flex-row gap-3 lg:gap-6 px-3 sm:px-4 lg:px-6 py-3 sm:py-4 overflow-y-auto animate-in fade-in duration-200">
-            <div className="order-2 lg:order-1 shrink-0 lg:flex-[3] min-w-0 bg-neutral-50 dark:bg-neutral-800/50 rounded-xl p-4 sm:p-5 border border-neutral-200 dark:border-neutral-700">
+          <div className="flex h-full min-h-0 flex-col lg:flex-row gap-3 lg:gap-6 px-3 sm:px-4 lg:px-6 py-3 sm:py-4 overflow-y-auto overflow-x-hidden animate-in fade-in duration-200">
+            <div className="order-2 lg:order-1 shrink-0 lg:flex-[3] min-h-0 min-w-0 bg-neutral-50 dark:bg-neutral-800/50 rounded-xl p-4 sm:p-5 border border-neutral-200 dark:border-neutral-700">
               <FocusTicketCard
                 ticket={focusedData.ticket}
                 onDismiss={handleDismiss}
               />
             </div>
-            <div className="order-1 lg:order-2 shrink-0 lg:flex-[2] min-w-0 min-h-[18rem] lg:min-h-0">
-              <PomodoroTimer
-                phase={timer.phase}
-                display={timer.display}
-                running={timer.running}
-                completedSessions={timer.completedSessions}
-                settings={settings}
-                onStart={timer.start}
-                onPause={timer.pause}
-                onReset={timer.reset}
-                onSwitchPhase={timer.switchPhase}
-                onFullscreen={() => setIsFullscreen(true)}
-              />
+            <div className="order-1 lg:order-2 flex min-h-0 min-w-0 flex-1 flex-col justify-center lg:flex-[2] lg:max-h-full">
+              {documentPip.isOpen ? (
+                <PomodoroTimerPipPlaceholder />
+              ) : (
+                <PomodoroTimer
+                  phase={timer.phase}
+                  display={timer.display}
+                  running={timer.running}
+                  completedSessions={timer.completedSessions}
+                  settings={settings}
+                  onStart={timer.start}
+                  onPause={timer.pause}
+                  onReset={timer.reset}
+                  onSwitchPhase={timer.switchPhase}
+                  onFullscreen={() => setIsFullscreen(true)}
+                  onOpenDocumentPictureInPicture={
+                    documentPip.isSupported ? handleOpenDocumentPictureInPicture : undefined
+                  }
+                />
+              )}
             </div>
           </div>
         ) : (
@@ -134,6 +188,10 @@ export function FocusZone({
           onReset={timer.reset}
           onSwitchPhase={timer.switchPhase}
           onExit={handleExitFullscreen}
+          onOpenDocumentPictureInPicture={
+            documentPip.isSupported ? handleOpenDocumentPictureInPicture : undefined
+          }
+          documentPictureInPictureActive={documentPip.isOpen}
         />
       )}
     </>

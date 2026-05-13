@@ -7,6 +7,7 @@ import type { Ticket } from '@/db/database';
 import type { PomodoroPhase, PomodoroSettings } from '@/modules/focus/types';
 import { FocusTicketCard } from './FocusTicketCard';
 import { PomodoroTimer } from './PomodoroTimer';
+import { PomodoroTimerPipPlaceholder } from './PomodoroTimerPipPlaceholder';
 
 interface FocusFullscreenProps {
   readonly ticket: Ticket;
@@ -21,6 +22,8 @@ interface FocusFullscreenProps {
   readonly onReset: () => void;
   readonly onSwitchPhase: (phase: PomodoroPhase, autoStart?: boolean) => void;
   readonly onExit: () => void;
+  readonly onOpenDocumentPictureInPicture?: () => void;
+  readonly documentPictureInPictureActive?: boolean;
 }
 
 const PHASE_BACKGROUNDS: Record<PomodoroPhase, string> = {
@@ -42,6 +45,8 @@ export function FocusFullscreen({
   onReset,
   onSwitchPhase,
   onExit,
+  onOpenDocumentPictureInPicture,
+  documentPictureInPictureActive = false,
 }: FocusFullscreenProps) {
   const [isClosing, setIsClosing] = useState(false);
   const { theme, setTheme } = useTheme();
@@ -122,17 +127,22 @@ export function FocusFullscreen({
           </div>
 
           <div className="flex-1 lg:flex-[2] min-w-0">
-            <PomodoroTimer
-              phase={phase}
-              display={display}
-              running={running}
-              completedSessions={completedSessions}
-              settings={settings}
-              onStart={onStart}
-              onPause={onPause}
-              onReset={onReset}
-              onSwitchPhase={onSwitchPhase}
-            />
+            {documentPictureInPictureActive ? (
+              <PomodoroTimerPipPlaceholder />
+            ) : (
+              <PomodoroTimer
+                phase={phase}
+                display={display}
+                running={running}
+                completedSessions={completedSessions}
+                settings={settings}
+                onStart={onStart}
+                onPause={onPause}
+                onReset={onReset}
+                onSwitchPhase={onSwitchPhase}
+                onOpenDocumentPictureInPicture={onOpenDocumentPictureInPicture}
+              />
+            )}
           </div>
         </div>
       </div>

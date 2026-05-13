@@ -1,8 +1,17 @@
 import { useContext } from 'react';
-import { Maximize2, Pause, Play, RotateCcw, Settings } from 'lucide-react';
+import {
+  Maximize2,
+  Pause,
+  PictureInPicture2,
+  Play,
+  RotateCcw,
+  Settings,
+  X,
+} from 'lucide-react';
 import { Tooltip } from '@/components/Tooltip';
 import { SettingsContext } from '@/contexts/settings-context';
 import type { PomodoroPhase, PomodoroSettings } from '@/modules/focus/types';
+import { isDocumentPictureInPictureSupported } from '@/modules/focus/utils/pictureInPictureDocument';
 
 interface PomodoroTimerProps {
   readonly phase: PomodoroPhase;
@@ -15,6 +24,9 @@ interface PomodoroTimerProps {
   readonly onReset: () => void;
   readonly onSwitchPhase: (phase: PomodoroPhase, autoStart?: boolean) => void;
   readonly onFullscreen?: () => void;
+  readonly layout?: 'default' | 'documentPip';
+  readonly onCloseDocumentPictureInPicture?: () => void;
+  readonly onOpenDocumentPictureInPicture?: () => void;
 }
 
 const PHASE_TABS: Array<{ id: PomodoroPhase; label: string }> = [
@@ -49,16 +61,41 @@ export function PomodoroTimer({
   onReset,
   onSwitchPhase,
   onFullscreen,
+  layout = 'default',
+  onCloseDocumentPictureInPicture,
+  onOpenDocumentPictureInPicture,
 }: PomodoroTimerProps) {
   const colors = PHASE_COLORS[phase];
   const settingsContext = useContext(SettingsContext);
+  const showDocumentPipButton =
+    layout === 'default' &&
+    isDocumentPictureInPictureSupported() &&
+    onOpenDocumentPictureInPicture !== undefined;
+
+  const rootLayoutClass =
+    layout === 'documentPip'
+      ? `${colors.bg} relative flex min-h-screen min-h-[100dvh] w-full flex-col items-center justify-center box-border rounded-xl p-4 sm:p-6`
+      : `${colors.bg} relative flex h-full min-h-0 flex-col items-center justify-center rounded-xl p-4 sm:p-6`;
 
   return (
-    <div className={`relative flex flex-col items-center justify-center rounded-xl p-4 sm:p-6 ${colors.bg} h-full`}>
-      {onFullscreen && (
-        <div className="absolute top-3 right-3 flex items-center gap-1.5">
-          {settingsContext && (
-            <Tooltip content="Focus settings" side="bottom">
+    <div className={rootLayoutClass}>
+      {layout === 'documentPip' && onCloseDocumentPictureInPicture ? (
+        <div className="absolute top-3 right-3 z-10 flex flex-col items-center gap-1.5">
+          <button
+            type="button"
+            onClick={onCloseDocumentPictureInPicture}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-white/70 dark:bg-neutral-700/70 text-neutral-600 dark:text-neutral-300 hover:bg-white dark:hover:bg-neutral-600 shadow-sm border border-white/50 dark:border-neutral-600/50 transition-all"
+            aria-label="Close picture-in-picture window"
+            title="Close picture-in-picture"
+          >
+            <X className="size-3.5" aria-hidden />
+          </button>
+        </div>
+      ) : null}
+      {layout === 'default' && (onFullscreen !== undefined || showDocumentPipButton) ? (
+        <div className="absolute top-3 right-3 flex flex-col items-center gap-1.5">
+          {onFullscreen !== undefined && settingsContext ? (
+            <Tooltip content="Focus settings" side="left">
               <button
                 type="button"
                 onClick={() => settingsContext.openSettings('focus')}
@@ -68,19 +105,33 @@ export function PomodoroTimer({
                 <Settings className="size-3.5" aria-hidden />
               </button>
             </Tooltip>
-          )}
-          <Tooltip content="Fullscreen" side="bottom">
-            <button
-              type="button"
-              onClick={onFullscreen}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-white/70 dark:bg-neutral-700/70 text-neutral-600 dark:text-neutral-300 hover:bg-white dark:hover:bg-neutral-600 shadow-sm border border-white/50 dark:border-neutral-600/50 transition-all"
-              aria-label="Enter fullscreen focus mode"
-            >
-              <Maximize2 className="size-3.5" aria-hidden />
-            </button>
-          </Tooltip>
+          ) : null}
+          {showDocumentPipButton && onOpenDocumentPictureInPicture ? (
+            <Tooltip content="Picture-in-picture" side="left">
+              <button
+                type="button"
+                onClick={onOpenDocumentPictureInPicture}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-white/70 dark:bg-neutral-700/70 text-neutral-600 dark:text-neutral-300 hover:bg-white dark:hover:bg-neutral-600 shadow-sm border border-white/50 dark:border-neutral-600/50 transition-all"
+                aria-label="Open timer in picture-in-picture"
+              >
+                <PictureInPicture2 className="size-3.5" aria-hidden />
+              </button>
+            </Tooltip>
+          ) : null}
+          {onFullscreen !== undefined ? (
+            <Tooltip content="Fullscreen" side="left">
+              <button
+                type="button"
+                onClick={onFullscreen}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-white/70 dark:bg-neutral-700/70 text-neutral-600 dark:text-neutral-300 hover:bg-white dark:hover:bg-neutral-600 shadow-sm border border-white/50 dark:border-neutral-600/50 transition-all"
+                aria-label="Enter fullscreen focus mode"
+              >
+                <Maximize2 className="size-3.5" aria-hidden />
+              </button>
+            </Tooltip>
+          ) : null}
         </div>
-      )}
+      ) : null}
 
       <div className="mb-4 flex w-full flex-wrap items-center justify-center gap-1">
         {PHASE_TABS.map((tab) => (
@@ -103,7 +154,7 @@ export function PomodoroTimer({
         {display}
       </div>
 
-      <div className="flex flex-wrap items-center justify-center gap-3 mt-5">
+      <div className="mt-5 flex flex-row flex-wrap items-center justify-center gap-3">
         <button
           type="button"
           onClick={running ? onPause : onStart}
@@ -121,16 +172,28 @@ export function PomodoroTimer({
             </>
           )}
         </button>
-        <Tooltip content="Reset timer" side="bottom">
+        {layout === 'documentPip' ? (
           <button
             type="button"
             onClick={onReset}
             className="p-2 rounded-lg text-neutral-500 dark:text-neutral-400 hover:bg-white/50 dark:hover:bg-neutral-700/50 transition-colors"
             aria-label="Reset timer"
+            title="Reset timer"
           >
             <RotateCcw className="size-4" aria-hidden />
           </button>
-        </Tooltip>
+        ) : (
+          <Tooltip content="Reset timer" side="bottom">
+            <button
+              type="button"
+              onClick={onReset}
+              className="p-2 rounded-lg text-neutral-500 dark:text-neutral-400 hover:bg-white/50 dark:hover:bg-neutral-700/50 transition-colors"
+              aria-label="Reset timer"
+            >
+              <RotateCcw className="size-4" aria-hidden />
+            </button>
+          </Tooltip>
+        )}
       </div>
 
       <footer className="mt-4 text-center">
