@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import Fuse, { type FuseResult, type FuseResultMatch, type IFuseOptions } from 'fuse.js';
+import Fuse, { type FuseResultMatch, type IFuseOptions } from 'fuse.js';
 import { Search, FileText, X } from 'lucide-react';
 import { useAllTicketsQuery } from '@/modules/tickets/hooks/useTicketsQuery';
 import { useColumnsQuery } from '@/modules/kanban/hooks/useColumnsQuery';
@@ -12,17 +12,24 @@ import type { Ticket } from '@/db/database';
 
 interface SearchableTicket {
   readonly ticket: Ticket;
+  /** Flattened for Fuse — nested `ticket.title` indexing is easy to misconfigure. */
+  readonly title: string;
   readonly plainDescription: string;
+  /** Jira key or local custom key, for queries like "PROJ-1234" or "1234". */
+  readonly ticketKey: string;
 }
 
 const FUSE_OPTIONS: IFuseOptions<SearchableTicket> = {
   keys: [
-    { name: 'ticket.title', weight: 0.7 },
-    { name: 'plainDescription', weight: 0.3 },
+    { name: 'title', weight: 0.52 },
+    { name: 'ticketKey', weight: 0.28 },
+    { name: 'plainDescription', weight: 0.2 },
   ],
-  threshold: 0.4,
+  threshold: 0.35,
   includeMatches: true,
-  minMatchCharLength: 2,
+  includeScore: true,
+  ignoreLocation: true,
+  minMatchCharLength: 1,
 };
 
 const MAX_RESULTS = 20;
@@ -31,6 +38,77 @@ const EMPTY_TICKETS: Ticket[] = [];
 interface SearchResult {
   readonly item: SearchableTicket;
   readonly matches?: readonly FuseResultMatch[];
+  /** Fuse relevance (lower is better). Used only for ordering; omitted only when skipping search. */
+  readonly fuseScore?: number;
+}
+
+const FUSE_CANDIDATE_LIMIT = MAX_RESULTS * 6;
+
+function ticketDisplayKey(ticket: Ticket): string {
+  if (ticket.type === 'jira' && ticket.jiraData?.jiraKey) {
+    return ticket.jiraData.jiraKey;
+  }
+  return ticket.customKey ?? '';
+}
+
+/** Lexicographically earlier = stronger relevance (exact title beats prefix, prefix beats infix, …). */
+function searchRankTuple(
+  queryTrimmed: string,
+  item: SearchableTicket,
+  matches: readonly FuseResultMatch[] | undefined,
+): readonly [number, number, number] {
+  const ql = queryTrimmed.toLowerCase();
+  if (ql.length === 0) return [99, 0, 0];
+
+  const title = item.title.toLowerCase();
+  const key = item.ticketKey.toLowerCase();
+
+  if (title === ql) return [0, 0, 0];
+  if (title.startsWith(ql)) return [1, 0, 0];
+  const ti = title.indexOf(ql);
+  if (ti >= 0) return [2, ti, 0];
+
+  if (key.length > 0) {
+    if (key === ql) return [3, 0, 0];
+    if (key.startsWith(ql)) return [4, 0, 0];
+    const ki = key.indexOf(ql);
+    if (ki >= 0) return [5, ki, 0];
+  }
+
+  if (matches?.some((m) => m.key === 'title')) return [8, 0, 0];
+  if (matches?.some((m) => m.key === 'ticketKey')) return [9, 0, 0];
+
+  return [10, 0, 0];
+}
+
+function syntheticTitleKeyMatches(queryTrimmed: string, item: SearchableTicket): FuseResultMatch[] {
+  const ql = queryTrimmed.toLowerCase();
+  if (ql.length === 0) return [];
+
+  const out: FuseResultMatch[] = [];
+  const tl = item.title.toLowerCase();
+  const ti = tl.indexOf(ql);
+  if (ti >= 0) {
+    out.push({ key: 'title', value: item.title, indices: [[ti, ti + ql.length - 1]] });
+  }
+
+  const kl = item.ticketKey.toLowerCase();
+  const ki = item.ticketKey ? kl.indexOf(ql) : -1;
+  if (ki >= 0) {
+    out.push({
+      key: 'ticketKey',
+      value: item.ticketKey,
+      indices: [[ki, ki + ql.length - 1]],
+    });
+  }
+
+  return out;
+}
+
+function compareRankTuples(a: readonly [number, number, number], b: readonly [number, number, number]): number {
+  if (a[0] !== b[0]) return a[0] - b[0];
+  if (a[1] !== b[1]) return a[1] - b[1];
+  return a[2] - b[2];
 }
 
 function getMatchIndices(
@@ -113,7 +191,9 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
     () =>
       tickets.map((ticket) => ({
         ticket,
+        title: ticket.title,
         plainDescription: ticket.description ? stripHtml(ticket.description) : '',
+        ticketKey: ticketDisplayKey(ticket),
       })),
     [tickets],
   );
@@ -121,13 +201,47 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
   const fuse = useMemo(() => new Fuse(searchableTickets, FUSE_OPTIONS), [searchableTickets]);
 
   const results = useMemo<SearchResult[]>(() => {
-    if (!query.trim()) {
+    const trimmed = query.trim();
+    if (!trimmed) {
       return searchableTickets.slice(0, MAX_RESULTS).map((item) => ({ item }));
     }
-    return fuse.search(query, { limit: MAX_RESULTS }).map((r: FuseResult<SearchableTicket>) => ({
-      item: r.item,
-      matches: r.matches,
-    }));
+
+    const fuseResults = fuse.search(trimmed, { limit: FUSE_CANDIDATE_LIMIT });
+
+    const byId = new Map<string, SearchResult>();
+    for (const r of fuseResults) {
+      byId.set(r.item.ticket.id, {
+        item: r.item,
+        matches: r.matches,
+        fuseScore: r.score ?? 1,
+      });
+    }
+
+    const ql = trimmed.toLowerCase();
+    for (const item of searchableTickets) {
+      if (byId.has(item.ticket.id)) continue;
+      const title = item.title.toLowerCase();
+      const key = item.ticketKey.toLowerCase();
+      if (!title.includes(ql) && (key.length === 0 || !key.includes(ql))) {
+        continue;
+      }
+      byId.set(item.ticket.id, {
+        item,
+        fuseScore: 1,
+        matches: syntheticTitleKeyMatches(trimmed, item),
+      });
+    }
+
+    return [...byId.values()]
+      .sort((a, b) => {
+        const r = compareRankTuples(
+          searchRankTuple(trimmed, a.item, a.matches),
+          searchRankTuple(trimmed, b.item, b.matches),
+        );
+        if (r !== 0) return r;
+        return (a.fuseScore ?? 1) - (b.fuseScore ?? 1);
+      })
+      .slice(0, MAX_RESULTS);
   }, [fuse, query, searchableTickets]);
 
   function handleSelect(searchable: SearchableTicket) {
@@ -240,8 +354,9 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
                 const { ticket, plainDescription } = item;
                 const isActive = index === activeIndex;
                 const columnName = columnMap.get(ticket.columnId);
-                const titleIndices = getMatchIndices(matches, 'ticket.title');
+                const titleIndices = getMatchIndices(matches, 'title');
                 const descIndices = getMatchIndices(matches, 'plainDescription');
+                const keyIndices = getMatchIndices(matches, 'ticketKey');
                 return (
                   <button
                     key={ticket.id}
@@ -264,12 +379,12 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
                         </span>
                         {ticket.type === 'jira' && ticket.jiraData?.jiraKey && (
                           <span className="shrink-0 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/40 rounded">
-                            {ticket.jiraData.jiraKey}
+                            <HighlightedText text={ticket.jiraData.jiraKey} indices={keyIndices} />
                           </span>
                         )}
                         {ticket.type === 'local' && ticket.customKey && (
                           <span className="shrink-0 px-1.5 py-0.5 text-[10px] font-medium text-yellow-700 dark:text-yellow-300 bg-yellow-100 dark:bg-yellow-900/40 rounded">
-                            {ticket.customKey}
+                            <HighlightedText text={ticket.customKey} indices={keyIndices} />
                           </span>
                         )}
                       </div>
