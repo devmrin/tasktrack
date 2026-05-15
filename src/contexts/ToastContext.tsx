@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { createPortal } from 'react-dom';
 import * as ToastPrimitive from '@radix-ui/react-toast';
 import { X } from 'lucide-react';
 import { ToastContext, type ToastData } from '@/contexts/toast-context';
@@ -51,7 +52,10 @@ export function ToastProvider({ children }: { readonly children: React.ReactNode
           </ToastPrimitive.Root>
         ))}
 
-        <ToastPrimitive.Viewport className="fixed bottom-0 right-0 z-[100] flex flex-col gap-1.5 p-3 w-auto max-w-[100vw] outline-none" />
+        {createPortal(
+          <ToastPrimitive.Viewport className="fixed bottom-0 right-0 z-[102] flex flex-col gap-1.5 p-3 w-auto max-w-[100vw] outline-none" />,
+          document.body,
+        )}
       </ToastPrimitive.Provider>
     </ToastContext>
   );
