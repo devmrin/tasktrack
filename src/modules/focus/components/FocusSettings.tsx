@@ -1,8 +1,12 @@
+import { useEffect } from 'react';
 import { Formik, Form } from 'formik';
 import * as Yup from 'yup';
 import { Check, ChevronDown, ChevronUp } from 'lucide-react';
+import { useSettingsDialogFooter } from '@/contexts/settings-dialog-footer-context';
 import { usePomodoroSettings } from '@/modules/focus/hooks/usePomodoroSettings';
 import type { PomodoroSettings } from '@/modules/focus/types';
+
+const FOCUS_SETTINGS_FORM_ID = 'focus-pomodoro-settings-form';
 
 const pomodoroSettingsSchema = Yup.object({
   workDuration: Yup.number().min(1).max(120).required(),
@@ -123,6 +127,37 @@ function ToggleField({
   );
 }
 
+function FocusSettingsFooter({
+  dirty,
+  isSubmitting,
+}: {
+  readonly dirty: boolean;
+  readonly isSubmitting: boolean;
+}) {
+  const { setFooter } = useSettingsDialogFooter();
+  useEffect(() => {
+    if (!dirty) {
+      setFooter(null);
+      return undefined;
+    }
+    setFooter(
+      <button
+        type="submit"
+        form={FOCUS_SETTINGS_FORM_ID}
+        disabled={isSubmitting}
+        className="flex items-center gap-2 rounded-lg bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-neutral-800 disabled:opacity-50 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200"
+      >
+        <Check className="size-4" aria-hidden />
+        {isSubmitting ? 'Saving...' : 'Save changes'}
+      </button>,
+    );
+    return () => {
+      setFooter(null);
+    };
+  }, [dirty, isSubmitting, setFooter]);
+  return null;
+}
+
 export function FocusSettings() {
   const { settings, updateSettings, loaded } = usePomodoroSettings();
 
@@ -144,7 +179,9 @@ export function FocusSettings() {
       enableReinitialize
     >
       {({ values, dirty, isSubmitting, setFieldValue }) => (
-        <Form className="space-y-6">
+        <>
+          <FocusSettingsFooter dirty={dirty} isSubmitting={isSubmitting} />
+          <Form id={FOCUS_SETTINGS_FORM_ID} className="space-y-6">
           <div>
             <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 mb-1">
               Timer Durations
@@ -214,20 +251,8 @@ export function FocusSettings() {
               />
             </div>
           </div>
-
-          {dirty && (
-            <div className="border-t border-neutral-200 dark:border-neutral-700 pt-4">
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 hover:bg-neutral-800 dark:hover:bg-neutral-200 disabled:opacity-50 transition-colors"
-              >
-                <Check className="size-4" aria-hidden />
-                {isSubmitting ? 'Saving...' : 'Save changes'}
-              </button>
-            </div>
-          )}
         </Form>
+        </>
       )}
     </Formik>
   );

@@ -19,6 +19,7 @@ import { useActiveBoard } from '@/modules/boards/hooks/useActiveBoard';
 import { useBoardsQuery, useSetBoardJiraEnabledMutation } from '@/modules/boards/hooks/useBoardsQuery';
 import { listBoards, setBoardJiraEnabled } from '@/modules/boards/services/board.service';
 import { useToast } from '@/hooks/useToast';
+import { useSettingsDialogFooter } from '@/contexts/settings-dialog-footer-context';
 import { Tooltip } from '@/components/Tooltip';
 
 export function JiraSettings() {
@@ -247,6 +248,7 @@ function JiraSettingsForm({ config, isConnected }: JiraSettingsFormProps) {
   const [error, setError] = useState<string | null>(null);
   const oauthHandledRef = useRef(false);
   const { showToast } = useToast();
+  const { setFooter } = useSettingsDialogFooter();
 
   const saveConfigMutation = useSaveAtlassianConfigMutation();
   const clearTokensMutation = useClearAtlassianTokensMutation();
@@ -293,7 +295,7 @@ function JiraSettingsForm({ config, isConnected }: JiraSettingsFormProps) {
     );
   }, [config, oauthCompleteMutation, jiraSyncMutation, showToast]);
 
-  const handleSaveConfig = () => {
+  const handleSaveConfig = useCallback(() => {
     setError(null);
     const newConfig: AtlassianConfig = {
       clientId: clientId.trim(),
@@ -330,7 +332,33 @@ function JiraSettingsForm({ config, isConnected }: JiraSettingsFormProps) {
       },
       onError: () => setError('Failed to save configuration'),
     });
-  };
+  }, [
+    activeBoardId,
+    clientId,
+    clientSecret,
+    instanceUrl,
+    queryClient,
+    saveConfigMutation,
+    showToast,
+  ]);
+
+  useEffect(() => {
+    setFooter(
+      <button
+        type="button"
+        onClick={() => {
+          handleSaveConfig();
+        }}
+        disabled={isSaving}
+        className="rounded-md bg-neutral-800 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-neutral-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-neutral-200 dark:text-neutral-900 dark:hover:bg-neutral-300"
+      >
+        {saveConfigMutation.isPending ? 'Saving...' : 'Save Configuration'}
+      </button>,
+    );
+    return () => {
+      setFooter(null);
+    };
+  }, [handleSaveConfig, isSaving, saveConfigMutation.isPending, setFooter]);
 
   const handleConnect = () => {
     if (!config) {
@@ -411,15 +439,6 @@ function JiraSettingsForm({ config, isConnected }: JiraSettingsFormProps) {
               className="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:ring-2 focus:ring-neutral-400 dark:focus:ring-neutral-500"
             />
           </div>
-
-          <button
-            type="button"
-            onClick={handleSaveConfig}
-            disabled={isSaving}
-            className="w-full px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-900 rounded-md hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
-          >
-            {saveConfigMutation.isPending ? 'Saving...' : 'Save Configuration'}
-          </button>
         </div>
       </div>
 

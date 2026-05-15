@@ -7,6 +7,7 @@ import { KeyboardShortcutsSettings } from './KeyboardShortcutsSettings';
 import { HistorySettings } from './HistorySettings';
 import { FocusSettings } from '@/modules/focus/components/FocusSettings';
 import { BoardManagementSettings } from '@/modules/settings/components/BoardManagementSettings';
+import { SettingsDialogFooterLayout } from '@/contexts/settings-dialog-footer-layout';
 
 export type SectionId = 'appearance' | 'focus' | 'jira' | 'keyboard' | 'history' | 'boards';
 
@@ -124,8 +125,8 @@ export function SettingsDialog({ open, onOpenChange, initialSection }: SettingsD
           </nav>
 
           {/* Right content */}
-          <div className="flex-1 flex flex-col min-w-0">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200 dark:border-neutral-700 shrink-0">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+            <div className="flex shrink-0 items-center justify-between border-b border-neutral-200 px-6 py-4 dark:border-neutral-700">
               <h2 className="text-base font-semibold text-neutral-900 dark:text-neutral-100">
                 {SECTION_TITLES[activeSection]}
               </h2>
@@ -140,9 +141,9 @@ export function SettingsDialog({ open, onOpenChange, initialSection }: SettingsD
               </Dialog.Close>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-6 py-5">
+            <SettingsDialogFooterLayout>
               <SectionContent section={activeSection} />
-            </div>
+            </SettingsDialogFooterLayout>
           </div>
 
           <Dialog.Description className="sr-only">
