@@ -1,5 +1,8 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Check, Copy, HelpCircle, ExternalLink } from 'lucide-react';
+import type { Board } from '@/db/database';
+import { queryKeys } from '@/hooks/queryKeys';
 import {
   initiateOAuthFlow,
   type AtlassianConfig,
@@ -14,6 +17,7 @@ import {
 import { useJiraSyncMutation } from '@/modules/inbox/hooks/useJiraSyncMutation';
 import { useActiveBoard } from '@/modules/boards/hooks/useActiveBoard';
 import { useBoardsQuery, useSetBoardJiraEnabledMutation } from '@/modules/boards/hooks/useBoardsQuery';
+import { listBoards, setBoardJiraEnabled } from '@/modules/boards/services/board.service';
 import { useToast } from '@/hooks/useToast';
 import { Tooltip } from '@/components/Tooltip';
 
@@ -235,6 +239,7 @@ function JiraBoardScopeToggles({ isConnected }: { readonly isConnected: boolean 
 }
 
 function JiraSettingsForm({ config, isConnected }: JiraSettingsFormProps) {
+  const queryClient = useQueryClient();
   const { activeBoardId } = useActiveBoard();
   const [clientId, setClientId] = useState(config?.clientId ?? '');
   const [clientSecret, setClientSecret] = useState(config?.clientSecret ?? '');
@@ -296,7 +301,33 @@ function JiraSettingsForm({ config, isConnected }: JiraSettingsFormProps) {
       instanceUrl: instanceUrl.trim(),
     };
     saveConfigMutation.mutate(newConfig, {
-      onSuccess: () => showToast('Configuration saved'),
+      onSuccess: async () => {
+        showToast('Configuration saved');
+        try {
+          const boards =
+            queryClient.getQueryData<Board[]>(queryKeys.boards) ??
+            (await queryClient.fetchQuery({
+              queryKey: queryKeys.boards,
+              queryFn: listBoards,
+            })) ??
+            [];
+          const boardId =
+            activeBoardId ??
+            boards.find((b) => b.isDefault)?.id ??
+            boards.at(0)?.id;
+          if (!boardId) {
+            return;
+          }
+          const target = boards.find((b) => b.id === boardId);
+          if (target?.jiraEnabled) {
+            return;
+          }
+          await setBoardJiraEnabled(boardId, true);
+          await queryClient.invalidateQueries({ queryKey: queryKeys.boards });
+        } catch {
+          // Atlassian configuration was saved; board JIRA flag is best-effort.
+        }
+      },
       onError: () => setError('Failed to save configuration'),
     });
   };
