@@ -3,6 +3,7 @@ import { Formik, Form } from 'formik';
 import * as Yup from 'yup';
 import { Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { useSettingsDialogFooter } from '@/contexts/settings-dialog-footer-context';
+import { useToast } from '@/hooks/useToast';
 import { usePomodoroSettings } from '@/modules/focus/hooks/usePomodoroSettings';
 import type { PomodoroSettings } from '@/modules/focus/types';
 
@@ -160,6 +161,7 @@ function FocusSettingsFooter({
 
 export function FocusSettings() {
   const { settings, updateSettings, loaded } = usePomodoroSettings();
+  const { showToast } = useToast();
 
   if (!loaded) {
     return (
@@ -168,7 +170,12 @@ export function FocusSettings() {
   }
 
   const handleSave = async (values: PomodoroSettings) => {
-    await updateSettings(values);
+    try {
+      await updateSettings(values);
+      showToast('Focus settings saved');
+    } catch {
+      showToast('Could not save focus settings');
+    }
   };
 
   return (
