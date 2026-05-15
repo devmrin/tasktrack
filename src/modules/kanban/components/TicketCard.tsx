@@ -85,28 +85,25 @@ export function TicketCard({
   const isFocusedTicket = focusedTicketId === ticket.id;
   const formattedDueDate = formatDueDate(ticket.dueDate);
 
-  const dragProps = showMenu ? {} : { ...attributes, ...listeners };
-  const contentDragProps = showMenu ? { ...attributes, ...listeners } : {};
+  const sortableHandleProps = { ...attributes, ...listeners };
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`bg-white dark:bg-neutral-800 rounded-lg shadow-sm border border-neutral-200 dark:border-neutral-700 p-3 mb-2 hover:shadow-md transition-shadow flex flex-col ${
+      className={`bg-white dark:bg-neutral-800 rounded-lg shadow-sm border border-neutral-200 dark:border-neutral-700 p-3 mb-2 hover:shadow-md transition-shadow flex flex-col cursor-move ${
         isFocusedTicket
           ? "ring-2 ring-inset ring-amber-400 dark:ring-amber-500"
           : ""
-      } ${showMenu ? "" : "cursor-move"}`}
-      {...dragProps}
+      }`}
+      {...sortableHandleProps}
     >
       <div className="flex items-start justify-between gap-2">
-        <div
-          className={`flex-1 min-w-0 ${showMenu ? "cursor-move" : ""}`}
-          {...contentDragProps}
-        >
+        <div className="flex-1 min-w-0">
           <button
             type="button"
-            className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 text-left hover:text-neutral-600 dark:hover:text-neutral-300 hover:underline transition-colors w-full line-clamp-4"
+            className="inline-block max-w-full text-left align-top text-sm font-semibold text-neutral-900 dark:text-neutral-100 hover:text-neutral-600 dark:hover:text-neutral-300 hover:underline transition-colors line-clamp-4"
+            onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => {
               e.stopPropagation();
               openTicketDetail(ticket);
@@ -255,6 +252,7 @@ export function TicketCard({
           <Tooltip content="Start focused work session">
             <button
               type="button"
+              onPointerDown={(e) => e.stopPropagation()}
               onClick={(e) => {
                 e.stopPropagation();
                 onStartFocus(ticket);
