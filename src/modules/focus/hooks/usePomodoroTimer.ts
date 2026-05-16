@@ -52,20 +52,10 @@ export function usePomodoroTimer(settings: PomodoroSettings, callbacks?: TimerCa
     callbacksRef.current = callbacks;
   }, [callbacks]);
 
-  const prevPhaseRef = useRef<PomodoroPhase>('work');
-
+  /** Latest committed phase for interval ticks (manual tab changes must not trigger completion callbacks). */
+  const phaseRef = useRef<PomodoroPhase>(state.phase);
   useEffect(() => {
-    const currentPhase = state.phase;
-    const prevPhase = prevPhaseRef.current;
-
-    if (currentPhase !== prevPhase) {
-      if (prevPhase === 'work' && (currentPhase === 'shortBreak' || currentPhase === 'longBreak')) {
-        callbacksRef.current?.onWorkComplete?.();
-      } else if ((prevPhase === 'shortBreak' || prevPhase === 'longBreak') && currentPhase === 'work') {
-        callbacksRef.current?.onBreakComplete?.();
-      }
-      prevPhaseRef.current = currentPhase;
-    }
+    phaseRef.current = state.phase;
   }, [state.phase]);
 
   const durationsChanged =
@@ -165,6 +155,12 @@ export function usePomodoroTimer(settings: PomodoroSettings, callbacks?: TimerCa
       if (remaining <= 0) {
         clearTimer();
         const currentSettings = settingsRef.current;
+        const completedPhase = phaseRef.current;
+        if (completedPhase === 'work') {
+          callbacksRef.current?.onWorkComplete?.();
+        } else if (completedPhase === 'shortBreak' || completedPhase === 'longBreak') {
+          callbacksRef.current?.onBreakComplete?.();
+        }
 
         setState((prev) => {
           if (prev.phase === 'work') {
@@ -184,6 +180,22 @@ export function usePomodoroTimer(settings: PomodoroSettings, callbacks?: TimerCa
           }
 
           const nextDuration = phaseToSeconds('work', currentSettings);
+          const finishedScheduledLongBreak =
+            prev.phase === 'longBreak' &&
+            prev.completedSessions > 0 &&
+            prev.completedSessions % currentSettings.longBreakInterval === 0;
+
+          if (finishedScheduledLongBreak) {
+            endTimeRef.current = null;
+            return {
+              ...prev,
+              phase: 'work',
+              timeRemaining: nextDuration,
+              running: false,
+              completedSessions: 0,
+            };
+          }
+
           const autoStart = currentSettings.autoStartPomodoros;
           endTimeRef.current = autoStart ? Date.now() + nextDuration * 1000 : null;
 
@@ -206,7 +218,9 @@ export function usePomodoroTimer(settings: PomodoroSettings, callbacks?: TimerCa
     intervalRef.current = setInterval(tick, 500);
 
     return clearTimer;
-  }, [state.running, clearTimer]);
+    // Include phase: auto-start keeps `running` true across phase transitions, but `tick` clears
+    // the interval when a phase ends — we must resubscribe when phase changes while running.
+  }, [state.running, state.phase, clearTimer]);
 
   const minutes = Math.floor(state.timeRemaining / 60);
   const seconds = state.timeRemaining % 60;
