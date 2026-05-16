@@ -14,7 +14,7 @@ import { FocusFullscreen } from './FocusFullscreen';
 import { FocusTicketCard } from './FocusTicketCard';
 import { PomodoroTimer } from './PomodoroTimer';
 import { PomodoroTimerPipPlaceholder } from './PomodoroTimerPipPlaceholder';
-import { playTimerCompletionChime } from '@/modules/focus/utils/playTimerCompletionChime';
+import { playPhaseCompletionSound } from '@/modules/focus/utils/playPhaseCompletionSound';
 
 interface FocusZoneProps {
   readonly focusedData: ReturnType<typeof useFocusZone>['focusedData'];
@@ -33,11 +33,11 @@ export function FocusZone({
   const { showToast } = useToast();
   const timer = usePomodoroTimer(settings, {
     onWorkComplete: () => {
-      if (settings.chimeOnTimerComplete) playTimerCompletionChime();
+      if (settings.chimeOnTimerComplete) playPhaseCompletionSound('work');
       showToast('Work session complete! Time for a break.');
     },
     onBreakComplete: () => {
-      if (settings.chimeOnTimerComplete) playTimerCompletionChime();
+      if (settings.chimeOnTimerComplete) playPhaseCompletionSound('break');
       showToast('Break over! Ready to focus?');
     },
   });

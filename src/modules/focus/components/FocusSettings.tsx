@@ -268,8 +268,8 @@ export function FocusSettings() {
               Audio feedback when a timer phase finishes.
             </p>
             <ToggleField
-              label="Completion chime"
-              description="Play a short chime when a work session or break ends."
+              label="Completion sounds"
+              description="Play a chime when a work session ends and a tone when a break ends."
               checked={values.chimeOnTimerComplete}
               onToggle={() => setFieldValue('chimeOnTimerComplete', !values.chimeOnTimerComplete)}
             />
