@@ -1,14 +1,18 @@
 import { useEffect, useRef } from 'react';
 import type { PomodoroPhase } from '@/modules/focus/types';
 
-function phaseMessage(phase: PomodoroPhase): string {
-  return phase === 'work' ? 'Time to focus!' : 'Time for a break!';
+function phaseMessage(phase: PomodoroPhase, workLabel?: string): string {
+  if (phase === 'work') {
+    return workLabel ?? 'Time to focus!';
+  }
+  return 'Time for a break!';
 }
 
 export function useDocumentTitle(
   display: string,
   phase: PomodoroPhase,
   isActive: boolean,
+  workLabel?: string,
 ): void {
   const originalTitleRef = useRef(document.title);
 
@@ -18,9 +22,9 @@ export function useDocumentTitle(
       document.title = savedTitle;
       return;
     }
-    document.title = `${display} - ${phaseMessage(phase)}`;
+    document.title = `${display} - ${phaseMessage(phase, workLabel)}`;
     return () => {
       document.title = savedTitle;
     };
-  }, [display, phase, isActive]);
+  }, [display, phase, isActive, workLabel]);
 }

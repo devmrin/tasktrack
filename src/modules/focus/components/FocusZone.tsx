@@ -5,6 +5,7 @@ import type { useFocusZone } from '@/modules/focus/hooks/useFocusZone';
 import { useDocumentTitle } from '@/modules/focus/hooks/useDocumentTitle';
 import { usePomodoroSettings } from '@/modules/focus/hooks/usePomodoroSettings';
 import { usePomodoroTimer } from '@/modules/focus/hooks/usePomodoroTimer';
+import { getFocusWorkLabel } from '@/modules/focus/utils/focusWorkLabel';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useActiveBoard } from '@/modules/boards/hooks/useActiveBoard';
 import { useBoardTerminology } from '@/modules/boards/hooks/useBoardTerminology';
@@ -43,7 +44,11 @@ export function FocusZone({
   });
   const isExpanded = focusedData !== null;
   const isMobileLayout = useMediaQuery('(max-width: 1023px)');
-  useDocumentTitle(timer.display, timer.phase, isExpanded);
+  const workContextLabel = useMemo(
+    () => (focusedData ? getFocusWorkLabel(focusedData.ticket) : undefined),
+    [focusedData],
+  );
+  useDocumentTitle(timer.display, timer.phase, isExpanded, workContextLabel);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const documentPip = usePomodoroDocumentPictureInPicture();
 
@@ -51,6 +56,7 @@ export function FocusZone({
     () => ({
       phase: timer.phase,
       display: timer.display,
+      workContextLabel,
       running: timer.running,
       completedSessions: timer.completedSessions,
       settings,
@@ -62,6 +68,7 @@ export function FocusZone({
     [
       timer.phase,
       timer.display,
+      workContextLabel,
       timer.running,
       timer.completedSessions,
       settings,
@@ -152,6 +159,7 @@ export function FocusZone({
                 <PomodoroTimer
                   phase={timer.phase}
                   display={timer.display}
+                  workContextLabel={workContextLabel}
                   running={timer.running}
                   completedSessions={timer.completedSessions}
                   settings={settings}

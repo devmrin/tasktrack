@@ -5,6 +5,7 @@ import { Tooltip } from '@/components/Tooltip';
 import { useTheme } from '@/hooks/useTheme';
 import type { Ticket } from '@/db/database';
 import type { PomodoroPhase, PomodoroSettings } from '@/modules/focus/types';
+import { getFocusWorkLabel } from '@/modules/focus/utils/focusWorkLabel';
 import { FocusTicketCard } from './FocusTicketCard';
 import { PomodoroTimer } from './PomodoroTimer';
 import { PomodoroTimerPipPlaceholder } from './PomodoroTimerPipPlaceholder';
@@ -50,6 +51,7 @@ export function FocusFullscreen({
 }: FocusFullscreenProps) {
   const [isClosing, setIsClosing] = useState(false);
   const { theme, setTheme } = useTheme();
+  const workContextLabel = getFocusWorkLabel(ticket);
 
   const handleClose = useCallback(() => {
     setIsClosing(true);
@@ -133,6 +135,7 @@ export function FocusFullscreen({
               <PomodoroTimer
                 phase={phase}
                 display={display}
+                workContextLabel={workContextLabel}
                 running={running}
                 completedSessions={completedSessions}
                 settings={settings}

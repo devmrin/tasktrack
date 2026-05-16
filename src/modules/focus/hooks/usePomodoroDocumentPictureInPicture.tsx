@@ -11,6 +11,7 @@ import {
 export type PomodoroDocumentPictureInPictureTimerProps = {
   readonly phase: PomodoroPhase;
   readonly display: string;
+  readonly workContextLabel?: string;
   readonly running: boolean;
   readonly completedSessions: number;
   readonly settings: PomodoroSettings;
@@ -60,6 +61,7 @@ export function usePomodoroDocumentPictureInPicture() {
         <PomodoroTimer
           phase={props.phase}
           display={props.display}
+          workContextLabel={props.workContextLabel}
           running={props.running}
           completedSessions={props.completedSessions}
           settings={props.settings}
@@ -125,6 +127,7 @@ export function usePomodoroDocumentPictureInPicture() {
           <PomodoroTimer
             phase={initialProps.phase}
             display={initialProps.display}
+            workContextLabel={initialProps.workContextLabel}
             running={initialProps.running}
             completedSessions={initialProps.completedSessions}
             settings={initialProps.settings}

@@ -16,6 +16,8 @@ import { isDocumentPictureInPictureSupported } from '@/modules/focus/utils/pictu
 interface PomodoroTimerProps {
   readonly phase: PomodoroPhase;
   readonly display: string;
+  /** Shown during work phase (e.g. JIRA key or ticket title). */
+  readonly workContextLabel?: string;
   readonly running: boolean;
   readonly completedSessions: number;
   readonly settings: PomodoroSettings;
@@ -53,6 +55,7 @@ const PHASE_COLORS: Record<PomodoroPhase, { bg: string; accent: string }> = {
 export function PomodoroTimer({
   phase,
   display,
+  workContextLabel,
   running,
   completedSessions,
   settings,
@@ -66,6 +69,7 @@ export function PomodoroTimer({
   onOpenDocumentPictureInPicture,
 }: PomodoroTimerProps) {
   const colors = PHASE_COLORS[phase];
+  const workPhaseCaption = workContextLabel ?? 'Time to focus!';
   const settingsContext = useContext(SettingsContext);
   const showDocumentPipButton =
     layout === 'default' &&
@@ -197,12 +201,18 @@ export function PomodoroTimer({
       </div>
 
       <footer className="mt-4 text-center">
-        <p className="text-xs text-neutral-500 dark:text-neutral-400">
+        <p className="flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 text-xs text-neutral-500 dark:text-neutral-400">
           {phase === 'work' && (
             <>
-              Session {completedSessions + 1} of {settings.longBreakInterval}
-              <span className="mx-1.5 text-neutral-400 dark:text-neutral-500">·</span>
-              Time to focus!
+              <span className="shrink-0">
+                Session {completedSessions + 1} of {settings.longBreakInterval}
+              </span>
+              <span className="text-neutral-400 dark:text-neutral-500" aria-hidden>
+                ·
+              </span>
+              <span className="min-w-0 max-w-[min(85vw,24rem)] truncate" title={workPhaseCaption}>
+                {workPhaseCaption}
+              </span>
             </>
           )}
           {phase === 'shortBreak' && (
