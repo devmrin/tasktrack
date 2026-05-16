@@ -16,6 +16,7 @@ const pomodoroSettingsSchema = Yup.object({
   longBreakInterval: Yup.number().min(1).max(12).required(),
   autoStartBreaks: Yup.boolean().required(),
   autoStartPomodoros: Yup.boolean().required(),
+  chimeOnTimerComplete: Yup.boolean().required(),
 });
 
 const stepperBtnClass =
@@ -257,6 +258,21 @@ export function FocusSettings() {
                 onToggle={() => setFieldValue('autoStartPomodoros', !values.autoStartPomodoros)}
               />
             </div>
+          </div>
+
+          <div className="border-t border-neutral-200 dark:border-neutral-700 pt-6">
+            <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 mb-1">
+              Sounds
+            </h3>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-4">
+              Audio feedback when a timer phase finishes.
+            </p>
+            <ToggleField
+              label="Completion chime"
+              description="Play a short chime when a work session or break ends."
+              checked={values.chimeOnTimerComplete}
+              onToggle={() => setFieldValue('chimeOnTimerComplete', !values.chimeOnTimerComplete)}
+            />
           </div>
         </Form>
         </>

@@ -9,6 +9,7 @@ export interface PomodoroSettings {
   longBreakInterval: number;
   autoStartBreaks: boolean;
   autoStartPomodoros: boolean;
+  chimeOnTimerComplete: boolean;
 }
 
 export interface FocusState {

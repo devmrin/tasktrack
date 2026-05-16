@@ -26,13 +26,14 @@ function getSnapshot(): PomodoroSettings {
 }
 
 async function loadFromDb(): Promise<void> {
-  const [work, short, long, interval, autoBreaks, autoPomodoros] = await Promise.all([
+  const [work, short, long, interval, autoBreaks, autoPomodoros, chime] = await Promise.all([
     db.settings.get(SETTING_KEYS.pomodoroWorkDuration),
     db.settings.get(SETTING_KEYS.pomodoroShortBreak),
     db.settings.get(SETTING_KEYS.pomodoroLongBreak),
     db.settings.get(SETTING_KEYS.pomodoroLongBreakInterval),
     db.settings.get(SETTING_KEYS.pomodoroAutoStartBreaks),
     db.settings.get(SETTING_KEYS.pomodoroAutoStartPomodoros),
+    db.settings.get(SETTING_KEYS.pomodoroChimeOnTimerComplete),
   ]);
 
   sharedSettings = {
@@ -46,6 +47,9 @@ async function loadFromDb(): Promise<void> {
     autoStartPomodoros: autoPomodoros
       ? autoPomodoros.value === 'true'
       : DEFAULT_POMODORO_SETTINGS.autoStartPomodoros,
+    chimeOnTimerComplete: chime
+      ? chime.value === 'true'
+      : DEFAULT_POMODORO_SETTINGS.chimeOnTimerComplete,
   };
   isLoaded = true;
   notify();
@@ -59,6 +63,7 @@ async function persistAndUpdate(next: PomodoroSettings): Promise<void> {
     { key: SETTING_KEYS.pomodoroLongBreakInterval, value: String(next.longBreakInterval) },
     { key: SETTING_KEYS.pomodoroAutoStartBreaks, value: String(next.autoStartBreaks) },
     { key: SETTING_KEYS.pomodoroAutoStartPomodoros, value: String(next.autoStartPomodoros) },
+    { key: SETTING_KEYS.pomodoroChimeOnTimerComplete, value: String(next.chimeOnTimerComplete) },
   ]);
   sharedSettings = next;
   notify();
