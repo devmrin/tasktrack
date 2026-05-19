@@ -13,7 +13,6 @@ import {
   Inbox,
   Moon,
   Plug,
-  RefreshCw,
   Search,
   Settings2,
   Sun,
@@ -27,6 +26,7 @@ import {
   type SectionId,
 } from "@/modules/settings";
 import { useColumnsQuery } from "@/modules/kanban";
+import { JiraSyncIcon } from "@/modules/inbox/components/JiraSyncIcon";
 import { useInbox } from "@/modules/inbox/hooks/useInbox";
 import { isValidTicketKey } from "@/modules/tickets/utils/validateTicketKey";
 import { TicketCard } from "@/modules/kanban/components/TicketCard";
@@ -183,6 +183,9 @@ export function InboxSidebar({
   );
 
   const handleSyncFromJira = () => {
+    if (syncing) {
+      return;
+    }
     syncFromJira(({ created, updated }) => {
       const parts: string[] = [];
       if (created.length > 0) parts.push(`${created.length} new`);
@@ -506,15 +509,15 @@ export function InboxSidebar({
                       >
                         <button
                           type="button"
-                          disabled={syncing}
                           onClick={handleSyncFromJira}
-                          className="flex h-7 items-center gap-1.5 px-2.5 text-xs font-medium rounded-md bg-[#0052CC] text-white hover:bg-[#0747A6] transition-colors disabled:opacity-50"
+                          aria-busy={syncing || undefined}
+                          aria-disabled={syncing || undefined}
+                          className={`flex h-7 items-center gap-1.5 px-2.5 text-xs font-medium rounded-md bg-[#0052CC] text-white hover:bg-[#0747A6] transition-colors ${
+                            syncing ? "pointer-events-none opacity-70" : ""
+                          }`}
                           aria-label={`Fetch JIRA ${terminology.items}`}
                         >
-                          <RefreshCw
-                            className={`size-3.5 ${syncing ? "animate-spin" : ""}`}
-                            aria-hidden
-                          />
+                          <JiraSyncIcon syncing={syncing} />
                           {syncing ? "Fetching…" : `Fetch JIRA ${terminology.items}`}
                           <kbd className="ml-0.5 px-1 py-0.5 text-[10px] font-medium text-white/85 bg-white/20 border border-white/30 rounded">
                             {SHORTCUT_DISPLAY.syncJira}
@@ -528,15 +531,15 @@ export function InboxSidebar({
                       >
                         <button
                           type="button"
-                          disabled={syncing}
                           onClick={handleSyncFromJira}
-                          className="flex h-7 items-center gap-1.5 px-2.5 text-xs font-medium rounded-md bg-[#0052CC] text-white hover:bg-[#0747A6] transition-colors disabled:opacity-50"
+                          aria-busy={syncing || undefined}
+                          aria-disabled={syncing || undefined}
+                          className={`flex h-7 items-center gap-1.5 px-2.5 text-xs font-medium rounded-md bg-[#0052CC] text-white hover:bg-[#0747A6] transition-colors ${
+                            syncing ? "pointer-events-none opacity-70" : ""
+                          }`}
                           aria-label="Sync from JIRA"
                         >
-                          <RefreshCw
-                            className={`size-3.5 ${syncing ? "animate-spin" : ""}`}
-                            aria-hidden
-                          />
+                          <JiraSyncIcon syncing={syncing} />
                           {syncing ? "Syncing…" : "Sync JIRA"}
                           <kbd className="ml-0.5 px-1 py-0.5 text-[10px] font-medium text-white/85 bg-white/20 border border-white/30 rounded">
                             {SHORTCUT_DISPLAY.syncJira}
