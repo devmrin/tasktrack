@@ -20,6 +20,7 @@ import {
 import { useEffect, useImperativeHandle, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import * as Select from "@/components/Select";
+import { StableWidthLabel } from "@/components/StableWidthLabel";
 import {
   GettingStartedDialog,
   SHORTCUT_DISPLAY,
@@ -518,7 +519,16 @@ export function InboxSidebar({
                           aria-label={`Fetch JIRA ${terminology.items}`}
                         >
                           <JiraSyncIcon syncing={syncing} />
-                          {syncing ? "Fetching…" : `Fetch JIRA ${terminology.items}`}
+                          <StableWidthLabel
+                            variants={[
+                              `Fetch JIRA ${terminology.items}`,
+                              "Fetching…",
+                            ]}
+                          >
+                            {syncing
+                              ? "Fetching…"
+                              : `Fetch JIRA ${terminology.items}`}
+                          </StableWidthLabel>
                           <kbd className="ml-0.5 px-1 py-0.5 text-[10px] font-medium text-white/85 bg-white/20 border border-white/30 rounded">
                             {SHORTCUT_DISPLAY.syncJira}
                           </kbd>
@@ -540,7 +550,9 @@ export function InboxSidebar({
                           aria-label="Sync from JIRA"
                         >
                           <JiraSyncIcon syncing={syncing} />
-                          {syncing ? "Syncing…" : "Sync JIRA"}
+                          <StableWidthLabel variants={["Sync JIRA", "Syncing…"]}>
+                            {syncing ? "Syncing…" : "Sync JIRA"}
+                          </StableWidthLabel>
                           <kbd className="ml-0.5 px-1 py-0.5 text-[10px] font-medium text-white/85 bg-white/20 border border-white/30 rounded">
                             {SHORTCUT_DISPLAY.syncJira}
                           </kbd>
