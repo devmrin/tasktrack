@@ -294,11 +294,10 @@ export function InboxSidebar({
   return (
     <div
       ref={setInboxDropRef}
-      className={`fixed left-0 top-0 h-full bg-white dark:bg-neutral-900 shadow-xl z-50 border-r border-neutral-200 dark:border-neutral-700 overflow-hidden transition-[width,transform,background-color,border-color] duration-300 ease-out will-change-[width,transform] ${
-        !isOpen && isOver
-          ? "ring-2 ring-blue-500 dark:ring-blue-400 ring-inset bg-blue-50/50 dark:bg-blue-950/30"
-          : ""
-      } ${isMobile && !isOpen ? "-translate-x-full pointer-events-none" : "translate-x-0"}`}
+      className={`fixed left-0 top-0 h-full bg-white dark:bg-neutral-900 shadow-xl z-50 border-r border-neutral-200 dark:border-neutral-700 overflow-hidden transition-[width,transform,background-color,border-color] duration-300 ease-out will-change-[width,transform] ${!isOpen && isOver
+        ? "ring-2 ring-blue-500 dark:ring-blue-400 ring-inset bg-blue-50/50 dark:bg-blue-950/30"
+        : ""
+        } ${isMobile && !isOpen ? "-translate-x-full pointer-events-none" : "translate-x-0"}`}
       style={{
         width: isMobile
           ? "min(20rem, calc(100vw - 1.5rem))"
@@ -309,11 +308,10 @@ export function InboxSidebar({
     >
       {!isMobile && (
         <div
-          className={`absolute inset-y-0 left-0 w-12 flex flex-col transition-[opacity,transform,filter] duration-200 ease-out will-change-[opacity,transform,filter] ${
-            isOpen
-              ? "opacity-0 pointer-events-none -translate-x-1 blur-[2px]"
-              : "opacity-100 translate-x-0 blur-0"
-          }`}
+          className={`absolute inset-y-0 left-0 w-12 flex flex-col transition-[opacity,transform,filter] duration-200 ease-out will-change-[opacity,transform,filter] ${isOpen
+            ? "opacity-0 pointer-events-none -translate-x-1 blur-[2px]"
+            : "opacity-100 translate-x-0 blur-0"
+            }`}
           aria-hidden={isOpen}
         >
           <div
@@ -347,11 +345,10 @@ export function InboxSidebar({
           <button
             type="button"
             onClick={onOpen}
-            className={`flex-1 min-h-0 w-full flex flex-col items-center justify-center gap-2 py-2 cursor-pointer transition-colors rounded-md mx-auto ${
-              isOver
-                ? "bg-blue-100/80 dark:bg-blue-900/40"
-                : "hover:bg-neutral-100 dark:hover:bg-neutral-800"
-            } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 dark:focus-visible:ring-neutral-500 focus-visible:ring-inset`}
+            className={`flex-1 min-h-0 w-full flex flex-col items-center justify-center gap-2 py-2 cursor-pointer transition-colors rounded-md mx-auto ${isOver
+              ? "bg-blue-100/80 dark:bg-blue-900/40"
+              : "hover:bg-neutral-100 dark:hover:bg-neutral-800"
+              } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 dark:focus-visible:ring-neutral-500 focus-visible:ring-inset`}
             aria-label="Open inbox"
           >
             <div className="w-px flex-1 min-h-[12px] bg-neutral-200 dark:bg-neutral-700" />
@@ -412,279 +409,267 @@ export function InboxSidebar({
       )}
 
       <div
-        className={`absolute inset-y-0 left-0 flex h-full flex-col transition-[opacity,transform,filter] duration-200 ease-out will-change-[opacity,transform,filter] ${
-          isMobile ? "w-full" : "w-[320px]"
-        } ${
-          !isOpen && !isMobile
+        className={`absolute inset-y-0 left-0 flex h-full flex-col transition-[opacity,transform,filter] duration-200 ease-out will-change-[opacity,transform,filter] ${isMobile ? "w-full" : "w-[320px]"
+          } ${!isOpen && !isMobile
             ? "opacity-0 pointer-events-none translate-x-2 blur-[3px]"
             : "opacity-100 translate-x-0 blur-0"
-        }`}
+          }`}
         aria-hidden={!isOpen && !isMobile}
       >
-          <div
-            className="flex items-center justify-between px-4 border-b border-neutral-200 dark:border-neutral-700 shrink-0"
-            style={{ height: 48 }}
+        <div
+          className="flex items-center justify-between px-4 border-b border-neutral-200 dark:border-neutral-700 shrink-0"
+          style={{ height: 48 }}
+        >
+          <button
+            type="button"
+            onClick={onSearchOpen}
+            className="flex items-center gap-1.5 h-7 px-2 text-xs text-neutral-500 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-md transition-colors"
+            aria-label={`Search ${terminology.items}`}
           >
-            <button
-              type="button"
-              onClick={onSearchOpen}
-              className="flex items-center gap-1.5 h-7 px-2 text-xs text-neutral-500 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-md transition-colors"
-              aria-label={`Search ${terminology.items}`}
+            <Search className="size-3.5" aria-hidden />
+            <span className="text-neutral-400 dark:text-neutral-500">Search</span>
+            <kbd className="ml-1 px-1 py-0.5 text-[10px] font-medium text-neutral-400 dark:text-neutral-500 bg-white dark:bg-neutral-700 border border-neutral-200 dark:border-neutral-600 rounded">
+              {SHORTCUT_DISPLAY.search}
+            </kbd>
+          </button>
+          <div className="flex items-center gap-1">
+            <Link
+              to="/history"
+              className="flex items-center gap-1.5 h-7 px-2.5 text-xs font-medium text-neutral-700 dark:text-neutral-200 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-600 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded-md transition-colors"
+              aria-label="Open history page"
             >
-              <Search className="size-3.5" aria-hidden />
-              <span className="text-neutral-400 dark:text-neutral-500">Search</span>
-              <kbd className="ml-1 px-1 py-0.5 text-[10px] font-medium text-neutral-400 dark:text-neutral-500 bg-white dark:bg-neutral-700 border border-neutral-200 dark:border-neutral-600 rounded">
-                {SHORTCUT_DISPLAY.search}
-              </kbd>
-            </button>
-            <div className="flex items-center gap-1">
-              <Link
-                to="/history"
-                className="flex items-center gap-1.5 h-7 px-2.5 text-xs font-medium text-neutral-700 dark:text-neutral-200 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-600 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded-md transition-colors"
-                aria-label="Open history page"
+              <History className="size-3.5" aria-hidden />
+              <span>History</span>
+            </Link>
+            <Tooltip
+              content={`Collapse sidebar (${SHORTCUT_DISPLAY.toggleSidebar})`}
+              side="bottom"
+            >
+              <button
+                type="button"
+                onClick={onClose}
+                className="p-1.5 text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-md transition-colors"
+                aria-label="Collapse sidebar"
               >
-                <History className="size-3.5" aria-hidden />
-                <span>History</span>
-              </Link>
-              <Tooltip
-                content={`Collapse sidebar (${SHORTCUT_DISPLAY.toggleSidebar})`}
-                side="bottom"
-              >
+                <ChevronLeft className="size-5" aria-hidden />
+              </button>
+            </Tooltip>
+          </div>
+        </div>
+        {isBoardJiraEnabled ? (
+          <div className="px-4 pt-3 pb-2 shrink-0 border-b border-neutral-100 dark:border-neutral-800">
+            <div className="flex items-center justify-end gap-1.5">
+              {!jiraConnected ? (
                 <button
                   type="button"
-                  onClick={onClose}
-                  className="p-1.5 text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-md transition-colors"
-                  aria-label="Collapse sidebar"
+                  onClick={() => onSettingsOpen("jira")}
+                  className="flex h-7 items-center gap-1.5 px-2.5 text-xs font-medium rounded-md bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900 hover:opacity-90 transition-opacity"
+                  aria-label="Connect JIRA"
                 >
-                  <ChevronLeft className="size-5" aria-hidden />
+                  <Plug className="size-3.5" aria-hidden />
+                  Connect JIRA
                 </button>
-              </Tooltip>
-            </div>
-          </div>
-          {isBoardJiraEnabled ? (
-            <div className="px-4 pt-3 pb-2 shrink-0 border-b border-neutral-100 dark:border-neutral-800">
-              <div className="flex items-center justify-end gap-1.5">
-                {!jiraConnected ? (
-                  <button
-                    type="button"
-                    onClick={() => onSettingsOpen("jira")}
-                    className="flex h-7 items-center gap-1.5 px-2.5 text-xs font-medium rounded-md bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900 hover:opacity-90 transition-opacity"
-                    aria-label="Connect JIRA"
+              ) : boardJiraUi ? (
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <Tooltip
+                    content={`Quick open issue in JIRA (${SHORTCUT_DISPLAY.jiraQuickOpen})`}
+                    side="bottom"
                   >
-                    <Plug className="size-3.5" aria-hidden />
-                    Connect JIRA
-                  </button>
-                ) : boardJiraUi ? (
-                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setQuickOpenOpen(true)}
+                      className="flex h-7 items-center gap-1.5 px-2.5 text-xs font-medium rounded-md text-neutral-700 dark:text-neutral-200 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-600 hover:bg-neutral-50 dark:hover:bg-neutral-700 transition-colors"
+                      aria-label="Quick open JIRA issue"
+                    >
+                      <ExternalLink className="size-3.5" aria-hidden />
+                      Quick open
+                      <kbd className="ml-0.5 px-1 py-0.5 text-[10px] font-medium text-neutral-400 dark:text-neutral-500 bg-white dark:bg-neutral-700 border border-neutral-200 dark:border-neutral-600 rounded">
+                        {SHORTCUT_DISPLAY.jiraQuickOpen}
+                      </kbd>
+                    </button>
+                  </Tooltip>
+                  {!hasJiraTicketsInDb ? (
                     <Tooltip
-                      content={`Quick open issue in JIRA (${SHORTCUT_DISPLAY.jiraQuickOpen})`}
+                      content={`Fetch JIRA ${terminology.items} (${SHORTCUT_DISPLAY.syncJira})`}
                       side="bottom"
                     >
                       <button
                         type="button"
-                        onClick={() => setQuickOpenOpen(true)}
-                        className="flex h-7 items-center gap-1.5 px-2.5 text-xs font-medium rounded-md text-neutral-700 dark:text-neutral-200 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-600 hover:bg-neutral-50 dark:hover:bg-neutral-700 transition-colors"
-                        aria-label="Quick open JIRA issue"
+                        onClick={handleSyncFromJira}
+                        aria-busy={syncing || undefined}
+                        aria-disabled={syncing || undefined}
+                        className={`flex h-7 items-center gap-1.5 px-2.5 text-xs font-medium rounded-md bg-[#0052CC] text-white hover:bg-[#0747A6] transition-colors ${syncing ? "pointer-events-none opacity-70" : ""
+                          }`}
+                        aria-label={`Fetch JIRA ${terminology.items}`}
                       >
-                        <ExternalLink className="size-3.5" aria-hidden />
-                        Quick open
-                        <kbd className="ml-0.5 px-1 py-0.5 text-[10px] font-medium text-neutral-400 dark:text-neutral-500 bg-white dark:bg-neutral-700 border border-neutral-200 dark:border-neutral-600 rounded">
-                          {SHORTCUT_DISPLAY.jiraQuickOpen}
+                        <JiraSyncIcon syncing={syncing} />
+                        <StableWidthLabel
+                          variants={[
+                            `Fetch JIRA ${terminology.items}`,
+                            "Fetching…",
+                          ]}
+                        >
+                          {syncing
+                            ? "Fetching…"
+                            : `Fetch JIRA ${terminology.items}`}
+                        </StableWidthLabel>
+                        <kbd className="ml-0.5 px-1 py-0.5 text-[10px] font-medium text-white/85 bg-white/20 border border-white/30 rounded">
+                          {SHORTCUT_DISPLAY.syncJira}
                         </kbd>
                       </button>
                     </Tooltip>
-                    {!hasJiraTicketsInDb ? (
-                      <Tooltip
-                        content={`Fetch JIRA ${terminology.items} (${SHORTCUT_DISPLAY.syncJira})`}
-                        side="bottom"
-                      >
-                        <button
-                          type="button"
-                          onClick={handleSyncFromJira}
-                          aria-busy={syncing || undefined}
-                          aria-disabled={syncing || undefined}
-                          className={`flex h-7 items-center gap-1.5 px-2.5 text-xs font-medium rounded-md bg-[#0052CC] text-white hover:bg-[#0747A6] transition-colors ${
-                            syncing ? "pointer-events-none opacity-70" : ""
+                  ) : (
+                    <Tooltip
+                      content={`Sync JIRA (${SHORTCUT_DISPLAY.syncJira})`}
+                      side="bottom"
+                    >
+                      <button
+                        type="button"
+                        onClick={handleSyncFromJira}
+                        aria-busy={syncing || undefined}
+                        aria-disabled={syncing || undefined}
+                        className={`flex h-7 items-center gap-1.5 px-2.5 text-xs font-medium rounded-md bg-[#0052CC] text-white hover:bg-[#0747A6] transition-colors ${syncing ? "pointer-events-none opacity-70" : ""
                           }`}
-                          aria-label={`Fetch JIRA ${terminology.items}`}
-                        >
-                          <JiraSyncIcon syncing={syncing} />
-                          <StableWidthLabel
-                            variants={[
-                              `Fetch JIRA ${terminology.items}`,
-                              "Fetching…",
-                            ]}
-                          >
-                            {syncing
-                              ? "Fetching…"
-                              : `Fetch JIRA ${terminology.items}`}
-                          </StableWidthLabel>
-                          <kbd className="ml-0.5 px-1 py-0.5 text-[10px] font-medium text-white/85 bg-white/20 border border-white/30 rounded">
-                            {SHORTCUT_DISPLAY.syncJira}
-                          </kbd>
-                        </button>
-                      </Tooltip>
-                    ) : (
-                      <Tooltip
-                        content={`Sync JIRA (${SHORTCUT_DISPLAY.syncJira})`}
-                        side="bottom"
+                        aria-label="Sync from JIRA"
                       >
-                        <button
-                          type="button"
-                          onClick={handleSyncFromJira}
-                          aria-busy={syncing || undefined}
-                          aria-disabled={syncing || undefined}
-                          className={`flex h-7 items-center gap-1.5 px-2.5 text-xs font-medium rounded-md bg-[#0052CC] text-white hover:bg-[#0747A6] transition-colors ${
-                            syncing ? "pointer-events-none opacity-70" : ""
-                          }`}
-                          aria-label="Sync from JIRA"
-                        >
-                          <JiraSyncIcon syncing={syncing} />
-                          <StableWidthLabel variants={["Sync JIRA", "Syncing…"]}>
-                            {syncing ? "Syncing…" : "Sync JIRA"}
-                          </StableWidthLabel>
-                          <kbd className="ml-0.5 px-1 py-0.5 text-[10px] font-medium text-white/85 bg-white/20 border border-white/30 rounded">
-                            {SHORTCUT_DISPLAY.syncJira}
-                          </kbd>
-                        </button>
-                      </Tooltip>
-                    )}
-                  </div>
-                ) : null}
-              </div>
-              {lastSyncedAt && boardJiraUi && (
-                <LastSyncedLabel isoString={lastSyncedAt} />
-              )}
+                        <JiraSyncIcon syncing={syncing} />
+                        <StableWidthLabel variants={["Sync JIRA", "Syncing…"]}>
+                          {syncing ? "Syncing…" : "Sync JIRA"}
+                        </StableWidthLabel>
+                        <kbd className="ml-0.5 px-1 py-0.5 text-[10px] font-medium text-white/85 bg-white/20 border border-white/30 rounded">
+                          {SHORTCUT_DISPLAY.syncJira}
+                        </kbd>
+                      </button>
+                    </Tooltip>
+                  )}
+                </div>
+              ) : null}
             </div>
-          ) : null}
-
-          <div className="px-4 pt-3 pb-2 shrink-0 border-b border-neutral-100 dark:border-neutral-800">
-            <div className="flex items-center justify-between gap-2">
-              <h2 className="text-sm font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">
-                Inbox
-              </h2>
-            </div>
+            {lastSyncedAt && boardJiraUi && (
+              <LastSyncedLabel isoString={lastSyncedAt} />
+            )}
           </div>
+        ) : null}
 
-          <div className="px-4 pt-3 pb-2 shrink-0 border-b border-neutral-100 dark:border-neutral-800">
-            <div className="mt-2 flex items-center gap-2">
-              <span className="text-[11px] font-medium uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
-                Sort by
-              </span>
-              <Select.Root
-                value={resolvedSortMode}
-                onValueChange={(value) =>
-                  setSortMode(normalizeInboxSortMode(value) as InboxSortMode)
-                }
+        <div className="px-4 pt-3 pb-2 shrink-0 border-b border-neutral-100 dark:border-neutral-800">
+          <div className="mt-2 flex items-center gap-2">
+            <span className="text-[11px] font-medium uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+              Sort by
+            </span>
+            <Select.Root
+              value={resolvedSortMode}
+              onValueChange={(value) =>
+                setSortMode(normalizeInboxSortMode(value) as InboxSortMode)
+              }
+            >
+              <Select.Trigger
+                className="inline-flex h-8 flex-1 items-center justify-between rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 px-2.5 text-xs text-neutral-700 dark:text-neutral-300 outline-none hover:bg-neutral-50 dark:hover:bg-neutral-700/60"
+                aria-label={`Sort inbox ${terminology.items}`}
               >
-                <Select.Trigger
-                  className="inline-flex h-8 flex-1 items-center justify-between rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 px-2.5 text-xs text-neutral-700 dark:text-neutral-300 outline-none hover:bg-neutral-50 dark:hover:bg-neutral-700/60"
-                  aria-label={`Sort inbox ${terminology.items}`}
+                <Select.Value />
+                <Select.Icon>
+                  <ChevronDown
+                    className="size-3 text-neutral-500 dark:text-neutral-400"
+                    aria-hidden
+                  />
+                </Select.Icon>
+              </Select.Trigger>
+              <Select.Portal>
+                <Select.Content
+                  className="z-[60] overflow-hidden rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 shadow-lg"
+                  position="popper"
+                  sideOffset={4}
+                  align="start"
                 >
-                  <Select.Value />
-                  <Select.Icon>
-                    <ChevronDown
-                      className="size-3 text-neutral-500 dark:text-neutral-400"
-                      aria-hidden
-                    />
-                  </Select.Icon>
-                </Select.Trigger>
-                <Select.Portal>
-                  <Select.Content
-                    className="z-[60] overflow-hidden rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 shadow-lg"
-                    position="popper"
-                    sideOffset={4}
-                    align="start"
-                  >
-                    <Select.Viewport className="p-1">
-                      <Select.Item
-                        value="custom"
-                        className="flex items-center gap-2 rounded px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 outline-none cursor-pointer data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700"
-                      >
-                        <Select.ItemText>Custom</Select.ItemText>
-                        <Select.ItemIndicator className="ml-auto">
-                          <Check className="size-3.5" aria-hidden />
-                        </Select.ItemIndicator>
-                      </Select.Item>
-                      <Select.Item
-                        value="priorityAscending"
-                        className="flex items-center gap-2 rounded px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 outline-none cursor-pointer data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700"
-                      >
-                        <Select.ItemText>Priority (ascending)</Select.ItemText>
-                        <Select.ItemIndicator className="ml-auto">
-                          <Check className="size-3.5" aria-hidden />
-                        </Select.ItemIndicator>
-                      </Select.Item>
-                      <Select.Item
-                        value="priorityDescending"
-                        className="flex items-center gap-2 rounded px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 outline-none cursor-pointer data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700"
-                      >
-                        <Select.ItemText>Priority (descending)</Select.ItemText>
-                        <Select.ItemIndicator className="ml-auto">
-                          <Check className="size-3.5" aria-hidden />
-                        </Select.ItemIndicator>
-                      </Select.Item>
-                      <Select.Item
-                        value="createdNewest"
-                        className="flex items-center gap-2 rounded px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 outline-none cursor-pointer data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700"
-                      >
-                        <Select.ItemText>Created (newest)</Select.ItemText>
-                        <Select.ItemIndicator className="ml-auto">
-                          <Check className="size-3.5" aria-hidden />
-                        </Select.ItemIndicator>
-                      </Select.Item>
-                      <Select.Item
-                        value="createdOldest"
-                        className="flex items-center gap-2 rounded px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 outline-none cursor-pointer data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700"
-                      >
-                        <Select.ItemText>Created (oldest)</Select.ItemText>
-                        <Select.ItemIndicator className="ml-auto">
-                          <Check className="size-3.5" aria-hidden />
-                        </Select.ItemIndicator>
-                      </Select.Item>
-                      <Select.Item
-                        value="updatedNewest"
-                        className="flex items-center gap-2 rounded px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 outline-none cursor-pointer data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700"
-                      >
-                        <Select.ItemText>Updated (newest)</Select.ItemText>
-                        <Select.ItemIndicator className="ml-auto">
-                          <Check className="size-3.5" aria-hidden />
-                        </Select.ItemIndicator>
-                      </Select.Item>
-                      <Select.Item
-                        value="updatedOldest"
-                        className="flex items-center gap-2 rounded px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 outline-none cursor-pointer data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700"
-                      >
-                        <Select.ItemText>Updated (oldest)</Select.ItemText>
-                        <Select.ItemIndicator className="ml-auto">
-                          <Check className="size-3.5" aria-hidden />
-                        </Select.ItemIndicator>
-                      </Select.Item>
-                    </Select.Viewport>
-                  </Select.Content>
-                </Select.Portal>
-              </Select.Root>
-            </div>
+                  <Select.Viewport className="p-1">
+                    <Select.Item
+                      value="custom"
+                      className="flex items-center gap-2 rounded px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 outline-none cursor-pointer data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700"
+                    >
+                      <Select.ItemText>Custom</Select.ItemText>
+                      <Select.ItemIndicator className="ml-auto">
+                        <Check className="size-3.5" aria-hidden />
+                      </Select.ItemIndicator>
+                    </Select.Item>
+                    <Select.Item
+                      value="priorityAscending"
+                      className="flex items-center gap-2 rounded px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 outline-none cursor-pointer data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700"
+                    >
+                      <Select.ItemText>Priority (ascending)</Select.ItemText>
+                      <Select.ItemIndicator className="ml-auto">
+                        <Check className="size-3.5" aria-hidden />
+                      </Select.ItemIndicator>
+                    </Select.Item>
+                    <Select.Item
+                      value="priorityDescending"
+                      className="flex items-center gap-2 rounded px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 outline-none cursor-pointer data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700"
+                    >
+                      <Select.ItemText>Priority (descending)</Select.ItemText>
+                      <Select.ItemIndicator className="ml-auto">
+                        <Check className="size-3.5" aria-hidden />
+                      </Select.ItemIndicator>
+                    </Select.Item>
+                    <Select.Item
+                      value="createdNewest"
+                      className="flex items-center gap-2 rounded px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 outline-none cursor-pointer data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700"
+                    >
+                      <Select.ItemText>Created (newest)</Select.ItemText>
+                      <Select.ItemIndicator className="ml-auto">
+                        <Check className="size-3.5" aria-hidden />
+                      </Select.ItemIndicator>
+                    </Select.Item>
+                    <Select.Item
+                      value="createdOldest"
+                      className="flex items-center gap-2 rounded px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 outline-none cursor-pointer data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700"
+                    >
+                      <Select.ItemText>Created (oldest)</Select.ItemText>
+                      <Select.ItemIndicator className="ml-auto">
+                        <Check className="size-3.5" aria-hidden />
+                      </Select.ItemIndicator>
+                    </Select.Item>
+                    <Select.Item
+                      value="updatedNewest"
+                      className="flex items-center gap-2 rounded px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 outline-none cursor-pointer data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700"
+                    >
+                      <Select.ItemText>Updated (newest)</Select.ItemText>
+                      <Select.ItemIndicator className="ml-auto">
+                        <Check className="size-3.5" aria-hidden />
+                      </Select.ItemIndicator>
+                    </Select.Item>
+                    <Select.Item
+                      value="updatedOldest"
+                      className="flex items-center gap-2 rounded px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 outline-none cursor-pointer data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700"
+                    >
+                      <Select.ItemText>Updated (oldest)</Select.ItemText>
+                      <Select.ItemIndicator className="ml-auto">
+                        <Check className="size-3.5" aria-hidden />
+                      </Select.ItemIndicator>
+                    </Select.Item>
+                  </Select.Viewport>
+                </Select.Content>
+              </Select.Portal>
+            </Select.Root>
           </div>
+        </div>
 
-          <div className="p-4 border-b border-neutral-100 dark:border-neutral-800 shrink-0">
-            {showAddForm ? (
-              <form onSubmit={handleAddTicket} className="space-y-2">
-                <textarea
-                  value={addTitle}
-                  onChange={(e) => setAddTitle(e.target.value)}
-                  placeholder={`${terminology.Item} title`}
-                  autoFocus
-                  rows={1}
-                  className="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md text-sm bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:ring-2 focus:ring-neutral-400 dark:focus:ring-neutral-500 focus:border-neutral-400 dark:focus:border-neutral-500 resize-none"
-                />
-                <TicketDescriptionEditor
-                  value={addDescription}
-                  onChange={setAddDescription}
-                  placeholder="Description (optional)"
-                  minHeight="4rem"
-                />
-                {activeBoard?.jiraEnabled ? (
+        <div className="p-4 border-b border-neutral-100 dark:border-neutral-800 shrink-0">
+          {showAddForm ? (
+            <form onSubmit={handleAddTicket} className="space-y-2">
+              <textarea
+                value={addTitle}
+                onChange={(e) => setAddTitle(e.target.value)}
+                placeholder={`${terminology.Item} title`}
+                autoFocus
+                rows={1}
+                className="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md text-sm bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:ring-2 focus:ring-neutral-400 dark:focus:ring-neutral-500 focus:border-neutral-400 dark:focus:border-neutral-500 resize-none"
+              />
+              <TicketDescriptionEditor
+                value={addDescription}
+                onChange={setAddDescription}
+                placeholder="Description (optional)"
+                minHeight="4rem"
+              />
+              {activeBoard?.jiraEnabled ? (
                 <div className="space-y-1.5">
                   <div className="flex items-center gap-1.5">
                     <span className="block text-xs font-medium text-neutral-500 dark:text-neutral-400">
@@ -812,11 +797,10 @@ export function InboxSidebar({
                           }
                         }}
                         placeholder="e.g. PROJ-123"
-                        className={`w-full px-3 py-1.5 border rounded-md text-sm bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:ring-2 focus:ring-neutral-400 dark:focus:ring-neutral-500 focus:border-neutral-400 dark:focus:border-neutral-500 ${
-                          customKeyError
-                            ? "border-red-400 dark:border-red-500"
-                            : "border-neutral-300 dark:border-neutral-600"
-                        }`}
+                        className={`w-full px-3 py-1.5 border rounded-md text-sm bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:ring-2 focus:ring-neutral-400 dark:focus:ring-neutral-500 focus:border-neutral-400 dark:focus:border-neutral-500 ${customKeyError
+                          ? "border-red-400 dark:border-red-500"
+                          : "border-neutral-300 dark:border-neutral-600"
+                          }`}
                       />
                       {customKeyError && (
                         <p className="text-xs text-red-600 dark:text-red-400 mt-0.5">
@@ -836,175 +820,174 @@ export function InboxSidebar({
                     </div>
                   )}
                 </div>
-                ) : null}
-                <div className="space-y-1.5">
-                  <span className="block text-xs font-medium text-neutral-500 dark:text-neutral-400">
-                    Priority (optional)
-                  </span>
-                  <Select.Root
-                    value={addPriority}
-                    onValueChange={(value) =>
-                      setAddPriority(value as TicketPriority | "none")
-                    }
+              ) : null}
+              <div className="space-y-1.5">
+                <span className="block text-xs font-medium text-neutral-500 dark:text-neutral-400">
+                  Priority (optional)
+                </span>
+                <Select.Root
+                  value={addPriority}
+                  onValueChange={(value) =>
+                    setAddPriority(value as TicketPriority | "none")
+                  }
+                >
+                  <Select.Trigger
+                    className="inline-flex w-full items-center justify-between px-3 py-1.5 border border-neutral-300 dark:border-neutral-600 rounded-md text-sm bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:ring-2 focus:ring-neutral-400 dark:focus:ring-neutral-500 focus:border-neutral-400 dark:focus:border-neutral-500 outline-none"
+                    aria-label="Priority"
                   >
-                    <Select.Trigger
-                      className="inline-flex w-full items-center justify-between px-3 py-1.5 border border-neutral-300 dark:border-neutral-600 rounded-md text-sm bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:ring-2 focus:ring-neutral-400 dark:focus:ring-neutral-500 focus:border-neutral-400 dark:focus:border-neutral-500 outline-none"
-                      aria-label="Priority"
+                    <Select.Value placeholder="No priority" />
+                    <Select.Icon>
+                      <ChevronDown
+                        className="size-3.5 text-neutral-500 dark:text-neutral-400"
+                        aria-hidden
+                      />
+                    </Select.Icon>
+                  </Select.Trigger>
+                  <Select.Portal>
+                    <Select.Content
+                      className="z-[60] overflow-hidden rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 shadow-lg"
+                      position="popper"
+                      sideOffset={4}
+                      align="start"
                     >
-                      <Select.Value placeholder="No priority" />
-                      <Select.Icon>
-                        <ChevronDown
-                          className="size-3.5 text-neutral-500 dark:text-neutral-400"
-                          aria-hidden
-                        />
-                      </Select.Icon>
-                    </Select.Trigger>
-                    <Select.Portal>
-                      <Select.Content
-                        className="z-[60] overflow-hidden rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 shadow-lg"
-                        position="popper"
-                        sideOffset={4}
-                        align="start"
-                      >
-                        <Select.Viewport className="p-1">
+                      <Select.Viewport className="p-1">
+                        <Select.Item
+                          value="none"
+                          className="flex items-center gap-2 px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 rounded cursor-pointer outline-none data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700"
+                        >
+                          <Select.ItemText>No priority</Select.ItemText>
+                          <Select.ItemIndicator className="ml-auto">
+                            <Check className="size-3.5" aria-hidden />
+                          </Select.ItemIndicator>
+                        </Select.Item>
+                        {TICKET_PRIORITY_VALUES.map((priority) => (
                           <Select.Item
-                            value="none"
+                            key={priority}
+                            value={priority}
                             className="flex items-center gap-2 px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 rounded cursor-pointer outline-none data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700"
                           >
-                            <Select.ItemText>No priority</Select.ItemText>
+                            <Select.ItemText>{priority}</Select.ItemText>
                             <Select.ItemIndicator className="ml-auto">
                               <Check className="size-3.5" aria-hidden />
                             </Select.ItemIndicator>
                           </Select.Item>
-                          {TICKET_PRIORITY_VALUES.map((priority) => (
-                            <Select.Item
-                              key={priority}
-                              value={priority}
-                              className="flex items-center gap-2 px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 rounded cursor-pointer outline-none data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700"
-                            >
-                              <Select.ItemText>{priority}</Select.ItemText>
-                              <Select.ItemIndicator className="ml-auto">
-                                <Check className="size-3.5" aria-hidden />
-                              </Select.ItemIndicator>
-                            </Select.Item>
-                          ))}
-                        </Select.Viewport>
-                      </Select.Content>
-                    </Select.Portal>
-                  </Select.Root>
-                </div>
-                <div className="space-y-1.5">
-                  <label
-                    htmlFor="ticket-due-date"
-                    className="block text-xs font-medium text-neutral-500 dark:text-neutral-400"
-                  >
-                    Due date (optional)
-                  </label>
-                  <input
-                    id="ticket-due-date"
-                    type="date"
-                    value={addDueDate}
-                    onChange={(e) => setAddDueDate(e.target.value)}
-                    className="w-full px-3 py-1.5 border border-neutral-300 dark:border-neutral-600 rounded-md text-sm bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:ring-2 focus:ring-neutral-400 dark:focus:ring-neutral-500 focus:border-neutral-400 dark:focus:border-neutral-500"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    type="submit"
-                    disabled={adding || !addTitle.trim()}
-                    className="px-3 py-1.5 text-sm font-medium bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-900 rounded-md hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50"
-                  >
-                    {adding ? "Adding…" : "Add"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowAddForm(false);
-                      setAddTitle("");
-                      setAddDescription("");
-                      setTicketKeyMode("none");
-                      setSelectedKey("");
-                      setCustomKeyInput("");
-                      setCustomKeyError("");
-                      setAddPriority("none");
-                      setAddDueDate("");
-                    }}
-                    className="px-3 py-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-md"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            ) : (
-              <Tooltip
-                content={`Add a local ${terminology.item} (${SHORTCUT_DISPLAY.newLocalTicket})`}
-                side="top"
-              >
+                        ))}
+                      </Select.Viewport>
+                    </Select.Content>
+                  </Select.Portal>
+                </Select.Root>
+              </div>
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="ticket-due-date"
+                  className="block text-xs font-medium text-neutral-500 dark:text-neutral-400"
+                >
+                  Due date (optional)
+                </label>
+                <input
+                  id="ticket-due-date"
+                  type="date"
+                  value={addDueDate}
+                  onChange={(e) => setAddDueDate(e.target.value)}
+                  className="w-full px-3 py-1.5 border border-neutral-300 dark:border-neutral-600 rounded-md text-sm bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:ring-2 focus:ring-neutral-400 dark:focus:ring-neutral-500 focus:border-neutral-400 dark:focus:border-neutral-500"
+                />
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  disabled={adding || !addTitle.trim()}
+                  className="px-3 py-1.5 text-sm font-medium bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-900 rounded-md hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50"
+                >
+                  {adding ? "Adding…" : "Add"}
+                </button>
                 <button
                   type="button"
-                  onClick={() => setShowAddForm(true)}
-                  className="w-full px-3 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-md transition-colors"
+                  onClick={() => {
+                    setShowAddForm(false);
+                    setAddTitle("");
+                    setAddDescription("");
+                    setTicketKeyMode("none");
+                    setSelectedKey("");
+                    setCustomKeyInput("");
+                    setCustomKeyError("");
+                    setAddPriority("none");
+                    setAddDueDate("");
+                  }}
+                  className="px-3 py-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-md"
                 >
-                  {`+ Add a local ${terminology.item}`}
+                  Cancel
                 </button>
-              </Tooltip>
-            )}
-          </div>
-
-          <div
-            className={`mx-3 my-2 flex-1 overflow-y-auto min-h-[8rem] rounded-md border-2 border-dashed p-4 transition-colors duration-150 ${
-              isOver
-                ? "border-blue-500 dark:border-blue-400 bg-blue-50/50 dark:bg-blue-950/30"
-                : "border-neutral-200/60 dark:border-neutral-600/60"
-            }`}
-          >
-            {inboxContent}
-          </div>
-          <div className="shrink-0 border-t border-neutral-200 dark:border-neutral-700 p-3 flex items-center justify-between gap-2">
+              </div>
+            </form>
+          ) : (
             <Tooltip
-              content={`Settings (${SHORTCUT_DISPLAY.settings})`}
+              content={`Add a local ${terminology.item} (${SHORTCUT_DISPLAY.newLocalTicket})`}
               side="top"
             >
               <button
                 type="button"
-                onClick={() => onSettingsOpen()}
-                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-neutral-100 rounded-md transition-colors"
-                aria-label="Settings"
+                onClick={() => setShowAddForm(true)}
+                className="w-full px-3 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-md transition-colors"
               >
-                <Settings2 className="size-5 shrink-0" aria-hidden />
-                Settings
+                {`+ Add a local ${terminology.item}`}
               </button>
             </Tooltip>
-            <div className="flex items-center gap-1">
-              <Tooltip content="Getting started" side="top">
-                <button
-                  type="button"
-                  onClick={() => setGettingStartedOpen(true)}
-                  className="flex items-center justify-center p-2 text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-700 dark:hover:text-neutral-200 rounded-md transition-colors"
-                  aria-label="Open getting started"
-                >
-                  <Info className="size-5" aria-hidden />
-                </button>
-              </Tooltip>
-              <Tooltip
-                content={`Toggle theme (${SHORTCUT_DISPLAY.toggleTheme})`}
-                side="top"
+          )}
+        </div>
+
+        <div
+          className={`mx-3 my-2 flex-1 overflow-y-auto min-h-[8rem] rounded-md border-2 border-dashed p-4 transition-colors duration-150 ${isOver
+            ? "border-blue-500 dark:border-blue-400 bg-blue-50/50 dark:bg-blue-950/30"
+            : "border-neutral-200/60 dark:border-neutral-600/60"
+            }`}
+        >
+          {inboxContent}
+        </div>
+        <div className="shrink-0 border-t border-neutral-200 dark:border-neutral-700 p-3 flex items-center justify-between gap-2">
+          <Tooltip
+            content={`Settings (${SHORTCUT_DISPLAY.settings})`}
+            side="top"
+          >
+            <button
+              type="button"
+              onClick={() => onSettingsOpen()}
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-neutral-100 rounded-md transition-colors"
+              aria-label="Settings"
+            >
+              <Settings2 className="size-5 shrink-0" aria-hidden />
+              Settings
+            </button>
+          </Tooltip>
+          <div className="flex items-center gap-1">
+            <Tooltip content="Getting started" side="top">
+              <button
+                type="button"
+                onClick={() => setGettingStartedOpen(true)}
+                className="flex items-center justify-center p-2 text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-700 dark:hover:text-neutral-200 rounded-md transition-colors"
+                aria-label="Open getting started"
               >
-                <button
-                  type="button"
-                  onClick={() => setTheme(getNextTheme(theme))}
-                  className="flex items-center justify-center p-2 text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-700 dark:hover:text-neutral-200 rounded-md transition-colors"
-                  aria-label="Toggle theme"
-                >
-                  {theme === "light" ? (
-                    <Sun className="size-5" aria-hidden />
-                  ) : (
-                    <Moon className="size-5" aria-hidden />
-                  )}
-                </button>
-              </Tooltip>
-            </div>
+                <Info className="size-5" aria-hidden />
+              </button>
+            </Tooltip>
+            <Tooltip
+              content={`Toggle theme (${SHORTCUT_DISPLAY.toggleTheme})`}
+              side="top"
+            >
+              <button
+                type="button"
+                onClick={() => setTheme(getNextTheme(theme))}
+                className="flex items-center justify-center p-2 text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-700 dark:hover:text-neutral-200 rounded-md transition-colors"
+                aria-label="Toggle theme"
+              >
+                {theme === "light" ? (
+                  <Sun className="size-5" aria-hidden />
+                ) : (
+                  <Moon className="size-5" aria-hidden />
+                )}
+              </button>
+            </Tooltip>
           </div>
+        </div>
       </div>
       <GettingStartedDialog
         open={gettingStartedOpen}
