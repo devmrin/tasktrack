@@ -28,6 +28,7 @@ import {
 } from "@/modules/settings";
 import { useColumnsQuery } from "@/modules/kanban";
 import { JiraSyncIcon } from "@/modules/inbox/components/JiraSyncIcon";
+import { LastSyncedLabel } from "@/modules/inbox/components/LastSyncedLabel";
 import { useInbox } from "@/modules/inbox/hooks/useInbox";
 import { isValidTicketKey } from "@/modules/tickets/utils/validateTicketKey";
 import { TicketCard } from "@/modules/kanban/components/TicketCard";
@@ -49,17 +50,6 @@ import { useBoardTerminology } from "@/modules/boards/hooks/useBoardTerminology"
 
 const SIDEBAR_WIDTH = 320;
 const SIDEBAR_COLLAPSED_WIDTH = 48;
-
-function formatLastSynced(isoString: string | null): string {
-  if (!isoString) return "";
-  const date = new Date(isoString);
-  const day = date.getDate();
-  const month = date.toLocaleString("en-US", { month: "short" });
-  const year = date.getFullYear();
-  const hours = date.getHours().toString().padStart(2, "0");
-  const minutes = date.getMinutes().toString().padStart(2, "0");
-  return `${day} ${month} ${year}, ${hours}:${minutes}`;
-}
 
 export interface InboxSidebarHandle {
   openAddTicketForm: () => void;
@@ -563,9 +553,7 @@ export function InboxSidebar({
                 ) : null}
               </div>
               {lastSyncedAt && boardJiraUi && (
-                <div className="mt-1 text-right text-[10px] text-neutral-400 dark:text-neutral-500">
-                  Last synced on {formatLastSynced(lastSyncedAt)}
-                </div>
+                <LastSyncedLabel isoString={lastSyncedAt} />
               )}
             </div>
           ) : null}
