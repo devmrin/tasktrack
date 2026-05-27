@@ -490,7 +490,7 @@ export function InboxSidebar({
                   </Tooltip>
                   {!hasJiraTicketsInDb ? (
                     <Tooltip
-                      content={`Fetch JIRA ${terminology.items} (${SHORTCUT_DISPLAY.syncJira})`}
+                      content={`Fetch ${terminology.items} (${SHORTCUT_DISPLAY.syncJira})`}
                       side="bottom"
                     >
                       <button
@@ -500,18 +500,18 @@ export function InboxSidebar({
                         aria-disabled={syncing || undefined}
                         className={`flex h-7 items-center gap-1.5 px-2.5 text-xs font-medium rounded-md bg-[#0052CC] text-white hover:bg-[#0747A6] transition-colors ${syncing ? "pointer-events-none opacity-70" : ""
                           }`}
-                        aria-label={`Fetch JIRA ${terminology.items}`}
+                        aria-label={`Fetch ${terminology.items}`}
                       >
                         <JiraSyncIcon syncing={syncing} />
                         <StableWidthLabel
                           variants={[
-                            `Fetch JIRA ${terminology.items}`,
+                            `Fetch ${terminology.items}`,
                             "Fetching…",
                           ]}
                         >
                           {syncing
                             ? "Fetching…"
-                            : `Fetch JIRA ${terminology.items}`}
+                            : `Fetch ${terminology.items}`}
                         </StableWidthLabel>
                         <kbd className="ml-0.5 px-1 py-0.5 text-[10px] font-medium text-white/85 bg-white/20 border border-white/30 rounded">
                           {SHORTCUT_DISPLAY.syncJira}
