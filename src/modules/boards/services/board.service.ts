@@ -69,7 +69,6 @@ export async function createBoard(rawName: string): Promise<Board> {
   const nextOrderBoard = typeof maxOrderBoard?.order === 'number' ? maxOrderBoard.order + 1 : 0;
 
   const boardId = crypto.randomUUID();
-  const hasToken = await settingsHasNonEmptyAccessToken();
 
   await db.transaction('rw', db.boards, db.columns, async () => {
     await db.boards.add({
@@ -77,7 +76,7 @@ export async function createBoard(rawName: string): Promise<Board> {
       name: trimmed,
       order: nextOrderBoard,
       isDefault: false,
-      jiraEnabled: hasToken,
+      jiraEnabled: false,
       createdAt: now,
       updatedAt: now,
     });
