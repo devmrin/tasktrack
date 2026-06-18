@@ -62,6 +62,9 @@ export interface Setting {
 }
 
 export type TransactionEventType =
+  | 'board_created'
+  | 'board_updated'
+  | 'board_deleted'
   | 'ticket_created_local'
   | 'ticket_moved'
   | 'ticket_deleted'

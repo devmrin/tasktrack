@@ -60,6 +60,7 @@ export function useCreateBoardMutation() {
     mutationFn: (name: string) => createBoardSvc(name),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.boards });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.history.all });
       showToast('Board created');
     },
     onError: () => {
@@ -76,6 +77,7 @@ export function useRenameBoardMutation() {
       renameBoardSvc(boardId, name),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.boards });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.history.all });
       showToast('Board renamed');
     },
     onError: () => {
@@ -92,6 +94,7 @@ export function useDeleteBoardMutation() {
     onSuccess: (_void, deletedBoardId) => {
       syncActiveBoardStorageAfterDelete(deletedBoardId);
       void queryClient.invalidateQueries({ queryKey: queryKeys.boards });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.history.all });
       void queryClient.invalidateQueries({ queryKey: ['tickets'] });
       void queryClient.invalidateQueries({ queryKey: ['columns'] });
       showToast('Board deleted');

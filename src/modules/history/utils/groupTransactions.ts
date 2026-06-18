@@ -144,6 +144,12 @@ function buildTransactionMessageBody(transaction: TransactionRecord): string {
     return transaction.summary;
   }
   switch (transaction.eventType) {
+    case 'board_created':
+      return 'Created board';
+    case 'board_updated':
+      return 'Updated board';
+    case 'board_deleted':
+      return 'Deleted board';
     case 'ticket_created_local':
       return 'Created local ticket';
     case 'ticket_moved': {

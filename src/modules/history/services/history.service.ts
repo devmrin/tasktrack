@@ -22,6 +22,7 @@ export const ALL_TIME_HISTORY_DATE_RANGE: HistoryDateRange = Object.freeze({
 interface RecordHistoryInput {
   readonly eventType: TransactionEventType;
   readonly boardId?: string;
+  readonly boardTitle?: string;
   readonly ticketId?: string;
   readonly ticketTitle?: string;
   readonly ticketKey?: string;
@@ -152,7 +153,7 @@ export async function recordHistoryTransaction(
 ): Promise<void> {
   const fromColumnTitle = await resolveColumnTitle(input.fromColumnId);
   const toColumnTitle = await resolveColumnTitle(input.toColumnId);
-  const boardTitle = await resolveBoardTitleSnapshot(input.boardId);
+  const boardTitle = input.boardTitle ?? (await resolveBoardTitleSnapshot(input.boardId));
   const record: TransactionRecord = {
     id: crypto.randomUUID(),
     createdAt: input.createdAt ?? Date.now(),

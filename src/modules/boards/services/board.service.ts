@@ -1,6 +1,7 @@
 import { db, type Board } from '@/db/database';
 import type { BoardExport } from '@/modules/boards/types/board.types';
 import { DEFAULT_BOARD_ID } from '@/modules/boards/constants/board.constants';
+import { recordHistoryTransaction } from '@/modules/history/services/history.service';
 
 const SETTINGS_ACCESS_TOKEN_KEY = 'atlassian_access_token';
 
@@ -99,6 +100,14 @@ export async function createBoard(rawName: string): Promise<Board> {
   if (!created) {
     throw new Error('Failed to create board');
   }
+
+  await recordHistoryTransaction({
+    eventType: 'board_created',
+    boardId: created.id,
+    boardTitle: created.name,
+    summary: 'Created board',
+  });
+
   return created;
 }
 
@@ -107,10 +116,22 @@ export async function renameBoard(boardId: string, rawName: string): Promise<voi
   if (!trimmed) {
     throw new Error('Board name cannot be empty');
   }
+
+  const existingBoard = await db.boards.get(boardId);
+
   await db.boards.update(boardId, {
     name: trimmed,
     updatedAt: Date.now(),
   });
+
+  if (existingBoard && existingBoard.name !== trimmed) {
+    await recordHistoryTransaction({
+      eventType: 'board_updated',
+      boardId,
+      boardTitle: trimmed,
+      summary: `Renamed board from "${existingBoard.name}" to "${trimmed}"`,
+    });
+  }
 }
 
 export async function setBoardJiraEnabled(boardId: string, enabled: boolean): Promise<void> {
@@ -182,6 +203,13 @@ export async function deleteBoard(boardId: string): Promise<void> {
 
   const remaining = await db.boards.orderBy('order').toArray();
   await reorderBoardOrdersFromList(remaining);
+
+  await recordHistoryTransaction({
+    eventType: 'board_deleted',
+    boardId,
+    boardTitle: target.name,
+    summary: `Deleted board "${target.name}"`,
+  });
 }
 
 export interface BoardStats {

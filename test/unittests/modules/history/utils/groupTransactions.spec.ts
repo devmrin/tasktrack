@@ -149,3 +149,41 @@ test('appends board to move description when recorded', () => {
   );
 });
 
+test('formats board lifecycle events using stored board snapshots', () => {
+  assert.equal(
+    formatTransactionMessage(
+      createTransaction({
+        eventType: 'board_created',
+        summary: undefined,
+        boardId: 'board-1',
+        boardTitle: 'Roadmap',
+      }),
+    ),
+    'Created board in Roadmap',
+  );
+
+  assert.equal(
+    formatTransactionMessage(
+      createTransaction({
+        eventType: 'board_updated',
+        summary: 'Renamed board from "Ops" to "Platform"',
+        boardId: 'board-2',
+        boardTitle: 'Platform',
+      }),
+    ),
+    'Renamed board from "Ops" to "Platform" in Platform',
+  );
+
+  assert.equal(
+    formatTransactionMessage(
+      createTransaction({
+        eventType: 'board_deleted',
+        summary: 'Deleted board "Backlog"',
+        boardId: 'board-3',
+        boardTitle: 'Backlog',
+      }),
+    ),
+    'Deleted board "Backlog" in Backlog',
+  );
+});
+

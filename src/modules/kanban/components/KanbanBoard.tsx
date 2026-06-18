@@ -88,12 +88,14 @@ export function KanbanBoard() {
 
   const renderBoardContent = () => (
     <>
-      <div className="px-3 sm:px-4 lg:px-6 pt-3 sm:pt-4 pb-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 min-h-12">
-        <BoardSwitcher />
+      <div className="px-3 sm:px-4 lg:px-6 pt-3 sm:pt-4 pb-2 flex items-center justify-between gap-2 sm:gap-4 min-h-12 flex-wrap sm:flex-nowrap">
+        <div className="min-w-0 flex-1">
+          <BoardSwitcher />
+        </div>
         {hasColumns && (
-          <div className="w-full sm:w-auto sm:min-w-[22rem] sm:max-w-[28rem] flex sm:justify-end">
+          <div className="flex shrink-0 justify-end">
             {showCreateColumnInput ? (
-              <div className="flex w-full sm:w-auto flex-col sm:flex-row sm:items-center gap-2">
+              <div className="flex w-full basis-full sm:basis-auto sm:w-auto flex-col sm:flex-row sm:items-center gap-2">
                 <input
                   type="text"
                   value={newColumnTitle}
@@ -134,7 +136,7 @@ export function KanbanBoard() {
               <button
                 type="button"
                 onClick={() => setShowCreateColumnInput(true)}
-                className="inline-flex items-center justify-center gap-2 h-9 sm:h-8 w-full sm:w-auto px-3 text-sm font-medium rounded border border-neutral-200 dark:border-neutral-900 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700"
+                className="inline-flex items-center justify-center gap-2 h-9 sm:h-8 px-3 text-sm font-medium rounded border border-neutral-200 dark:border-neutral-900 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 whitespace-nowrap"
               >
                 <Plus className="size-4" aria-hidden />
                 Add column
@@ -291,7 +293,8 @@ export function KanbanBoard() {
         mode={focusZoneMode}
       />
 
-      {(!isMobileLayout || resolvedMobileView === "board") && renderBoardContent()}
+      {(!isMobileLayout || resolvedMobileView === "board") &&
+        renderBoardContent()}
     </div>
   );
 }
