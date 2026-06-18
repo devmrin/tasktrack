@@ -1,34 +1,42 @@
-import { useState } from 'react';
-import * as Dialog from '@radix-ui/react-dialog';
-import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { Check, ChevronDown, Loader2, Pencil, Plus, Trash2 } from 'lucide-react';
-import { useActiveBoard } from '@/modules/boards/hooks/useActiveBoard';
+import { useState } from "react";
+import * as Dialog from "@radix-ui/react-dialog";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import {
+  Check,
+  ChevronDown,
+  Loader2,
+  Pencil,
+  Plus,
+  Trash2,
+} from "lucide-react";
+import { ConfirmationDialog } from "@/components/ConfirmationDialog";
+import { useActiveBoard } from "@/modules/boards/hooks/useActiveBoard";
 import {
   useCreateBoardMutation,
   useDeleteBoardMutation,
   useRenameBoardMutation,
-} from '@/modules/boards/hooks/useBoardsQuery';
-
-function confirmDelete(boardName: string): boolean {
-  return globalThis.confirm(
-    `Delete board "${boardName}"? All columns and tickets on this board will be permanently removed.`,
-  );
-}
+} from "@/modules/boards/hooks/useBoardsQuery";
 
 export function BoardSwitcher() {
-  const { boards, activeBoard, activeBoardId, setActiveBoardId, isLoading } = useActiveBoard();
+  const { boards, activeBoard, activeBoardId, setActiveBoardId, isLoading } =
+    useActiveBoard();
   const createBoardMutation = useCreateBoardMutation();
   const renameBoardMutation = useRenameBoardMutation();
   const deleteBoardMutation = useDeleteBoardMutation();
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [newBoardName, setNewBoardName] = useState('');
+  const [newBoardName, setNewBoardName] = useState("");
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [renameBoardId, setRenameBoardId] = useState<string | null>(null);
-  const [renameDraft, setRenameDraft] = useState('');
+  const [renameDraft, setRenameDraft] = useState("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [boardToDelete, setBoardToDelete] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
-  const displayName = activeBoard?.name ?? (isLoading ? 'Loading…' : 'Board');
+  const displayName = activeBoard?.name ?? (isLoading ? "Loading…" : "Board");
 
   function handleCreateSubmit() {
     const name = newBoardName.trim();
@@ -36,7 +44,7 @@ export function BoardSwitcher() {
     createBoardMutation.mutate(name, {
       onSuccess: (created) => {
         setActiveBoardId(created.id);
-        setNewBoardName('');
+        setNewBoardName("");
         setCreateDialogOpen(false);
         setMenuOpen(false);
       },
@@ -65,13 +73,31 @@ export function BoardSwitcher() {
     );
   }
 
-  function handleDelete(boardId: string, boardName: string, onlyBoard: boolean, isDefault: boolean) {
+  function handleDelete(
+    boardId: string,
+    boardName: string,
+    onlyBoard: boolean,
+    isDefault: boolean,
+  ) {
     if (onlyBoard || isDefault) {
       return;
     }
-    if (!confirmDelete(boardName)) return;
-    deleteBoardMutation.mutate(boardId);
+    setBoardToDelete({ id: boardId, name: boardName });
+    setDeleteDialogOpen(true);
     setMenuOpen(false);
+  }
+
+  function handleDeleteConfirm() {
+    if (!boardToDelete) {
+      return;
+    }
+
+    deleteBoardMutation.mutate(boardToDelete.id, {
+      onSuccess: () => {
+        setDeleteDialogOpen(false);
+        setBoardToDelete(null);
+      },
+    });
   }
 
   return (
@@ -85,7 +111,10 @@ export function BoardSwitcher() {
             disabled={isLoading || boards.length === 0}
           >
             <span className="truncate">{displayName}</span>
-            <ChevronDown className="size-4 shrink-0 text-neutral-500" aria-hidden />
+            <ChevronDown
+              className="size-4 shrink-0 text-neutral-500"
+              aria-hidden
+            />
           </button>
         </DropdownMenu.Trigger>
 
@@ -110,7 +139,9 @@ export function BoardSwitcher() {
                     }}
                   >
                     <span className="flex size-5 shrink-0 items-center justify-center text-neutral-500">
-                      {selected ? <Check className="size-4" aria-hidden /> : null}
+                      {selected ? (
+                        <Check className="size-4" aria-hidden />
+                      ) : null}
                     </span>
                     <span className="truncate text-left">{b.name}</span>
                   </DropdownMenu.Item>
@@ -134,9 +165,9 @@ export function BoardSwitcher() {
                       title={
                         blockedDelete
                           ? b.isDefault
-                            ? 'Cannot delete default board'
-                            : 'Cannot delete the only board'
-                          : 'Delete board'
+                            ? "Cannot delete default board"
+                            : "Cannot delete the only board"
+                          : "Delete board"
                       }
                       className="rounded p-1 text-neutral-500 hover:bg-red-50 hover:text-red-700 disabled:opacity-40 dark:hover:bg-red-950/40 dark:hover:text-red-300"
                       onClick={(event) => {
@@ -177,7 +208,9 @@ export function BoardSwitcher() {
             <Dialog.Title className="text-base font-semibold text-neutral-900 dark:text-neutral-100">
               New board
             </Dialog.Title>
-            <Dialog.Description className="sr-only">Enter a name for the new board</Dialog.Description>
+            <Dialog.Description className="sr-only">
+              Enter a name for the new board
+            </Dialog.Description>
             <input
               type="text"
               value={newBoardName}
@@ -185,7 +218,7 @@ export function BoardSwitcher() {
               placeholder="Board name"
               className="mt-3 w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100"
               onKeyDown={(e) => {
-                if (e.key === 'Enter') {
+                if (e.key === "Enter") {
                   e.preventDefault();
                   handleCreateSubmit();
                 }
@@ -222,14 +255,16 @@ export function BoardSwitcher() {
             <Dialog.Title className="text-base font-semibold text-neutral-900 dark:text-neutral-100">
               Rename board
             </Dialog.Title>
-            <Dialog.Description className="sr-only">Change the board name</Dialog.Description>
+            <Dialog.Description className="sr-only">
+              Change the board name
+            </Dialog.Description>
             <input
               type="text"
               value={renameDraft}
               onChange={(e) => setRenameDraft(e.target.value)}
               className="mt-3 w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100"
               onKeyDown={(e) => {
-                if (e.key === 'Enter') {
+                if (e.key === "Enter") {
                   e.preventDefault();
                   handleRenameSubmit();
                 }
@@ -258,6 +293,26 @@ export function BoardSwitcher() {
           </Dialog.Content>
         </Dialog.Portal>
       </Dialog.Root>
+
+      <ConfirmationDialog
+        open={deleteDialogOpen}
+        onOpenChange={(open) => {
+          setDeleteDialogOpen(open);
+          if (!open) {
+            setBoardToDelete(null);
+          }
+        }}
+        title="Delete board?"
+        description={
+          boardToDelete
+            ? `Delete board "${boardToDelete.name}"? All columns and tickets on this board will be permanently removed.`
+            : ""
+        }
+        confirmLabel="Delete"
+        confirmVariant="destructive"
+        loading={deleteBoardMutation.isPending}
+        onConfirm={handleDeleteConfirm}
+      />
     </>
   );
 }
