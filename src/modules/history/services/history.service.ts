@@ -5,7 +5,19 @@ import {
   type TransactionTicketRef,
 } from '@/db/database';
 import { INBOX_COLUMN_ID } from '@/modules/inbox';
-import type { HistoryDateRange } from '@/modules/history/types';
+import type {
+  HistoryDateRange,
+  HistoryDateRangePreset,
+  HistoryDeleteRange,
+  HistoryQueryFilters,
+} from '@/modules/history/types';
+
+const DAY_IN_MS = 24 * 60 * 60 * 1000;
+
+export const ALL_TIME_HISTORY_DATE_RANGE: HistoryDateRange = Object.freeze({
+  from: null,
+  to: null,
+});
 
 interface RecordHistoryInput {
   readonly eventType: TransactionEventType;
@@ -31,8 +43,72 @@ function getStartOfDay(timestamp: number): number {
   return date.getTime();
 }
 
-export function resolveHistoryRangeStart(
-  dateRange: HistoryDateRange,
+function getEndOfDay(timestamp: number): number {
+  const date = new Date(timestamp);
+  date.setHours(23, 59, 59, 999);
+  return date.getTime();
+}
+
+export function createHistoryDateRangeFromPreset(
+  preset: HistoryDateRangePreset,
+  nowTimestamp = Date.now(),
+): HistoryDateRange {
+  const startOfToday = getStartOfDay(nowTimestamp);
+  const endOfToday = getEndOfDay(nowTimestamp);
+
+  if (preset === 'all') {
+    return ALL_TIME_HISTORY_DATE_RANGE;
+  }
+  if (preset === 'today') {
+    return {
+      from: startOfToday,
+      to: endOfToday,
+    };
+  }
+
+  const dayCountByPreset: Record<Exclude<HistoryDateRangePreset, 'all' | 'today'>, number> = {
+    last7Days: 7,
+    last30Days: 30,
+    last90Days: 90,
+    last365Days: 365,
+    last730Days: 730,
+  };
+
+  const dayCount = dayCountByPreset[preset];
+
+  return {
+    from: startOfToday - (dayCount - 1) * DAY_IN_MS,
+    to: endOfToday,
+  };
+}
+
+export function normalizeHistoryDateRange(dateRange: HistoryDateRange): HistoryDateRange {
+  const normalizedFrom = dateRange.from === null ? null : getStartOfDay(dateRange.from);
+  const normalizedTo = dateRange.to === null ? null : getEndOfDay(dateRange.to);
+
+  if (normalizedFrom !== null && normalizedTo !== null && normalizedFrom > normalizedTo) {
+    const originalFrom = dateRange.from;
+    const originalTo = dateRange.to;
+    if (originalFrom === null || originalTo === null) {
+      return {
+        from: normalizedFrom,
+        to: normalizedTo,
+      };
+    }
+    return {
+      from: getStartOfDay(originalTo),
+      to: getEndOfDay(originalFrom),
+    };
+  }
+
+  return {
+    from: normalizedFrom,
+    to: normalizedTo,
+  };
+}
+
+export function resolveHistoryDeleteRangeStart(
+  dateRange: HistoryDeleteRange,
   nowTimestamp = Date.now(),
 ): number | null {
   const startOfToday = getStartOfDay(nowTimestamp);
@@ -40,10 +116,10 @@ export function resolveHistoryRangeStart(
     return startOfToday;
   }
   if (dateRange === 'last7Days') {
-    return startOfToday - 6 * 24 * 60 * 60 * 1000;
+    return startOfToday - 6 * DAY_IN_MS;
   }
   if (dateRange === 'last30Days') {
-    return startOfToday - 29 * 24 * 60 * 60 * 1000;
+    return startOfToday - 29 * DAY_IN_MS;
   }
   return null;
 }
@@ -102,14 +178,28 @@ export async function recordHistoryTransaction(
 }
 
 export async function getHistoryTransactions(
-  dateRange: HistoryDateRange,
+  filters: HistoryQueryFilters,
 ): Promise<TransactionRecord[]> {
-  const rangeStart = resolveHistoryRangeStart(dateRange);
+  const normalizedDateRange = normalizeHistoryDateRange(filters.dateRange);
   const transactions =
-    rangeStart === null
+    normalizedDateRange.from === null
       ? await db.transactions.toArray()
-      : await db.transactions.where('createdAt').aboveOrEqual(rangeStart).toArray();
-  return transactions.sort((a, b) => {
+      : await db.transactions.where('createdAt').aboveOrEqual(normalizedDateRange.from).toArray();
+
+  const filteredTransactions = transactions.filter((transaction) => {
+    if (
+      normalizedDateRange.to !== null
+      && transaction.createdAt > normalizedDateRange.to
+    ) {
+      return false;
+    }
+    if (filters.boardId !== null && transaction.boardId !== filters.boardId) {
+      return false;
+    }
+    return true;
+  });
+
+  return filteredTransactions.sort((a, b) => {
     if (a.createdAt !== b.createdAt) {
       return b.createdAt - a.createdAt;
     }
@@ -118,9 +208,9 @@ export async function getHistoryTransactions(
 }
 
 export async function deleteHistoryTransactions(
-  dateRange: HistoryDateRange,
+  dateRange: HistoryDeleteRange,
 ): Promise<void> {
-  const rangeStart = resolveHistoryRangeStart(dateRange);
+  const rangeStart = resolveHistoryDeleteRangeStart(dateRange);
   if (dateRange === 'all') {
     await db.transactions.clear();
     return;

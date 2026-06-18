@@ -98,6 +98,76 @@
 }
 
 @layer components {
+  .history-date-picker .rdp-root {
+    --rdp-accent-color: theme('colors.neutral.900');
+    --rdp-accent-background-color: theme('colors.neutral.200');
+    --rdp-day-height: 40px;
+    --rdp-day-width: 40px;
+    --rdp-day_button-height: 36px;
+    --rdp-day_button-width: 36px;
+    --rdp-day_button-border-radius: 0.75rem;
+    --rdp-selected-border: 2px solid theme('colors.neutral.900');
+    --rdp-today-color: theme('colors.blue.600');
+    --rdp-range_middle-background-color: theme('colors.neutral.100');
+    --rdp-range_middle-color: theme('colors.neutral.900');
+    --rdp-range_start-date-background-color: theme('colors.neutral.900');
+    --rdp-range_end-date-background-color: theme('colors.neutral.900');
+    --rdp-months-gap: 1.25rem;
+    @apply text-neutral-900;
+  }
+  .dark .history-date-picker .rdp-root {
+    --rdp-accent-color: theme('colors.neutral.100');
+    --rdp-accent-background-color: theme('colors.neutral.800');
+    --rdp-selected-border: 2px solid theme('colors.neutral.100');
+    --rdp-today-color: theme('colors.blue.400');
+    --rdp-range_middle-background-color: rgb(38 38 38 / 0.95);
+    --rdp-range_middle-color: theme('colors.neutral.100');
+    --rdp-range_start-date-background-color: theme('colors.neutral.100');
+    --rdp-range_end-date-background-color: theme('colors.neutral.100');
+    @apply text-neutral-100;
+  }
+  .history-date-picker .rdp-months {
+    @apply flex-col gap-4 md:flex-row;
+  }
+  .history-date-picker .rdp-month_caption {
+    @apply mb-2 items-center text-sm font-semibold;
+  }
+  .history-date-picker .rdp-caption_label {
+    @apply text-sm font-semibold text-neutral-900 dark:text-neutral-100;
+  }
+  .history-date-picker .rdp-nav {
+    @apply gap-1;
+  }
+  .history-date-picker .rdp-button_previous,
+  .history-date-picker .rdp-button_next {
+    @apply rounded-md border border-neutral-200 text-neutral-700 transition-colors hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-800;
+  }
+  .history-date-picker .rdp-chevron {
+    @apply fill-current;
+  }
+  .history-date-picker .rdp-weekday {
+    @apply pb-2 text-[11px] font-medium uppercase tracking-wide text-neutral-400 dark:text-neutral-500;
+  }
+  .history-date-picker .rdp-day_button {
+    @apply text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-100 dark:text-neutral-200 dark:hover:bg-neutral-800;
+  }
+  .history-date-picker .rdp-today:not(.rdp-outside) .rdp-day_button {
+    @apply border border-blue-200 dark:border-blue-500/50;
+  }
+  .history-date-picker .rdp-range_start .rdp-day_button,
+  .history-date-picker .rdp-range_end .rdp-day_button,
+  .history-date-picker .rdp-selected .rdp-day_button {
+    @apply text-white dark:text-neutral-900;
+  }
+  .history-date-picker .rdp-range_middle .rdp-day_button {
+    @apply rounded-none;
+  }
+  .history-date-picker .rdp-outside .rdp-day_button {
+    @apply text-neutral-400 dark:text-neutral-600;
+  }
+  .history-date-picker .rdp-disabled .rdp-day_button {
+    @apply text-neutral-300 dark:text-neutral-700;
+  }
   .ticket-description-editor {
     @apply min-h-[4rem] overflow-visible;
   }

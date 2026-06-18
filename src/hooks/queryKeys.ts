@@ -1,3 +1,5 @@
+import type { HistoryQueryFilters } from '@/modules/history/types';
+
 export const queryKeys = {
   boards: ['boards'] as const,
   columns: (boardId: string) => ['columns', boardId] as const,
@@ -14,6 +16,6 @@ export const queryKeys = {
   },
   history: {
     all: ['history'] as const,
-    list: (dateRange: string) => ['history', dateRange] as const,
+    list: (filters: HistoryQueryFilters) => ['history', filters] as const,
   },
 } as const;

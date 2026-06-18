@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState } from "react";
 import {
   ArrowLeft,
   ChevronDown,
@@ -6,12 +6,18 @@ import {
   Check,
   History,
   SquareKanban,
-} from 'lucide-react';
-import { Link } from '@tanstack/react-router';
-import * as Select from '@/components/Select';
-import type { TransactionRecord, TransactionTicketRef } from '@/db/database';
-import { useHistoryTransactionsQuery } from '@/modules/history/hooks/useHistory';
-import type { HistoryDateRange, HistoryGroupMode } from '@/modules/history/types';
+} from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import * as Select from "@/components/Select";
+import type { TransactionRecord, TransactionTicketRef } from "@/db/database";
+import { useBoardsQuery } from "@/modules/boards/hooks/useBoardsQuery";
+import { useHistoryTransactionsQuery } from "@/modules/history/hooks/useHistory";
+import { HistoryDateRangePicker } from "@/modules/history/components/HistoryDateRangePicker";
+import { ALL_TIME_HISTORY_DATE_RANGE } from "@/modules/history/services/history.service";
+import type {
+  HistoryGroupMode,
+  HistoryQueryFilters,
+} from "@/modules/history/types";
 import {
   formatTransactionMessageWithoutBoard,
   formatTransactionTime,
@@ -19,18 +25,11 @@ import {
   getJiraSyncTicketDetails,
   groupTransactionsByDate,
   groupTransactionsByTicket,
-} from '@/modules/history/utils/groupTransactions';
-
-const DATE_RANGE_LABEL: Record<HistoryDateRange, string> = {
-  all: 'All time',
-  today: 'Today',
-  last7Days: 'Last 7 days',
-  last30Days: 'Last 30 days',
-};
+} from "@/modules/history/utils/groupTransactions";
 
 const GROUP_MODE_LABEL: Record<HistoryGroupMode, string> = {
-  date: 'Group by date',
-  ticket: 'Group by ticket',
+  date: "Group by date",
+  ticket: "Group by ticket",
 };
 const EMPTY_TRANSACTIONS: readonly TransactionRecord[] = [];
 
@@ -38,23 +37,22 @@ function getTransactionTicketLabel(ticket: TransactionTicketRef): string {
   if (ticket.ticketKey) {
     return ticket.ticketKey;
   }
-  if (ticket.ticketType === 'local') {
+  if (ticket.ticketType === "local") {
     return `Local-${ticket.ticketId.slice(0, 8)}`;
   }
   return ticket.ticketId.slice(0, 8);
 }
 
-function HistoryBoardKanbanBadge({
-  name,
-}: {
-  readonly name: string;
-}) {
+function HistoryBoardKanbanBadge({ name }: { readonly name: string }) {
   return (
     <span
       className="inline-flex shrink-0 items-center gap-0.5 text-neutral-600 dark:text-neutral-300"
       aria-label={`Board: ${name}`}
     >
-      <SquareKanban className="size-3.5 shrink-0 text-neutral-500 dark:text-neutral-400" aria-hidden />
+      <SquareKanban
+        className="size-3.5 shrink-0 text-neutral-500 dark:text-neutral-400"
+        aria-hidden
+      />
       <span className="font-medium">{name}</span>
     </span>
   );
@@ -72,7 +70,7 @@ function HistoryBoardContextInline({
     return body;
   }
 
-  const displayName = board.kind === 'home' ? 'Home' : board.name;
+  const displayName = board.kind === "home" ? "Home" : board.name;
 
   return (
     <span className="inline-flex max-w-full min-w-0 flex-wrap items-center gap-x-1 gap-y-0.5 text-neutral-900 dark:text-neutral-100">
@@ -85,11 +83,7 @@ function HistoryBoardContextInline({
   );
 }
 
-function TicketBadge({
-  ticketLabel,
-}: {
-  readonly ticketLabel?: string;
-}) {
+function TicketBadge({ ticketLabel }: { readonly ticketLabel?: string }) {
   if (!ticketLabel) {
     return null;
   }
@@ -149,7 +143,9 @@ function TicketListSection({
         <div className="text-[11px] font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
           {label}
         </div>
-        <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">None</p>
+        <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+          None
+        </p>
       </div>
     );
   }
@@ -160,7 +156,10 @@ function TicketListSection({
       </div>
       <ul className="mt-1 space-y-1">
         {tickets.map((ticket) => (
-          <li key={`${label}-${ticket.ticketId}`} className="flex items-start gap-2">
+          <li
+            key={`${label}-${ticket.ticketId}`}
+            className="flex items-start gap-2"
+          >
             <span className="mt-1 size-1.5 shrink-0 rounded-full bg-neutral-400 dark:bg-neutral-500" />
             <div className="min-w-0">
               <p className="text-xs font-medium text-neutral-700 dark:text-neutral-200">
@@ -178,11 +177,23 @@ function TicketListSection({
 }
 
 export function HistoryPage() {
-  const [groupMode, setGroupMode] = useState<HistoryGroupMode>('date');
-  const [dateRange, setDateRange] = useState<HistoryDateRange>('all');
-  const [expandedJiraRows, setExpandedJiraRows] = useState<Set<string>>(new Set());
-  const transactionsQuery = useHistoryTransactionsQuery(dateRange);
+  const [groupMode, setGroupMode] = useState<HistoryGroupMode>("date");
+  const [dateRange, setDateRange] = useState(ALL_TIME_HISTORY_DATE_RANGE);
+  const [boardId, setBoardId] = useState<string | null>(null);
+  const [expandedJiraRows, setExpandedJiraRows] = useState<Set<string>>(
+    new Set(),
+  );
+  const boardsQuery = useBoardsQuery();
+  const filters = useMemo<HistoryQueryFilters>(
+    () => ({
+      boardId,
+      dateRange,
+    }),
+    [boardId, dateRange],
+  );
+  const transactionsQuery = useHistoryTransactionsQuery(filters);
   const transactions = transactionsQuery.data ?? EMPTY_TRANSACTIONS;
+  const boards = boardsQuery.data ?? [];
 
   const dateGroups = useMemo(
     () => groupTransactionsByDate(transactions),
@@ -226,7 +237,7 @@ export function HistoryPage() {
           </div>
         </div>
 
-        <div className="mb-5 grid gap-3 rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-700 dark:bg-neutral-900 md:grid-cols-2">
+        <div className="mb-5 grid gap-3 rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-700 dark:bg-neutral-900 md:grid-cols-3">
           <div className="space-y-1.5">
             <span className="text-xs font-medium uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
               Grouping
@@ -257,7 +268,9 @@ export function HistoryPage() {
                           value={mode}
                           className="flex cursor-pointer items-center gap-2 rounded px-3 py-1.5 text-sm text-neutral-700 outline-none data-[highlighted]:bg-neutral-100 dark:text-neutral-300 dark:data-[highlighted]:bg-neutral-700"
                         >
-                          <Select.ItemText>{GROUP_MODE_LABEL[mode]}</Select.ItemText>
+                          <Select.ItemText>
+                            {GROUP_MODE_LABEL[mode]}
+                          </Select.ItemText>
                           <Select.ItemIndicator className="ml-auto">
                             <Check className="size-3.5" aria-hidden />
                           </Select.ItemIndicator>
@@ -271,15 +284,17 @@ export function HistoryPage() {
           </div>
           <div className="space-y-1.5">
             <span className="text-xs font-medium uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
-              Date range
+              Board
             </span>
             <Select.Root
-              value={dateRange}
-              onValueChange={(value) => setDateRange(value as HistoryDateRange)}
+              value={boardId ?? "all"}
+              onValueChange={(value) =>
+                setBoardId(value === "all" ? null : value)
+              }
             >
               <Select.Trigger
                 className="inline-flex h-9 w-full items-center justify-between rounded-md border border-neutral-200 bg-white px-2.5 text-sm text-neutral-700 outline-none hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700/60"
-                aria-label="History date range"
+                aria-label="History board filter"
               >
                 <Select.Value />
                 <Select.Icon>
@@ -292,24 +307,37 @@ export function HistoryPage() {
               <Select.Portal>
                 <Select.Content position="popper" sideOffset={4} align="start">
                   <Select.Viewport className="p-1">
-                    {(Object.keys(DATE_RANGE_LABEL) as HistoryDateRange[]).map(
-                      (range) => (
-                        <Select.Item
-                          key={range}
-                          value={range}
-                          className="flex cursor-pointer items-center gap-2 rounded px-3 py-1.5 text-sm text-neutral-700 outline-none data-[highlighted]:bg-neutral-100 dark:text-neutral-300 dark:data-[highlighted]:bg-neutral-700"
-                        >
-                          <Select.ItemText>{DATE_RANGE_LABEL[range]}</Select.ItemText>
-                          <Select.ItemIndicator className="ml-auto">
-                            <Check className="size-3.5" aria-hidden />
-                          </Select.ItemIndicator>
-                        </Select.Item>
-                      ),
-                    )}
+                    <Select.Item
+                      value="all"
+                      className="flex cursor-pointer items-center gap-2 rounded px-3 py-1.5 text-sm text-neutral-700 outline-none data-[highlighted]:bg-neutral-100 dark:text-neutral-300 dark:data-[highlighted]:bg-neutral-700"
+                    >
+                      <Select.ItemText>All boards</Select.ItemText>
+                      <Select.ItemIndicator className="ml-auto">
+                        <Check className="size-3.5" aria-hidden />
+                      </Select.ItemIndicator>
+                    </Select.Item>
+                    {boards.map((board) => (
+                      <Select.Item
+                        key={board.id}
+                        value={board.id}
+                        className="flex cursor-pointer items-center gap-2 rounded px-3 py-1.5 text-sm text-neutral-700 outline-none data-[highlighted]:bg-neutral-100 dark:text-neutral-300 dark:data-[highlighted]:bg-neutral-700"
+                      >
+                        <Select.ItemText>{board.name}</Select.ItemText>
+                        <Select.ItemIndicator className="ml-auto">
+                          <Check className="size-3.5" aria-hidden />
+                        </Select.ItemIndicator>
+                      </Select.Item>
+                    ))}
                   </Select.Viewport>
                 </Select.Content>
               </Select.Portal>
             </Select.Root>
+          </div>
+          <div className="space-y-1.5">
+            <span className="text-xs font-medium uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+              Date range
+            </span>
+            <HistoryDateRangePicker value={dateRange} onChange={setDateRange} />
           </div>
         </div>
 
@@ -321,7 +349,7 @@ export function HistoryPage() {
           <div className="rounded-lg border border-dashed border-neutral-300 bg-white p-6 text-sm text-neutral-500 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-400">
             No history found for this range.
           </div>
-        ) : groupMode === 'date' ? (
+        ) : groupMode === "date" ? (
           <div className="space-y-4">
             {dateGroups.map((group) => (
               <section
@@ -335,11 +363,8 @@ export function HistoryPage() {
                 </header>
                 <ul className="divide-y divide-neutral-100 dark:divide-neutral-800">
                   {group.transactions.map((transaction) => (
-                    <li
-                      key={transaction.id}
-                      className="px-4 py-3 text-sm"
-                    >
-                      {transaction.eventType === 'jira_sync_summary' ? (
+                    <li key={transaction.id} className="px-4 py-3 text-sm">
+                      {transaction.eventType === "jira_sync_summary" ? (
                         <>
                           <button
                             type="button"
@@ -349,13 +374,18 @@ export function HistoryPage() {
                           >
                             <div className="flex min-w-0 items-center gap-2">
                               <ChevronRight
-                                className={`size-4 shrink-0 text-neutral-400 transition-transform dark:text-neutral-500 ${expandedJiraRows.has(transaction.id) ? 'rotate-90' : ''
-                                  }`}
+                                className={`size-4 shrink-0 text-neutral-400 transition-transform dark:text-neutral-500 ${
+                                  expandedJiraRows.has(transaction.id)
+                                    ? "rotate-90"
+                                    : ""
+                                }`}
                                 aria-hidden
                               />
                               <div className="min-w-0">
                                 <span className="truncate text-neutral-900 dark:text-neutral-100">
-                                  <HistoryBoardContextInline transaction={transaction} />
+                                  <HistoryBoardContextInline
+                                    transaction={transaction}
+                                  />
                                 </span>
                               </div>
                             </div>
@@ -372,9 +402,13 @@ export function HistoryPage() {
                         <div className="flex items-start justify-between gap-4">
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
-                              <TicketBadge ticketLabel={transaction.ticketKey} />
+                              <TicketBadge
+                                ticketLabel={transaction.ticketKey}
+                              />
                               <span className="truncate text-neutral-900 dark:text-neutral-100">
-                                <HistoryBoardContextInline transaction={transaction} />
+                                <HistoryBoardContextInline
+                                  transaction={transaction}
+                                />
                               </span>
                             </div>
                             {transaction.ticketTitle && (

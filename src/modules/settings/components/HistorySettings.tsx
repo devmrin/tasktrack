@@ -1,31 +1,31 @@
-import { useState } from 'react';
-import { ChevronDown, Check, Trash2 } from 'lucide-react';
-import * as Select from '@/components/Select';
-import {
-  useDeleteHistoryTransactionsMutation,
-} from '@/modules/history/hooks/useHistory';
-import type { HistoryDateRange } from '@/modules/history/types';
+import { useState } from "react";
+import { ChevronDown, Check, Trash2 } from "lucide-react";
+import * as Select from "@/components/Select";
+import { useDeleteHistoryTransactionsMutation } from "@/modules/history/hooks/useHistory";
+import type { HistoryDeleteRange } from "@/modules/history/types";
 
-const DELETE_RANGE_LABEL: Record<HistoryDateRange, string> = {
-  all: 'All time',
-  today: 'Today',
-  last7Days: 'Last 7 days',
-  last30Days: 'Last 30 days',
+const DELETE_RANGE_LABEL: Record<HistoryDeleteRange, string> = {
+  all: "All time",
+  today: "Today",
+  last7Days: "Last 7 days",
+  last30Days: "Last 30 days",
 };
 
-function getDeleteConfirmationMessage(dateRange: HistoryDateRange): string {
-  if (dateRange === 'all') {
-    return 'Delete all recorded history? This action cannot be undone.';
+function getDeleteConfirmationMessage(dateRange: HistoryDeleteRange): string {
+  if (dateRange === "all") {
+    return "Delete all recorded history? This action cannot be undone.";
   }
   return `Delete history for ${DELETE_RANGE_LABEL[dateRange].toLowerCase()}? This action cannot be undone.`;
 }
 
 export function HistorySettings() {
-  const [dateRange, setDateRange] = useState<HistoryDateRange>('last30Days');
+  const [dateRange, setDateRange] = useState<HistoryDeleteRange>("last30Days");
   const deleteMutation = useDeleteHistoryTransactionsMutation();
 
   const handleDelete = () => {
-    const confirmed = globalThis.confirm(getDeleteConfirmationMessage(dateRange));
+    const confirmed = globalThis.confirm(
+      getDeleteConfirmationMessage(dateRange),
+    );
     if (!confirmed) {
       return;
     }
@@ -52,7 +52,7 @@ export function HistorySettings() {
         </label>
         <Select.Root
           value={dateRange}
-          onValueChange={(value) => setDateRange(value as HistoryDateRange)}
+          onValueChange={(value) => setDateRange(value as HistoryDeleteRange)}
         >
           <Select.Trigger
             id="history-delete-range"
@@ -70,14 +70,16 @@ export function HistorySettings() {
           <Select.Portal>
             <Select.Content position="popper" sideOffset={4} align="start">
               <Select.Viewport className="p-1">
-                {(Object.keys(DELETE_RANGE_LABEL) as HistoryDateRange[]).map(
+                {(Object.keys(DELETE_RANGE_LABEL) as HistoryDeleteRange[]).map(
                   (range) => (
                     <Select.Item
                       key={range}
                       value={range}
                       className="flex cursor-pointer items-center gap-2 rounded px-3 py-1.5 text-sm text-neutral-700 outline-none data-[highlighted]:bg-neutral-100 dark:text-neutral-300 dark:data-[highlighted]:bg-neutral-700"
                     >
-                      <Select.ItemText>{DELETE_RANGE_LABEL[range]}</Select.ItemText>
+                      <Select.ItemText>
+                        {DELETE_RANGE_LABEL[range]}
+                      </Select.ItemText>
                       <Select.ItemIndicator className="ml-auto">
                         <Check className="size-3.5" aria-hidden />
                       </Select.ItemIndicator>
@@ -96,10 +98,9 @@ export function HistorySettings() {
           className="inline-flex items-center gap-2 rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-60"
         >
           <Trash2 className="size-4" aria-hidden />
-          {deleteMutation.isPending ? 'Deleting...' : 'Delete history'}
+          {deleteMutation.isPending ? "Deleting..." : "Delete history"}
         </button>
       </section>
     </div>
   );
 }
-

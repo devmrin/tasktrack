@@ -4,13 +4,13 @@ import {
   deleteHistoryTransactions,
   getHistoryTransactions,
 } from '@/modules/history/services/history.service';
-import type { HistoryDateRange } from '@/modules/history/types';
+import type { HistoryDeleteRange, HistoryQueryFilters } from '@/modules/history/types';
 import { useToast } from '@/hooks/useToast';
 
-export function useHistoryTransactionsQuery(dateRange: HistoryDateRange) {
+export function useHistoryTransactionsQuery(filters: HistoryQueryFilters) {
   return useQuery({
-    queryKey: queryKeys.history.list(dateRange),
-    queryFn: () => getHistoryTransactions(dateRange),
+    queryKey: queryKeys.history.list(filters),
+    queryFn: () => getHistoryTransactions(filters),
   });
 }
 
@@ -18,7 +18,7 @@ export function useDeleteHistoryTransactionsMutation() {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
   return useMutation({
-    mutationFn: (dateRange: HistoryDateRange) => deleteHistoryTransactions(dateRange),
+    mutationFn: (dateRange: HistoryDeleteRange) => deleteHistoryTransactions(dateRange),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.history.all });
       showToast('History deleted');
