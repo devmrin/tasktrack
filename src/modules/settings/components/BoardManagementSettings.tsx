@@ -15,6 +15,7 @@ import {
   useRenameBoardMutation,
   useReorderBoardsMutation,
   useSetDefaultBoardMutation,
+  useSetBoardFieldVisibilityMutation,
 } from '@/modules/boards/hooks/useBoardsQuery';
 import { getBoardStats, type BoardStats } from '@/modules/boards/services/board.service';
 import type { Board } from '@/db/database';
@@ -28,6 +29,7 @@ export function BoardManagementSettings() {
   const setDefaultMutation = useSetDefaultBoardMutation();
   const reorderMutation = useReorderBoardsMutation();
   const exportMutation = useExportBoardMutation();
+  const fieldVisibilityMutation = useSetBoardFieldVisibilityMutation();
 
   const [statsByBoard, setStatsByBoard] = useState<Record<string, BoardStats>>({});
   useEffect(() => {
@@ -222,6 +224,35 @@ export function BoardManagementSettings() {
                 <p className="text-[11px] text-neutral-500 dark:text-neutral-500">
                   {stats.columnCount} columns · {stats.ticketCount} {wording}
                 </p>
+              )}
+              {!board.jiraEnabled && (
+                <div className="mt-1 border-t border-neutral-200 pt-2 dark:border-neutral-700">
+                  <p className="text-xs font-medium text-neutral-700 dark:text-neutral-300">Local task fields</p>
+                  <p className="mt-0.5 text-[11px] text-neutral-500 dark:text-neutral-500">
+                    Choose which optional fields are available on this board.
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2">
+                    {([
+                      ['showPriority', 'Priority'],
+                      ['showDueDate', 'Due date'],
+                    ] as const).map(([field, label]) => (
+                      <label key={field} className="flex items-center gap-1.5 text-xs text-neutral-600 dark:text-neutral-400">
+                        <input
+                          type="checkbox"
+                          checked={board[field] ?? true}
+                          disabled={fieldVisibilityMutation.isPending}
+                          onChange={(event) => fieldVisibilityMutation.mutate({
+                            boardId: board.id,
+                            field,
+                            enabled: event.target.checked,
+                          })}
+                          className="rounded border-neutral-300 dark:border-neutral-600"
+                        />
+                        {label}
+                      </label>
+                    ))}
+                  </div>
+                </div>
               )}
             </li>
           );

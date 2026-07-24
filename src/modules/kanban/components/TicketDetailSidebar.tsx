@@ -431,6 +431,8 @@ export function TicketDetailSidebar({
   const isOpen = selectedTicket !== null;
   const isJira = selectedTicket?.type === "jira";
   const isEditable = !isJira;
+  const showPriority = isJira || (activeBoard?.showPriority ?? true);
+  const showDueDate = isJira || (activeBoard?.showDueDate ?? true);
   const formattedDueDate = formatDueDate(selectedTicket?.dueDate);
   const linkedLocalJiraUrl = useMemo(() => {
     if (!selectedTicket || selectedTicket.type !== "local") {
@@ -597,7 +599,7 @@ export function TicketDetailSidebar({
                     </div>
                   )}
 
-                  {isEditable && (
+                  {isEditable && showPriority && (
                     <Callout.Root size="1" color="blue" variant="soft">
                       <Callout.Icon>
                         <Info className="size-4" aria-hidden />
@@ -657,7 +659,7 @@ export function TicketDetailSidebar({
                     )}
                   </div>
 
-                  {isEditable && (
+                  {isEditable && showDueDate && (
                     <TicketKeyField
                       jiraKeyOptions={jiraKeyOptions}
                       terminology={terminology}

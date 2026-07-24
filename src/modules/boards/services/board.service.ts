@@ -52,6 +52,8 @@ export async function ensureDefaultBoardBootstrap(): Promise<void> {
     order: 0,
     isDefault: true,
     jiraEnabled: hasToken,
+    showPriority: true,
+    showDueDate: true,
     createdAt: now,
     updatedAt: now,
   });
@@ -78,6 +80,8 @@ export async function createBoard(rawName: string): Promise<Board> {
       order: nextOrderBoard,
       isDefault: false,
       jiraEnabled: false,
+      showPriority: true,
+      showDueDate: true,
       createdAt: now,
       updatedAt: now,
     });
@@ -139,6 +143,14 @@ export async function setBoardJiraEnabled(boardId: string, enabled: boolean): Pr
     jiraEnabled: enabled,
     updatedAt: Date.now(),
   });
+}
+
+export async function setBoardFieldVisibility(
+  boardId: string,
+  field: 'showPriority' | 'showDueDate',
+  enabled: boolean,
+): Promise<void> {
+  await db.boards.update(boardId, { [field]: enabled, updatedAt: Date.now() });
 }
 
 export async function setDefaultBoard(boardId: string): Promise<void> {

@@ -111,6 +111,8 @@ export function InboxSidebar({
   const columns = columnsQuery.data ?? [];
   const terminology = useBoardTerminology(activeBoard);
   const isBoardJiraEnabled = activeBoard?.jiraEnabled ?? false;
+  const showPriority = isBoardJiraEnabled || (activeBoard?.showPriority ?? true);
+  const showDueDate = isBoardJiraEnabled || (activeBoard?.showDueDate ?? true);
   const boardJiraUi = jiraConnected && (activeBoard?.jiraEnabled ?? false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [addTitle, setAddTitle] = useState("");
@@ -145,6 +147,9 @@ export function InboxSidebar({
   const [gettingStartedOpen, setGettingStartedOpen] = useState(false);
   const [quickOpenOpen, setQuickOpenOpen] = useState(false);
   const resolvedSortMode = normalizeInboxSortMode(sortMode);
+  const effectiveSortMode = showPriority || !resolvedSortMode.startsWith('priority')
+    ? resolvedSortMode
+    : 'custom';
 
   useEffect(() => {
     /* eslint-disable react-hooks/set-state-in-effect -- add-ticket key fields are board-scoped; reset when board changes */
@@ -185,8 +190,8 @@ export function InboxSidebar({
   );
 
   const sortedInboxTickets = useMemo(
-    () => sortInboxTickets(inboxTickets, resolvedSortMode),
-    [inboxTickets, resolvedSortMode],
+    () => sortInboxTickets(inboxTickets, effectiveSortMode),
+    [inboxTickets, effectiveSortMode],
   );
 
   const handleSyncFromJira = () => {
@@ -295,7 +300,7 @@ export function InboxSidebar({
             <TicketCard
               key={ticket.id}
               ticket={ticket}
-              allowReorderInColumn={resolvedSortMode === "custom"}
+              allowReorderInColumn={effectiveSortMode === "custom"}
               moveTargets={columns}
               onMove={moveTicketToColumn}
               onDelete={handleTicketDelete}
@@ -573,7 +578,7 @@ export function InboxSidebar({
               Sort by
             </span>
             <Select.Root
-              value={resolvedSortMode}
+              value={effectiveSortMode}
               onValueChange={(value) =>
                 setSortMode(normalizeInboxSortMode(value) as InboxSortMode)
               }
@@ -607,7 +612,7 @@ export function InboxSidebar({
                         <Check className="size-3.5" aria-hidden />
                       </Select.ItemIndicator>
                     </Select.Item>
-                    <Select.Item
+                    {showPriority && <Select.Item
                       value="priorityAscending"
                       className="flex items-center gap-2 rounded px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 outline-none cursor-pointer data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700"
                     >
@@ -615,8 +620,8 @@ export function InboxSidebar({
                       <Select.ItemIndicator className="ml-auto">
                         <Check className="size-3.5" aria-hidden />
                       </Select.ItemIndicator>
-                    </Select.Item>
-                    <Select.Item
+                    </Select.Item>}
+                    {showPriority && <Select.Item
                       value="priorityDescending"
                       className="flex items-center gap-2 rounded px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 outline-none cursor-pointer data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700"
                     >
@@ -624,7 +629,7 @@ export function InboxSidebar({
                       <Select.ItemIndicator className="ml-auto">
                         <Check className="size-3.5" aria-hidden />
                       </Select.ItemIndicator>
-                    </Select.Item>
+                    </Select.Item>}
                     <Select.Item
                       value="createdNewest"
                       className="flex items-center gap-2 rounded px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 outline-none cursor-pointer data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700"
@@ -838,7 +843,7 @@ export function InboxSidebar({
                   )}
                 </div>
               ) : null}
-              <div className="space-y-1.5">
+              {showPriority && <div className="space-y-1.5">
                 <span className="block text-xs font-medium text-neutral-500 dark:text-neutral-400">
                   Priority (optional)
                 </span>
@@ -893,8 +898,8 @@ export function InboxSidebar({
                     </Select.Content>
                   </Select.Portal>
                 </Select.Root>
-              </div>
-              <div className="space-y-1.5">
+              </div>}
+              {showDueDate && <div className="space-y-1.5">
                 <label
                   htmlFor="ticket-due-date"
                   className="block text-xs font-medium text-neutral-500 dark:text-neutral-400"
@@ -908,7 +913,7 @@ export function InboxSidebar({
                   onChange={(e) => setAddDueDate(e.target.value)}
                   className="w-full px-3 py-1.5 border border-neutral-300 dark:border-neutral-600 rounded-md text-sm bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:ring-2 focus:ring-neutral-400 dark:focus:ring-neutral-500 focus:border-neutral-400 dark:focus:border-neutral-500"
                 />
-              </div>
+              </div>}
               <div className="flex gap-2">
                 <button
                   type="submit"

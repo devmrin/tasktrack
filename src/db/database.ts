@@ -10,6 +10,8 @@ export interface Board {
   order: number;
   isDefault: boolean;
   jiraEnabled: boolean;
+  showPriority: boolean;
+  showDueDate: boolean;
   createdAt: number;
   updatedAt: number;
 }
@@ -233,7 +235,6 @@ export class TaskTrackDatabase extends Dexie {
           await ticketsTable.bulkPut(migratedTickets);
         }
       });
-
     this.version(8)
       .stores({
         boards: 'id, order, isDefault',
@@ -257,6 +258,8 @@ export class TaskTrackDatabase extends Dexie {
           order: 0,
           isDefault: true,
           jiraEnabled: hasToken,
+          showPriority: true,
+          showDueDate: true,
           createdAt: now,
           updatedAt: now,
         });
@@ -297,6 +300,23 @@ export class TaskTrackDatabase extends Dexie {
         if (updated.length > 0) {
           await txTable.bulkPut(updated);
         }
+      });
+
+    this.version(10)
+      .stores({
+        boards: 'id, order, isDefault',
+        tickets:
+          'id, columnId, boardId, type, createdAt, order, [columnId+order], [boardId+columnId+order]',
+        columns: 'id, boardId, order, [boardId+order]',
+        settings: 'key',
+        transactions:
+          'id, createdAt, ticketId, eventType, boardId, [ticketId+createdAt], [createdAt+eventType]',
+      })
+      .upgrade(async (transaction) => {
+        await transaction.table<Board, string>('boards').toCollection().modify((board) => {
+          board.showPriority ??= true;
+          board.showDueDate ??= true;
+        });
       });
   }
 }

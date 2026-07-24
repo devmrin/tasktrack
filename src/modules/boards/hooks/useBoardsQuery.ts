@@ -8,6 +8,7 @@ import {
   renameBoard as renameBoardSvc,
   reorderBoards as reorderBoardsSvc,
   setBoardJiraEnabled,
+  setBoardFieldVisibility,
   setDefaultBoard as setDefaultBoardSvc,
 } from '@/modules/boards/services/board.service';
 import { ACTIVE_BOARD_STORAGE_KEY } from '@/modules/boards/constants/board.constants';
@@ -143,6 +144,20 @@ export function useSetBoardJiraEnabledMutation() {
     onError: () => {
       showToast('Failed to update board');
     },
+  });
+}
+
+export function useSetBoardFieldVisibilityMutation() {
+  const queryClient = useQueryClient();
+  const { showToast } = useToast();
+  return useMutation({
+    mutationFn: ({ boardId, field, enabled }: { boardId: string; field: 'showPriority' | 'showDueDate'; enabled: boolean }) =>
+      setBoardFieldVisibility(boardId, field, enabled),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.boards });
+      showToast('Board settings updated');
+    },
+    onError: () => showToast('Failed to update board'),
   });
 }
 
