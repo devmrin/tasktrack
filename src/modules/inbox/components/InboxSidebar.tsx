@@ -27,6 +27,7 @@ import {
 } from "react";
 import { Link } from "@tanstack/react-router";
 import * as Select from "@/components/Select";
+import { Switch } from "@radix-ui/themes";
 import { StableWidthLabel } from "@/components/StableWidthLabel";
 import {
   GettingStartedDialog,
@@ -115,6 +116,7 @@ export function InboxSidebar({
   const showDueDate = isBoardJiraEnabled || (activeBoard?.showDueDate ?? true);
   const boardJiraUi = jiraConnected && (activeBoard?.jiraEnabled ?? false);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [rapidAddEnabled, setRapidAddEnabled] = useState(false);
   const [addTitle, setAddTitle] = useState("");
   const addTitleRef = useRef<HTMLTextAreaElement>(null);
 
@@ -125,6 +127,12 @@ export function InboxSidebar({
     textarea.style.height = "auto";
     textarea.style.height = `${textarea.scrollHeight}px`;
   }, [addTitle]);
+
+  useEffect(() => {
+    if (showAddForm && rapidAddEnabled && !adding) {
+      addTitleRef.current?.focus();
+    }
+  }, [showAddForm, rapidAddEnabled, adding]);
   const [addDescription, setAddDescription] = useState("");
   const [ticketKeyMode, setTicketKeyMode] = useState<
     "none" | "existing" | "other"
@@ -257,7 +265,9 @@ export function InboxSidebar({
         setCustomKeyError("");
         setAddPriority("none");
         setAddDueDate("");
-        setShowAddForm(false);
+        if (!rapidAddEnabled) {
+          setShowAddForm(false);
+        }
       },
     );
   };
@@ -676,22 +686,43 @@ export function InboxSidebar({
         <div className="p-4 border-b border-neutral-100 dark:border-neutral-800 shrink-0">
           {showAddForm ? (
             <form onSubmit={handleAddTicket} className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label
+                  htmlFor="rapid-add-switch"
+                  className="text-xs font-medium text-neutral-600 dark:text-neutral-300"
+                >
+                  Rapid Add
+                </label>
+                <Switch
+                  id="rapid-add-switch"
+                  size="1"
+                  checked={rapidAddEnabled}
+                  onCheckedChange={(checked) => setRapidAddEnabled(checked)}
+                  aria-label="Rapid Add"
+                />
+              </div>
               <textarea
                 ref={addTitleRef}
                 value={addTitle}
                 onChange={(e) => setAddTitle(e.target.value)}
+                onKeyDown={(e) => {
+                  if (rapidAddEnabled && e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    e.currentTarget.form?.requestSubmit();
+                  }
+                }}
                 placeholder={`${terminology.Item} title`}
                 autoFocus
                 rows={1}
                 className="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md text-sm bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:ring-2 focus:ring-neutral-400 dark:focus:ring-neutral-500 resize-none overflow-hidden"
               />
-              <TicketDescriptionEditor
+              {!rapidAddEnabled && <TicketDescriptionEditor
                 value={addDescription}
                 onChange={setAddDescription}
                 placeholder="Description (optional)"
                 minHeight="4rem"
-              />
-              {activeBoard?.jiraEnabled ? (
+              />}
+              {!rapidAddEnabled && activeBoard?.jiraEnabled ? (
                 <div className="space-y-1.5">
                   <div className="flex items-center gap-1.5">
                     <span className="block text-xs font-medium text-neutral-500 dark:text-neutral-400">
@@ -843,7 +874,7 @@ export function InboxSidebar({
                   )}
                 </div>
               ) : null}
-              {showPriority && <div className="space-y-1.5">
+              {!rapidAddEnabled && showPriority && <div className="space-y-1.5">
                 <span className="block text-xs font-medium text-neutral-500 dark:text-neutral-400">
                   Priority (optional)
                 </span>
@@ -899,7 +930,7 @@ export function InboxSidebar({
                   </Select.Portal>
                 </Select.Root>
               </div>}
-              {showDueDate && <div className="space-y-1.5">
+              {!rapidAddEnabled && showDueDate && <div className="space-y-1.5">
                 <label
                   htmlFor="ticket-due-date"
                   className="block text-xs font-medium text-neutral-500 dark:text-neutral-400"
@@ -934,6 +965,7 @@ export function InboxSidebar({
                     setCustomKeyError("");
                     setAddPriority("none");
                     setAddDueDate("");
+                    setRapidAddEnabled(false);
                   }}
                   className="px-3 py-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-md"
                 >
