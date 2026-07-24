@@ -358,7 +358,7 @@ export function InboxSidebar({
               </span>
             ) : (
               <span className="text-xs font-semibold text-neutral-400 dark:text-neutral-500 [writing-mode:vertical-rl] rotate-180 select-none tracking-widest uppercase shrink-0">
-                Open Inbox
+                Open Inbox ({inboxTickets.length})
               </span>
             )}
             <div className="w-px flex-1 min-h-[12px] bg-neutral-200 dark:bg-neutral-700" />
