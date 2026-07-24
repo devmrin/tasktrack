@@ -187,6 +187,30 @@
   .ticket-description-editor ul {
     @apply list-disc;
   }
+  .ticket-description-editor ul[data-type='taskList'],
+  .ticket-description-content ul[data-type='taskList'] {
+    @apply list-none pl-0;
+  }
+  .ticket-description-editor ul[data-type='taskList'] > li,
+  .ticket-description-editor li[data-type='taskItem'],
+  .ticket-description-content li[data-type='taskItem'] {
+    @apply flex items-start gap-2;
+  }
+  .ticket-description-editor ul[data-type='taskList'] > li > label,
+  .ticket-description-editor li[data-type='taskItem'] > label,
+  .ticket-description-content li[data-type='taskItem'] > label {
+    @apply mt-0.5 shrink-0;
+  }
+  .ticket-description-editor ul[data-type='taskList'] > li > div,
+  .ticket-description-editor li[data-type='taskItem'] > div,
+  .ticket-description-content li[data-type='taskItem'] > div {
+    @apply min-w-0 flex-1;
+  }
+  .ticket-description-editor ul[data-type='taskList'] > li input[type='checkbox'],
+  .ticket-description-editor li[data-type='taskItem'] input[type='checkbox'],
+  .ticket-description-content li[data-type='taskItem'] input[type='checkbox'] {
+    @apply size-3.5 accent-neutral-900 dark:accent-neutral-100;
+  }
   .ticket-description-editor li {
     @apply mb-0.5;
   }

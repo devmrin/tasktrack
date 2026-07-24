@@ -4,6 +4,8 @@ import Typography from '@tiptap/extension-typography';
 import Placeholder from '@tiptap/extension-placeholder';
 import Image from '@tiptap/extension-image';
 import FileHandler from '@tiptap/extension-file-handler';
+import TaskItem from '@tiptap/extension-task-item';
+import TaskList from '@tiptap/extension-task-list';
 import { useEffect, useRef } from 'react';
 import { isEmptyEditorHtml } from '@/utils/editorHtml';
 
@@ -89,6 +91,8 @@ export function TicketDescriptionEditor({
   const editor = useEditor({
     extensions: [
       StarterKit,
+      TaskList,
+      TaskItem.configure({ nested: true }),
       Typography,
       Image.configure({
         allowBase64: true,
