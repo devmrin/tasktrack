@@ -17,7 +17,14 @@ import {
   Settings2,
   Sun,
 } from "lucide-react";
-import { useEffect, useImperativeHandle, useMemo, useState } from "react";
+import {
+  useEffect,
+  useImperativeHandle,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Link } from "@tanstack/react-router";
 import * as Select from "@/components/Select";
 import { StableWidthLabel } from "@/components/StableWidthLabel";
@@ -107,6 +114,15 @@ export function InboxSidebar({
   const boardJiraUi = jiraConnected && (activeBoard?.jiraEnabled ?? false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [addTitle, setAddTitle] = useState("");
+  const addTitleRef = useRef<HTMLTextAreaElement>(null);
+
+  useLayoutEffect(() => {
+    const textarea = addTitleRef.current;
+    if (!textarea) return;
+
+    textarea.style.height = "auto";
+    textarea.style.height = `${textarea.scrollHeight}px`;
+  }, [addTitle]);
   const [addDescription, setAddDescription] = useState("");
   const [ticketKeyMode, setTicketKeyMode] = useState<
     "none" | "existing" | "other"
@@ -656,12 +672,13 @@ export function InboxSidebar({
           {showAddForm ? (
             <form onSubmit={handleAddTicket} className="space-y-2">
               <textarea
+                ref={addTitleRef}
                 value={addTitle}
                 onChange={(e) => setAddTitle(e.target.value)}
                 placeholder={`${terminology.Item} title`}
                 autoFocus
                 rows={1}
-                className="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md text-sm bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:ring-2 focus:ring-neutral-400 dark:focus:ring-neutral-500 focus:border-neutral-400 dark:focus:border-neutral-500 resize-none"
+                className="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md text-sm bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:ring-2 focus:ring-neutral-400 dark:focus:ring-neutral-500 resize-none overflow-hidden"
               />
               <TicketDescriptionEditor
                 value={addDescription}

@@ -2,7 +2,7 @@ import { Formik, Form, Field, ErrorMessage, useFormikContext } from "formik";
 import { Callout } from "@radix-ui/themes";
 import * as Yup from "yup";
 import { Check, ChevronDown, X, ExternalLink, Copy, Info } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import * as Select from "@/components/Select";
 import type { JiraComment } from "@/db/database";
 import { useTicketDetail } from "@/hooks/useTicketDetail";
@@ -79,6 +79,32 @@ function TicketDescriptionField({ id }: { readonly id?: string }) {
       onChange={(html) => setFieldValue("description", html)}
       placeholder="Description (optional)"
       minHeight="5rem"
+    />
+  );
+}
+
+function AutoResizeTitleField() {
+  const { values, handleBlur, handleChange } = useFormikContext<{ title: string }>();
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useLayoutEffect(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    textarea.style.height = "auto";
+    textarea.style.height = `${textarea.scrollHeight}px`;
+  }, [values.title]);
+
+  return (
+    <textarea
+      ref={textareaRef}
+      id="ticket-title"
+      name="title"
+      value={values.title}
+      onBlur={handleBlur}
+      onChange={handleChange}
+      rows={1}
+      className="w-full rounded-md border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 px-3 py-2 text-sm focus:border-neutral-400 dark:focus:border-neutral-500 focus:ring-1 focus:ring-neutral-400 dark:focus:ring-neutral-500 resize-none overflow-hidden"
     />
   );
 }
@@ -592,12 +618,7 @@ export function TicketDetailSidebar({
                     </label>
                     {isEditable ? (
                       <>
-                        <Field
-                          as="textarea"
-                          id="ticket-title"
-                          name="title"
-                          className="w-full rounded-md border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 px-3 py-2 text-sm focus:border-neutral-400 dark:focus:border-neutral-500 focus:ring-1 focus:ring-neutral-400 dark:focus:ring-neutral-500 resize-none"
-                        />
+                        <AutoResizeTitleField />
                         <ErrorMessage
                           name="title"
                           component="p"
