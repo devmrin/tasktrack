@@ -19,7 +19,7 @@ import {
 } from '@/modules/boards/hooks/useBoardsQuery';
 import { getBoardStats, type BoardStats } from '@/modules/boards/services/board.service';
 import type { Board } from '@/db/database';
-import * as Dialog from '@radix-ui/react-dialog';
+import { BoardDeleteConfirmationDialog } from '@/modules/boards/components/BoardDeleteConfirmationDialog';
 
 export function BoardManagementSettings() {
   const boardsQuery = useBoardsQuery();
@@ -259,38 +259,18 @@ export function BoardManagementSettings() {
         })}
       </ul>
 
-      <Dialog.Root open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 bg-black/40 z-[100]" />
-          <Dialog.Content className="fixed left-1/2 top-1/2 z-[101] w-[90vw] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl border border-neutral-200 bg-white p-4 shadow-xl dark:border-neutral-700 dark:bg-neutral-900">
-            <Dialog.Title className="text-base font-semibold text-neutral-900 dark:text-neutral-100">
-              Delete board?
-            </Dialog.Title>
-            <Dialog.Description className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
-              {boardToDelete
-                ? `This will permanently delete "${boardToDelete.name}" and all of its columns and items. This cannot be undone.`
-                : null}
-            </Dialog.Description>
-            <div className="mt-4 flex justify-end gap-2">
-              <button
-                type="button"
-                className="rounded-md px-3 py-1.5 text-sm text-neutral-600 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800"
-                onClick={() => setDeleteDialogOpen(false)}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="rounded-md px-3 py-1.5 text-sm font-medium bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
-                disabled={deleteMutation.isPending}
-                onClick={executeDelete}
-              >
-                Delete
-              </button>
-            </div>
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
+      <BoardDeleteConfirmationDialog
+        open={deleteDialogOpen}
+        onOpenChange={(open) => {
+          setDeleteDialogOpen(open);
+          if (!open) setBoardToDelete(null);
+        }}
+        boardName={boardToDelete?.name ?? null}
+        ticketCount={boardToDelete ? statsByBoard[boardToDelete.id]?.ticketCount ?? 0 : 0}
+        itemLabel={boardToDelete?.jiraEnabled ? 'tickets' : 'tasks'}
+        loading={deleteMutation.isPending}
+        onConfirm={executeDelete}
+      />
     </div>
   );
 }

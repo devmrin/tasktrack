@@ -9,7 +9,8 @@ import {
   Plus,
   Trash2,
 } from "lucide-react";
-import { ConfirmationDialog } from "@/components/ConfirmationDialog";
+import { BoardDeleteConfirmationDialog } from "@/modules/boards/components/BoardDeleteConfirmationDialog";
+import { getBoardStats } from "@/modules/boards/services/board.service";
 import { useActiveBoard } from "@/modules/boards/hooks/useActiveBoard";
 import {
   useCreateBoardMutation,
@@ -34,6 +35,8 @@ export function BoardSwitcher() {
   const [boardToDelete, setBoardToDelete] = useState<{
     id: string;
     name: string;
+    ticketCount: number;
+    itemLabel: "tickets" | "tasks";
   } | null>(null);
 
   const displayName = activeBoard?.name ?? (isLoading ? "Loading…" : "Board");
@@ -73,16 +76,18 @@ export function BoardSwitcher() {
     );
   }
 
-  function handleDelete(
+  async function handleDelete(
     boardId: string,
     boardName: string,
     onlyBoard: boolean,
     isDefault: boolean,
+    itemLabel: "tickets" | "tasks",
   ) {
     if (onlyBoard || isDefault) {
       return;
     }
-    setBoardToDelete({ id: boardId, name: boardName });
+    const stats = await getBoardStats(boardId);
+    setBoardToDelete({ id: boardId, name: boardName, ticketCount: stats.ticketCount, itemLabel });
     setDeleteDialogOpen(true);
     setMenuOpen(false);
   }
@@ -173,7 +178,7 @@ export function BoardSwitcher() {
                       onClick={(event) => {
                         event.preventDefault();
                         event.stopPropagation();
-                        handleDelete(b.id, b.name, onlyBoard, b.isDefault);
+                        void handleDelete(b.id, b.name, onlyBoard, b.isDefault, b.jiraEnabled ? "tickets" : "tasks");
                       }}
                     >
                       <Trash2 className="size-3.5" aria-hidden />
@@ -294,7 +299,7 @@ export function BoardSwitcher() {
         </Dialog.Portal>
       </Dialog.Root>
 
-      <ConfirmationDialog
+      <BoardDeleteConfirmationDialog
         open={deleteDialogOpen}
         onOpenChange={(open) => {
           setDeleteDialogOpen(open);
@@ -302,14 +307,9 @@ export function BoardSwitcher() {
             setBoardToDelete(null);
           }
         }}
-        title="Delete board?"
-        description={
-          boardToDelete
-            ? `Delete board "${boardToDelete.name}"? All columns and tickets on this board will be permanently removed.`
-            : ""
-        }
-        confirmLabel="Delete"
-        confirmVariant="destructive"
+        boardName={boardToDelete?.name ?? null}
+        ticketCount={boardToDelete?.ticketCount ?? 0}
+        itemLabel={boardToDelete?.itemLabel ?? "tasks"}
         loading={deleteBoardMutation.isPending}
         onConfirm={handleDeleteConfirm}
       />
