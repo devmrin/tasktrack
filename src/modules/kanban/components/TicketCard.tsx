@@ -102,9 +102,8 @@ export function TicketCard({
         <div className="flex-1 min-w-0">
           <button
             type="button"
-            className="inline-block max-w-full text-left align-top text-sm font-semibold text-neutral-900 dark:text-neutral-100 hover:text-neutral-600 dark:hover:text-neutral-300 hover:underline transition-colors line-clamp-4"
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={(e) => {
+            className="inline-block max-w-full cursor-move text-left align-top text-sm font-semibold text-neutral-900 dark:text-neutral-100 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors line-clamp-4"
+            onDoubleClick={(e) => {
               e.stopPropagation();
               openTicketDetail(ticket);
             }}
