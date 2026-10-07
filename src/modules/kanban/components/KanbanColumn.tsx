@@ -14,6 +14,7 @@ import { TicketCard } from "./TicketCard";
 interface KanbanColumnProps {
   readonly column: Column;
   readonly tickets: Ticket[];
+  readonly totalTicketCount?: number;
   readonly moveTargets: MoveTarget[];
   readonly onTitleUpdate: (columnId: string, newTitle: string) => void;
   readonly onDelete: (columnId: string) => void;
@@ -31,6 +32,7 @@ interface KanbanColumnProps {
 export function KanbanColumn({
   column,
   tickets,
+  totalTicketCount,
   moveTargets,
   onTitleUpdate,
   onDelete,
@@ -211,7 +213,9 @@ export function KanbanColumn({
           </div>
         )}
         <div className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
-          {`${tickets.length} ${itemPluralWord}`}
+          {totalTicketCount === undefined
+            ? `${tickets.length} ${itemPluralWord}`
+            : `${tickets.length} of ${totalTicketCount} ${itemPluralWord}`}
         </div>
       </div>
 

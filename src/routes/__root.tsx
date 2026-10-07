@@ -9,6 +9,7 @@ import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { DndProvider } from '@/contexts/DndProvider';
 import { SettingsContext } from '@/contexts/settings-context';
 import { TicketDetailProvider } from '@/contexts/TicketDetailContext';
+import { StatusFilterProvider } from '@/contexts/StatusFilterContext';
 import { InboxSidebar, useJiraSyncMutation } from '@/modules/inbox';
 import type { InboxSidebarHandle } from '@/modules/inbox';
 import { TicketDetailSidebar } from '@/modules/kanban';
@@ -156,6 +157,7 @@ function RootComponent() {
 
   return (
     <TicketDetailProvider>
+      <StatusFilterProvider>
       <SettingsContext.Provider value={settingsContextValue}>
         <DndProvider>
           <div className="min-h-screen bg-neutral-100 dark:bg-neutral-900">
@@ -218,6 +220,7 @@ function RootComponent() {
           </div>
         </DndProvider>
       </SettingsContext.Provider>
+      </StatusFilterProvider>
     </TicketDetailProvider>
   );
 }

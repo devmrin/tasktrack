@@ -15,7 +15,10 @@ import { useKanban } from "@/modules/kanban/hooks/useKanban";
 import { BoardSwitcher } from "@/modules/boards";
 import { useActiveBoard } from "@/modules/boards/hooks/useActiveBoard";
 import { useBoardTerminology } from "@/modules/boards/hooks/useBoardTerminology";
+import { ticketMatchesStatusFilter } from "@/modules/tickets";
+import { useStatusFilter } from "@/hooks/useStatusFilter";
 import { KanbanColumn } from "./KanbanColumn";
+import { StatusFilter } from "./StatusFilter";
 
 type MobileView = "focus" | "board";
 
@@ -34,6 +37,7 @@ export function KanbanBoard() {
     loading,
   } = useKanban();
   const { activeBoard } = useActiveBoard();
+  const statusFilter = useStatusFilter();
   const terminology = useBoardTerminology(activeBoard);
   const { focusedData, focusActive, startFocus, endFocus } = useFocusZone();
   const isMobileLayout = useMediaQuery("(max-width: 1023px)");
@@ -89,8 +93,9 @@ export function KanbanBoard() {
   const renderBoardContent = () => (
     <>
       <div className="px-3 sm:px-4 lg:px-6 pt-3 sm:pt-4 pb-2 flex items-center justify-between gap-2 sm:gap-4 min-h-12 flex-wrap sm:flex-nowrap">
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 flex items-center gap-3">
           <BoardSwitcher />
+          <StatusFilter key={activeBoard?.id} />
         </div>
         {hasColumns && (
           <div className="flex shrink-0 justify-end">
@@ -154,15 +159,19 @@ export function KanbanBoard() {
           <div className="flex-1 flex gap-3 sm:gap-4 px-3 sm:px-4 lg:px-6 pb-4 sm:pb-6 overflow-x-auto">
             {columns.map((column) => {
               const columnTickets = getTicketsForColumn(column.id);
+              const visibleTickets = columnTickets.filter((ticket) =>
+                ticketMatchesStatusFilter(ticket, statusFilter.filter),
+              );
               return (
                 <SortableContext
                   key={column.id}
-                  items={columnTickets.map((t) => t.id)}
+                  items={visibleTickets.map((t) => t.id)}
                   strategy={verticalListSortingStrategy}
                 >
                   <KanbanColumn
                     column={column}
-                    tickets={columnTickets}
+                    tickets={visibleTickets}
+                    totalTicketCount={statusFilter.isActive ? columnTickets.length : undefined}
                     moveTargets={moveTargets}
                     onTitleUpdate={handleColumnTitleUpdate}
                     onDelete={handleColumnDelete}

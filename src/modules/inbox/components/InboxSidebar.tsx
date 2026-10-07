@@ -55,6 +55,8 @@ import { TICKET_PRIORITY_VALUES, type TicketPriority } from "@/modules/tickets";
 import { sortInboxTickets } from "@/modules/inbox/utils/sortInboxTickets";
 import { JiraQuickOpenDialog } from "@/modules/inbox/components/JiraQuickOpenDialog";
 import { useBoardTerminology } from "@/modules/boards/hooks/useBoardTerminology";
+import { useStatusFilter } from "@/hooks/useStatusFilter";
+import { ticketMatchesStatusFilter } from "@/modules/tickets";
 
 const SIDEBAR_WIDTH = 320;
 const SIDEBAR_COLLAPSED_WIDTH = 48;
@@ -197,9 +199,14 @@ export function InboxSidebar({
     [jiraTickets],
   );
 
+  const { filter: statusFilter } = useStatusFilter();
   const sortedInboxTickets = useMemo(
     () => sortInboxTickets(inboxTickets, effectiveSortMode),
     [inboxTickets, effectiveSortMode],
+  );
+  const visibleInboxTickets = useMemo(
+    () => sortedInboxTickets.filter((ticket) => ticketMatchesStatusFilter(ticket, statusFilter)),
+    [sortedInboxTickets, statusFilter],
   );
 
   const handleSyncFromJira = () => {
@@ -299,14 +306,27 @@ export function InboxSidebar({
         </p>
       </div>
     );
+  } else if (visibleInboxTickets.length === 0) {
+    inboxContent = isOver ? (
+      <div className="flex flex-col items-center justify-center min-h-[8rem] gap-2 text-sm text-blue-600 dark:text-blue-400 transition-colors">
+        <span className="font-medium">Drop here</span>
+        <span className="text-xs">Release to move to inbox</span>
+      </div>
+    ) : (
+      <div className="flex flex-col items-center justify-center h-full gap-2 text-center">
+        <p className="text-sm text-neutral-400 dark:text-neutral-500">
+          {`No ${terminology.items} match this filter`}
+        </p>
+      </div>
+    );
   } else {
     inboxContent = (
       <SortableContext
-        items={sortedInboxTickets.map((t) => t.id)}
+        items={visibleInboxTickets.map((t) => t.id)}
         strategy={verticalListSortingStrategy}
       >
         <div className="space-y-2">
-          {sortedInboxTickets.map((ticket) => (
+          {visibleInboxTickets.map((ticket) => (
             <TicketCard
               key={ticket.id}
               ticket={ticket}
