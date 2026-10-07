@@ -5,6 +5,7 @@ import { createTicket, updateTicket, getAllTickets, getJiraTickets, deleteTicket
 import {
   getValidAccessToken,
   getAtlassianConfig,
+  getJiraCloudExApiBase,
   refreshCloudIdFromToken,
   isJiraCloud,
 } from '@/modules/settings';
@@ -213,9 +214,7 @@ export interface JiraSearchResponse {
 const SEARCH_FIELDS = '*navigable';
 
 function buildApiBase(cloudId: string | undefined, instanceUrl: string): string {
-  return cloudId
-    ? `https://api.atlassian.com/ex/jira/${cloudId}`
-    : instanceUrl;
+  return cloudId ? getJiraCloudExApiBase(cloudId) : instanceUrl;
 }
 
 function buildSearchUrl(cloudId: string | undefined, instanceUrl: string, jql: string): string {

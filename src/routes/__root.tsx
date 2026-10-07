@@ -17,6 +17,7 @@ import { SettingsDialog } from '@/modules/settings';
 import type { SectionId } from '@/modules/settings';
 import { useActiveBoard } from '@/modules/boards/hooks/useActiveBoard';
 import { useAtlassianConnectionQuery } from '@/modules/settings/hooks/useAtlassianQuery';
+import { useAtlassianOAuthRedirectHandler } from '@/modules/settings/hooks/useAtlassianOAuthRedirectHandler';
 
 function getNextTheme(current: 'light' | 'dark'): 'light' | 'dark' {
   return current === 'light' ? 'dark' : 'light';
@@ -38,6 +39,7 @@ function RootComponent() {
   const isMobileLayout = useMediaQuery('(max-width: 1023px)');
   const { activeBoard, activeBoardId } = useActiveBoard();
   const connectionQuery = useAtlassianConnectionQuery();
+  useAtlassianOAuthRedirectHandler();
   const jiraConnected = !!connectionQuery.data;
   const jiraBoardShortcutsEnabled =
     jiraConnected && !!(activeBoard?.jiraEnabled);

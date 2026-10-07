@@ -8,3 +8,4 @@ export * from './components/HistorySettings';
 export * from './services/atlassian.service';
 export * from './types';
 export * from './hooks/useAtlassianQuery';
+export * from './hooks/useAtlassianOAuthRedirectHandler';

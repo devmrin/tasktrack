@@ -12,7 +12,39 @@ const OAUTH_STATE_KEY = 'atlassian_oauth_state';
 const JIRA_CLOUD_SCOPES = 'read:jira-work read:jira-user offline_access';
 const AUTH_ATLASSIAN_AUTHORIZE = 'https://auth.atlassian.com/authorize';
 const AUTH_ATLASSIAN_TOKEN = 'https://auth.atlassian.com/oauth/token';
-const API_ATLASSIAN_ACCESSIBLE_RESOURCES = 'https://api.atlassian.com/oauth/token/accessible-resources';
+const AUTH_ATLASSIAN_TOKEN_PROXY = '/api/atlassian/oauth/token';
+const API_ATLASSIAN_ACCESSIBLE_RESOURCES =
+  'https://api.atlassian.com/oauth/token/accessible-resources';
+const API_ATLASSIAN_ACCESSIBLE_RESOURCES_PROXY = '/api/jira-cloud/accessible-resources';
+
+function isLocalAtlassianProxyHost(): boolean {
+  const host = globalThis.location?.hostname ?? '';
+  return host === 'localhost' || host === '127.0.0.1';
+}
+
+/** Atlassian’s token endpoint is not reliably callable from browser origins; use the dev proxy on localhost. */
+function getCloudOAuthTokenUrl(): string {
+  if (isLocalAtlassianProxyHost()) {
+    return AUTH_ATLASSIAN_TOKEN_PROXY;
+  }
+  return AUTH_ATLASSIAN_TOKEN;
+}
+
+/** Ad blockers often block the real path because it contains `/oauth/token/`. */
+function getAccessibleResourcesUrl(): string {
+  if (isLocalAtlassianProxyHost()) {
+    return API_ATLASSIAN_ACCESSIBLE_RESOURCES_PROXY;
+  }
+  return API_ATLASSIAN_ACCESSIBLE_RESOURCES;
+}
+
+/** Jira Cloud REST calls via `api.atlassian.com/ex/jira/{cloudId}`. */
+export function getJiraCloudExApiBase(cloudId: string): string {
+  if (isLocalAtlassianProxyHost()) {
+    return `/api/jira-cloud/ex/jira/${cloudId}`;
+  }
+  return `https://api.atlassian.com/ex/jira/${cloudId}`;
+}
 
 export function isJiraCloud(instanceUrl: string): boolean {
   try {
@@ -173,7 +205,7 @@ export async function refreshCloudIdFromToken(
   if (!isJiraCloud(config.instanceUrl)) {
     return null;
   }
-  const response = await fetch(API_ATLASSIAN_ACCESSIBLE_RESOURCES, {
+  const response = await fetch(getAccessibleResourcesUrl(), {
     headers: {
       Authorization: `Bearer ${accessToken}`,
       Accept: 'application/json',
@@ -201,7 +233,9 @@ export async function exchangeCodeForTokens(
   config: AtlassianConfig
 ): Promise<AtlassianTokens> {
   const isCloud = isJiraCloud(config.instanceUrl);
-  const tokenUrl = isCloud ? AUTH_ATLASSIAN_TOKEN : `${config.instanceUrl}/plugins/servlet/oauth/access-token`;
+  const tokenUrl = isCloud
+    ? getCloudOAuthTokenUrl()
+    : `${config.instanceUrl}/plugins/servlet/oauth/access-token`;
 
   const response = await fetch(tokenUrl, {
     method: 'POST',
@@ -218,7 +252,22 @@ export async function exchangeCodeForTokens(
   });
 
   if (!response.ok) {
-    throw new Error('Failed to exchange code for tokens');
+    const body = await response.text();
+    let message = 'Failed to exchange code for tokens';
+    try {
+      const parsed = JSON.parse(body) as {
+        error_description?: string;
+        message?: string;
+      };
+      if (parsed.error_description) {
+        message = parsed.error_description;
+      } else if (parsed.message) {
+        message = parsed.message;
+      }
+    } catch {
+      // keep default message
+    }
+    throw new Error(message);
   }
 
   const data = await response.json();
@@ -229,7 +278,7 @@ export async function exchangeCodeForTokens(
   };
 
   if (isCloud) {
-    const resourcesRes = await fetch(API_ATLASSIAN_ACCESSIBLE_RESOURCES, {
+    const resourcesRes = await fetch(getAccessibleResourcesUrl(), {
       headers: {
         Authorization: `Bearer ${tokens.accessToken}`,
         Accept: 'application/json',
@@ -262,7 +311,9 @@ export async function refreshAccessToken(config: AtlassianConfig): Promise<Atlas
     throw new Error('No refresh token available');
   }
 
-  const tokenUrl = isJiraCloud(config.instanceUrl) ? AUTH_ATLASSIAN_TOKEN : `${config.instanceUrl}/plugins/servlet/oauth/access-token`;
+  const tokenUrl = isJiraCloud(config.instanceUrl)
+    ? getCloudOAuthTokenUrl()
+    : `${config.instanceUrl}/plugins/servlet/oauth/access-token`;
 
   const response = await fetch(tokenUrl, {
     method: 'POST',

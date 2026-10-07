@@ -11,11 +11,8 @@ import {
   useAtlassianConfigQuery,
   useAtlassianConnectionQuery,
   useClearAtlassianTokensMutation,
-  useOAuthCompleteMutation,
   useSaveAtlassianConfigMutation,
 } from "@/modules/settings/hooks/useAtlassianQuery";
-import { useJiraSyncMutation } from "@/modules/inbox/hooks/useJiraSyncMutation";
-import { useActiveBoard } from "@/modules/boards/hooks/useActiveBoard";
 import { useBoardsQuery } from "@/modules/boards/hooks/useBoardsQuery";
 import { setBoardJiraEnabled } from "@/modules/boards/services/board.service";
 import { useToast } from "@/hooks/useToast";
@@ -31,10 +28,15 @@ interface JiraSettingsFormValues {
   boardJiraEnabled: Record<string, boolean>;
 }
 
+function hasOAuthCodeInUrl(): boolean {
+  return new URLSearchParams(globalThis.location.search).has("code");
+}
+
 export function JiraSettings() {
   const configQuery = useAtlassianConfigQuery();
   const connectionQuery = useAtlassianConnectionQuery();
   const boardsQuery = useBoardsQuery();
+  const oauthCodePending = hasOAuthCodeInUrl() && !connectionQuery.data;
 
   if (configQuery.isLoading || boardsQuery.isLoading) {
     return (
@@ -49,6 +51,7 @@ export function JiraSettings() {
       boards={boardsQuery.data ?? []}
       config={configQuery.data ?? null}
       isConnected={!!connectionQuery.data}
+      isConnecting={oauthCodePending || (connectionQuery.isFetching && hasOAuthCodeInUrl())}
     />
   );
 }
@@ -140,13 +143,18 @@ function JiraSetupGuide() {
 
         <div>
           <h4 className="font-semibold text-neutral-800 dark:text-neutral-200 mb-1.5">
-            2. Configure authorization &amp; scopes
+            2. Configure OAuth 2.0 (3LO) authorization
           </h4>
           <ol className="list-decimal list-inside space-y-1 ml-1">
             <li>
-              Open <strong>Authorization</strong> in the left menu, click{" "}
-              <strong>Add</strong> next to &ldquo;OAuth 2.0 (3LO)&rdquo;, and
-              enter your Callback URL.
+              Open <strong>Authorization</strong> in the left menu.
+            </li>
+            <li>
+              Click <strong>Add</strong> next to &ldquo;OAuth 2.0 (3LO)&rdquo;.
+            </li>
+            <li>
+              Set the <strong>Callback URL</strong> to this app&apos;s origin
+              (exact match, no trailing path):
             </li>
           </ol>
           <div className="mt-2">
@@ -160,14 +168,33 @@ function JiraSetupGuide() {
               <CopyButton value={callbackUrl} />
             </div>
           </div>
-          <ol
-            start={2}
-            className="list-decimal list-inside space-y-1 mt-2 ml-1"
-          >
+          <p className="mt-2 text-xs text-neutral-600 dark:text-neutral-400">
+            If you run tasktrack on a different host or port, update the
+            callback URL in the developer console to match that origin.
+          </p>
+        </div>
+
+        <div>
+          <h4 className="font-semibold text-neutral-800 dark:text-neutral-200 mb-1.5">
+            3. Add Jira API permissions (required)
+          </h4>
+          <p className="mb-2 text-xs text-neutral-600 dark:text-neutral-400">
+            New 3LO apps use the <strong>Permissions</strong> page instead of
+            classic-only scope pickers. You must attach the Jira API before
+            connect will work.
+          </p>
+          <ol className="list-decimal list-inside space-y-1 ml-1">
             <li>
-              Go to <strong>Permissions</strong> &rarr; add{" "}
-              <strong>Jira API</strong> &rarr; <strong>Configure</strong>, then
-              enable these scopes:
+              Open <strong>Permissions</strong> in the left menu.
+            </li>
+            <li>
+              Find <strong>Jira API</strong> and click <strong>Add</strong> (if
+              it is not listed yet).
+            </li>
+            <li>
+              Click <strong>Configure</strong> on Jira API and enable read
+              access for issues/work and users. tasktrack requests these OAuth
+              scopes:
             </li>
           </ol>
           <ul className="mt-1.5 ml-5 space-y-0.5">
@@ -181,30 +208,76 @@ function JiraSetupGuide() {
               <code className="text-xs bg-neutral-200 dark:bg-neutral-700 px-1 py-0.5 rounded">
                 read:jira-user
               </code>{" "}
-              &mdash; view user profiles
+              &mdash; view user profiles (assignees, etc.)
+            </li>
+            <li>
+              <code className="text-xs bg-neutral-200 dark:bg-neutral-700 px-1 py-0.5 rounded">
+                offline_access
+              </code>{" "}
+              &mdash; refresh tokens so you stay connected
             </li>
           </ul>
           <p className="mt-2 text-xs text-neutral-600 dark:text-neutral-400">
-            These scopes are available under the Classic scopes section.
+            The console may label these as <strong>Classic</strong> or{" "}
+            <strong>Granular</strong> scopes. Choose the classic names when
+            available; otherwise pick the equivalent granular read permissions
+            for Jira issues/work and users inside <strong>Configure</strong>.
+          </p>
+          <p className="mt-2 text-xs text-neutral-600 dark:text-neutral-400">
+            If Atlassian also lists <strong>User identity API</strong>, you can
+            add it when prompted; it is not required for basic Jira sync.
           </p>
         </div>
 
         <div>
           <h4 className="font-semibold text-neutral-800 dark:text-neutral-200 mb-1.5">
-            3. Retrieve your credentials
+            4. Retrieve your credentials
           </h4>
           <ol className="list-decimal list-inside space-y-1 ml-1">
             <li>
-              Navigate to <strong>Settings</strong> in the left sidebar.
+              In the developer console, open <strong>Settings</strong> for your
+              app.
             </li>
             <li>
               Copy the <strong>Client ID</strong> and{" "}
               <strong>Client Secret</strong> into the fields below.
             </li>
+            <li>
+              Set <strong>JIRA Instance URL</strong> to your site, e.g.{" "}
+              <code className="text-xs bg-neutral-200 dark:bg-neutral-700 px-1 py-0.5 rounded">
+                https://your-domain.atlassian.net
+              </code>
+              .
+            </li>
           </ol>
           <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
-            Treat the Client Secret as highly sensitive &mdash; never expose it
-            in client-side code or share it publicly.
+            Treat the Client Secret as highly sensitive &mdash; never share it
+            publicly. Rotate it in the developer console if it is exposed.
+          </p>
+        </div>
+
+        <div>
+          <h4 className="font-semibold text-neutral-800 dark:text-neutral-200 mb-1.5">
+            5. Save and connect in tasktrack
+          </h4>
+          <ol className="list-decimal list-inside space-y-1 ml-1">
+            <li>
+              Click <strong>Save Configuration</strong> (Connect stays disabled
+              until credentials are saved).
+            </li>
+            <li>
+              Click <strong>Connect</strong>, approve access in Atlassian, and
+              wait until the status shows connected.
+            </li>
+            <li>
+              Optionally enable <strong>Boards with JIRA features</strong> above
+              for each board that should sync or quick-open issues.
+            </li>
+          </ol>
+          <p className="mt-2 text-xs text-neutral-600 dark:text-neutral-400">
+            If connect fails after redirect, try again with a fresh{" "}
+            <strong>Connect</strong> click. Disable ad blockers for localhost
+            if requests to Atlassian are blocked in the browser.
           </p>
         </div>
       </div>
@@ -221,6 +294,7 @@ interface JiraSettingsFormProps {
   }>;
   readonly config: AtlassianConfig | null;
   readonly isConnected: boolean;
+  readonly isConnecting: boolean;
 }
 
 function JiraBoardScopeToggles({
@@ -325,17 +399,14 @@ function JiraSettingsForm({
   boards,
   config,
   isConnected,
+  isConnecting,
 }: JiraSettingsFormProps) {
   const queryClient = useQueryClient();
-  const { activeBoardId } = useActiveBoard();
   const [error, setError] = useState<string | null>(null);
-  const oauthHandledRef = useRef(false);
   const { showToast } = useToast();
 
   const saveConfigMutation = useSaveAtlassianConfigMutation();
   const clearTokensMutation = useClearAtlassianTokensMutation();
-  const oauthCompleteMutation = useOAuthCompleteMutation();
-  const jiraSyncMutation = useJiraSyncMutation(activeBoardId);
 
   const initialValues = useMemo<JiraSettingsFormValues>(
     () => ({
@@ -348,45 +419,6 @@ function JiraSettingsForm({
     }),
     [boards, config?.clientId, config?.clientSecret, config?.instanceUrl],
   );
-
-  useEffect(() => {
-    if (!config) return;
-    const urlParams = new URLSearchParams(globalThis.location.search);
-    const code = urlParams.get("code");
-    if (!code || oauthHandledRef.current) return;
-    oauthHandledRef.current = true;
-    oauthCompleteMutation.mutate(
-      { code, state: urlParams.get("state"), config },
-      {
-        onSuccess: () => {
-          jiraSyncMutation.mutate(undefined, {
-            onSuccess: (result) => {
-              const total =
-                (result?.created.length ?? 0) + (result?.updated.length ?? 0);
-              showToast(
-                total > 0
-                  ? `Connected to JIRA — fetched ${total} tickets`
-                  : "Connected to JIRA",
-              );
-              globalThis.history.replaceState({}, "", "/");
-            },
-            onError: () => {
-              showToast("Connected to JIRA");
-              globalThis.history.replaceState({}, "", "/");
-            },
-          });
-        },
-        onError: (err) => {
-          setError(
-            err instanceof Error
-              ? err.message
-              : "Failed to complete OAuth flow",
-          );
-          oauthHandledRef.current = false;
-        },
-      },
-    );
-  }, [config, oauthCompleteMutation, jiraSyncMutation, showToast]);
 
   const handleSaveConfig = useCallback(
     async (
@@ -571,10 +603,20 @@ function JiraSettingsForm({
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <div
-                    className={`w-2.5 h-2.5 rounded-full ${isConnected ? "bg-emerald-500" : "bg-neutral-400 dark:bg-neutral-500"}`}
+                    className={`w-2.5 h-2.5 rounded-full ${
+                      isConnected
+                        ? "bg-emerald-500"
+                        : isConnecting
+                          ? "bg-amber-400 animate-pulse"
+                          : "bg-neutral-400 dark:bg-neutral-500"
+                    }`}
                   />
                   <span className="text-sm text-neutral-700 dark:text-neutral-300">
-                    {isConnected ? "Connected to JIRA" : "Not connected"}
+                    {isConnected
+                      ? "Connected to JIRA"
+                      : isConnecting
+                        ? "Connecting…"
+                        : "Not connected"}
                   </span>
                 </div>
 
@@ -593,7 +635,7 @@ function JiraSettingsForm({
                     onClick={() => {
                       handleConnect(dirty);
                     }}
-                    disabled={!config || dirty}
+                    disabled={!config || dirty || isConnecting}
                     className="px-3 py-1.5 text-sm font-medium bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-900 rounded-md hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     Connect
