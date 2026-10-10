@@ -231,7 +231,7 @@ export function FocusSettings() {
               </p>
               <ToggleField
                 label="Enable Focus"
-                description="Show the focus zone on the board and the Focus button on each card."
+                description="Show the Focus button on each card. Starting focus opens the full-screen session."
                 checked={values.enabled}
                 onToggle={() => setFieldValue("enabled", !values.enabled)}
               />

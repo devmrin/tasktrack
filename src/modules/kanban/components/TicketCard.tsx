@@ -147,7 +147,6 @@ export function TicketCard({
                   Due {formattedDueDate}
                 </span>
               )}
-              <TicketAttachmentCount count={attachmentCount} />
             </div>
           )}
           {ticket.type === "local" && ticket.customKey && (
@@ -259,22 +258,27 @@ export function TicketCard({
         )}
       </div>
 
-      {onStartFocus && !focusActive && (
-        <div className="flex justify-end mt-2 pt-2 border-t border-neutral-100 dark:border-neutral-700/50">
-          <Tooltip content="Start focused work session">
-            <button
-              type="button"
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={(e) => {
-                e.stopPropagation();
-                onStartFocus(ticket);
-              }}
-              className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
-            >
-              <PlayCircle className="size-3.5" aria-hidden />
-              Focus
-            </button>
-          </Tooltip>
+      {(attachmentCount > 0 || (onStartFocus && !focusActive)) && (
+        <div className="flex items-center mt-2 pt-2 border-t border-neutral-100 dark:border-neutral-700/50">
+          {attachmentCount > 0 && <TicketAttachmentCount count={attachmentCount} />}
+          {onStartFocus && !focusActive && (
+            <div className="ml-auto">
+              <Tooltip content="Start focused work session">
+                <button
+                  type="button"
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onStartFocus(ticket);
+                  }}
+                  className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
+                >
+                  <PlayCircle className="size-3.5" aria-hidden />
+                  Focus
+                </button>
+              </Tooltip>
+            </div>
+          )}
         </div>
       )}
 

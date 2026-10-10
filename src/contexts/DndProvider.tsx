@@ -282,7 +282,7 @@ export function DndProvider({ children }: DndProviderProps) {
                 </p>
               )}
             {attachmentCount > 0 && (
-              <div className="mt-2">
+              <div className="mt-2 pt-2 border-t border-neutral-100 dark:border-neutral-700/50">
                 <TicketAttachmentCount count={attachmentCount} />
               </div>
             )}

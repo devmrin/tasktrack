@@ -3,11 +3,9 @@ import {
   horizontalListSortingStrategy,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import * as Tabs from "@radix-ui/react-tabs";
 import { Columns3, Plus } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Ticket } from "@/db/database";
-import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { MAX_COLUMN_TITLE_LENGTH } from "@/modules/kanban/constants";
 import { INBOX_COLUMN_ID } from "@/modules/inbox/types";
 import { FocusZone, useFocusZone, usePomodoroSettings } from "@/modules/focus";
@@ -17,8 +15,6 @@ import { useBoardTerminology } from "@/modules/boards/hooks/useBoardTerminology"
 import { ticketMatchesStatusFilter } from "@/modules/tickets";
 import { useStatusFilter } from "@/hooks/useStatusFilter";
 import { KanbanColumn } from "./KanbanColumn";
-
-type MobileView = "focus" | "board";
 
 export function KanbanBoard() {
   const {
@@ -40,10 +36,6 @@ export function KanbanBoard() {
   const { focusedData, focusActive, startFocus, endFocus } = useFocusZone();
   const { settings: focusSettings, loaded: focusSettingsLoaded } = usePomodoroSettings();
   const focusEnabled = focusSettings.enabled;
-  const isMobileLayout = useMediaQuery("(max-width: 1023px)");
-  const [mobileView, setMobileView] = useState<MobileView>(() =>
-    isMobileLayout && focusActive ? "focus" : "board",
-  );
   const [newColumnTitle, setNewColumnTitle] = useState("");
   const [showCreateColumnInput, setShowCreateColumnInput] = useState(false);
   const createColumnInputRef = useRef<HTMLInputElement>(null);
@@ -58,12 +50,9 @@ export function KanbanBoard() {
   const handleStartFocus = useCallback(
     (ticket: Ticket) => {
       if (!focusEnabled || focusActive) return;
-      if (isMobileLayout) {
-        setMobileView("focus");
-      }
       startFocus(ticket);
     },
-    [focusEnabled, focusActive, isMobileLayout, startFocus],
+    [focusEnabled, focusActive, startFocus],
   );
 
   useEffect(() => {
@@ -264,52 +253,13 @@ export function KanbanBoard() {
     </>
   );
 
-  const shouldShowMobileSegmentedControl =
-    isMobileLayout && focusEnabled && focusActive;
-  const resolvedMobileView: MobileView =
-    isMobileLayout && focusEnabled && focusActive ? mobileView : "board";
-  const focusZoneMode: "full" | "hidden" =
-    isMobileLayout && resolvedMobileView === "board" ? "hidden" : "full";
-
   return (
     <div className="flex-1 min-h-0 flex flex-col">
-      {shouldShowMobileSegmentedControl && (
-        <div className="shrink-0 px-3 pt-0 pb-2 border-b border-neutral-200 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-900">
-          <Tabs.Root
-            value={resolvedMobileView}
-            onValueChange={(value) => setMobileView(value as MobileView)}
-          >
-            <Tabs.List
-              aria-label="Mobile view mode"
-              className="grid grid-cols-2 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-1"
-            >
-              <Tabs.Trigger
-                value="focus"
-                className="h-9 rounded-md text-sm font-medium text-neutral-600 dark:text-neutral-300 data-[state=active]:bg-neutral-900 data-[state=active]:text-white dark:data-[state=active]:bg-neutral-100 dark:data-[state=active]:text-neutral-900 transition-colors"
-              >
-                Focus
-              </Tabs.Trigger>
-              <Tabs.Trigger
-                value="board"
-                className="h-9 rounded-md text-sm font-medium text-neutral-600 dark:text-neutral-300 data-[state=active]:bg-neutral-900 data-[state=active]:text-white dark:data-[state=active]:bg-neutral-100 dark:data-[state=active]:text-neutral-900 transition-colors"
-              >
-                Board
-              </Tabs.Trigger>
-            </Tabs.List>
-          </Tabs.Root>
-        </div>
-      )}
-
       {focusEnabled && (
-        <FocusZone
-          focusedData={focusedData}
-          onEndFocus={endFocus}
-          mode={focusZoneMode}
-        />
+        <FocusZone focusedData={focusedData} onEndFocus={endFocus} />
       )}
 
-      {(!isMobileLayout || resolvedMobileView === "board") &&
-        renderBoardContent()}
+      {renderBoardContent()}
     </div>
   );
 }

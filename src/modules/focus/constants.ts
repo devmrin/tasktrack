@@ -23,6 +23,3 @@ export const DEFAULT_POMODORO_SETTINGS: PomodoroSettings = {
   autoStartPomodoros: false,
   chimeOnTimerComplete: true,
 };
-
-export const FOCUS_ZONE_EXPANDED_HEIGHT = 280;
-export const FOCUS_ZONE_COLLAPSED_HEIGHT = 48;
