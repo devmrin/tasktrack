@@ -479,6 +479,10 @@ export function InboxSidebar({
 
           {isBoardJiraEnabled ? (
             <div className="flex items-center gap-1 shrink-0">
+              <span
+                className="mr-1 h-5 w-px shrink-0 bg-neutral-300 dark:bg-neutral-600"
+                aria-hidden
+              />
               {!jiraConnected ? (
                 <Tooltip content="Connect JIRA" side="bottom">
                   <button
