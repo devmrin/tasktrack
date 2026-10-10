@@ -1,0 +1,3 @@
+# Client routes (/:boardSlug/board, /history) are handled by the SPA.
+# Existing files still win; this only rewrites paths Netlify cannot find.
+/*    /index.html   200
