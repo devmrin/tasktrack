@@ -1,6 +1,7 @@
 import type { PomodoroSettings } from '@/modules/focus/types';
 
 export const SETTING_KEYS = {
+  focusEnabled: 'focus-enabled',
   focusTicketId: 'focus-ticket-id',
   focusOriginalColumnId: 'focus-original-column-id',
   pomodoroWorkDuration: 'pomodoro-work-duration',
@@ -13,6 +14,7 @@ export const SETTING_KEYS = {
 } as const;
 
 export const DEFAULT_POMODORO_SETTINGS: PomodoroSettings = {
+  enabled: true,
   workDuration: 25,
   shortBreakDuration: 5,
   longBreakDuration: 15,

@@ -26,7 +26,8 @@ function getSnapshot(): PomodoroSettings {
 }
 
 async function loadFromDb(): Promise<void> {
-  const [work, short, long, interval, autoBreaks, autoPomodoros, chime] = await Promise.all([
+  const [enabled, work, short, long, interval, autoBreaks, autoPomodoros, chime] = await Promise.all([
+    db.settings.get(SETTING_KEYS.focusEnabled),
     db.settings.get(SETTING_KEYS.pomodoroWorkDuration),
     db.settings.get(SETTING_KEYS.pomodoroShortBreak),
     db.settings.get(SETTING_KEYS.pomodoroLongBreak),
@@ -37,6 +38,7 @@ async function loadFromDb(): Promise<void> {
   ]);
 
   sharedSettings = {
+    enabled: enabled ? enabled.value === 'true' : DEFAULT_POMODORO_SETTINGS.enabled,
     workDuration: work ? Number(work.value) : DEFAULT_POMODORO_SETTINGS.workDuration,
     shortBreakDuration: short ? Number(short.value) : DEFAULT_POMODORO_SETTINGS.shortBreakDuration,
     longBreakDuration: long ? Number(long.value) : DEFAULT_POMODORO_SETTINGS.longBreakDuration,
@@ -57,6 +59,7 @@ async function loadFromDb(): Promise<void> {
 
 async function persistAndUpdate(next: PomodoroSettings): Promise<void> {
   await db.settings.bulkPut([
+    { key: SETTING_KEYS.focusEnabled, value: String(next.enabled) },
     { key: SETTING_KEYS.pomodoroWorkDuration, value: String(next.workDuration) },
     { key: SETTING_KEYS.pomodoroShortBreak, value: String(next.shortBreakDuration) },
     { key: SETTING_KEYS.pomodoroLongBreak, value: String(next.longBreakDuration) },

@@ -12,6 +12,7 @@ import { SETTINGS_PANEL_SECTION_DIVIDER_CLASSNAME } from "@/modules/settings/con
 const FOCUS_SETTINGS_FORM_ID = "focus-pomodoro-settings-form";
 
 const pomodoroSettingsSchema = Yup.object({
+  enabled: Yup.boolean().required(),
   workDuration: Yup.number().min(1).max(120).required(),
   shortBreakDuration: Yup.number().min(1).max(30).required(),
   longBreakDuration: Yup.number().min(1).max(60).required(),
@@ -222,101 +223,124 @@ export function FocusSettings() {
           <Form id={FOCUS_SETTINGS_FORM_ID} className="space-y-6">
             <div>
               <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 mb-1">
-                Timer Durations
+                Focus
               </h3>
               <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-4">
-                Customize the length of each pomodoro phase.
+                Turn Focus off to hide it from the board. Pomodoro settings stay
+                saved and apply again when you turn it back on.
               </p>
-              <div className="space-y-3">
-                <NumberField
-                  label="Pomodoro"
-                  name="workDuration"
-                  value={values.workDuration}
-                  min={1}
-                  max={120}
-                  suffix="min"
-                  onChange={(n, v) => setFieldValue(n, v)}
-                />
-                <NumberField
-                  label="Short Break"
-                  name="shortBreakDuration"
-                  value={values.shortBreakDuration}
-                  min={1}
-                  max={30}
-                  suffix="min"
-                  onChange={(n, v) => setFieldValue(n, v)}
-                />
-                <NumberField
-                  label="Long Break"
-                  name="longBreakDuration"
-                  value={values.longBreakDuration}
-                  min={1}
-                  max={60}
-                  suffix="min"
-                  onChange={(n, v) => setFieldValue(n, v)}
-                />
-                <NumberField
-                  label="Long Break Interval"
-                  name="longBreakInterval"
-                  value={values.longBreakInterval}
-                  min={1}
-                  max={12}
-                  suffix="sessions"
-                  onChange={(n, v) => setFieldValue(n, v)}
-                />
-              </div>
+              <ToggleField
+                label="Enable Focus"
+                description="Show the focus zone on the board and the Focus button on each card."
+                checked={values.enabled}
+                onToggle={() => setFieldValue("enabled", !values.enabled)}
+              />
             </div>
 
-            <div className={SETTINGS_PANEL_SECTION_DIVIDER_CLASSNAME}>
-              <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 mb-1">
-                Auto-start
-              </h3>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-4">
-                Automatically start the next phase when one ends.
-              </p>
-              <div className="space-y-4">
+            <fieldset
+              disabled={!values.enabled}
+              className={`m-0 min-w-0 space-y-6 border-0 p-0 ${
+                values.enabled ? "" : "pointer-events-none opacity-50"
+              }`}
+            >
+              <div className={SETTINGS_PANEL_SECTION_DIVIDER_CLASSNAME}>
+                <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 mb-1">
+                  Timer Durations
+                </h3>
+                <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-4">
+                  Customize the length of each pomodoro phase.
+                </p>
+                <div className="space-y-3">
+                  <NumberField
+                    label="Pomodoro"
+                    name="workDuration"
+                    value={values.workDuration}
+                    min={1}
+                    max={120}
+                    suffix="min"
+                    onChange={(n, v) => setFieldValue(n, v)}
+                  />
+                  <NumberField
+                    label="Short Break"
+                    name="shortBreakDuration"
+                    value={values.shortBreakDuration}
+                    min={1}
+                    max={30}
+                    suffix="min"
+                    onChange={(n, v) => setFieldValue(n, v)}
+                  />
+                  <NumberField
+                    label="Long Break"
+                    name="longBreakDuration"
+                    value={values.longBreakDuration}
+                    min={1}
+                    max={60}
+                    suffix="min"
+                    onChange={(n, v) => setFieldValue(n, v)}
+                  />
+                  <NumberField
+                    label="Long Break Interval"
+                    name="longBreakInterval"
+                    value={values.longBreakInterval}
+                    min={1}
+                    max={12}
+                    suffix="sessions"
+                    onChange={(n, v) => setFieldValue(n, v)}
+                  />
+                </div>
+              </div>
+
+              <div className={SETTINGS_PANEL_SECTION_DIVIDER_CLASSNAME}>
+                <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 mb-1">
+                  Auto-start
+                </h3>
+                <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-4">
+                  Automatically start the next phase when one ends.
+                </p>
+                <div className="space-y-4">
+                  <ToggleField
+                    label="Auto-start breaks"
+                    description="Start break timer automatically after a pomodoro"
+                    checked={values.autoStartBreaks}
+                    onToggle={() =>
+                      setFieldValue("autoStartBreaks", !values.autoStartBreaks)
+                    }
+                  />
+                  <ToggleField
+                    label="Auto-start pomodoros"
+                    description="Start work timer automatically after a break"
+                    checked={values.autoStartPomodoros}
+                    onToggle={() =>
+                      setFieldValue(
+                        "autoStartPomodoros",
+                        !values.autoStartPomodoros,
+                      )
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className={SETTINGS_PANEL_SECTION_DIVIDER_CLASSNAME}>
+                <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 mb-1">
+                  Sounds
+                </h3>
+                <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-4">
+                  Audio feedback when a timer phase finishes.
+                </p>
                 <ToggleField
-                  label="Auto-start breaks"
-                  description="Start break timer automatically after a pomodoro"
-                  checked={values.autoStartBreaks}
-                  onToggle={() =>
-                    setFieldValue("autoStartBreaks", !values.autoStartBreaks)
-                  }
-                />
-                <ToggleField
-                  label="Auto-start pomodoros"
-                  description="Start work timer automatically after a break"
-                  checked={values.autoStartPomodoros}
+                  label="Completion sounds"
+                  description="Play a chime when a work session ends and a tone when a break ends."
+                  checked={values.chimeOnTimerComplete}
                   onToggle={() =>
                     setFieldValue(
-                      "autoStartPomodoros",
-                      !values.autoStartPomodoros,
+                      "chimeOnTimerComplete",
+                      !values.chimeOnTimerComplete,
                     )
                   }
                 />
+                <CompletionSoundPreview />
               </div>
-            </div>
-
-            <div className={SETTINGS_PANEL_SECTION_DIVIDER_CLASSNAME}>
-              <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 mb-1">
-                Sounds
-              </h3>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-4">
-                Audio feedback when a timer phase finishes.
-              </p>
-              <ToggleField
-                label="Completion sounds"
-                description="Play a chime when a work session ends and a tone when a break ends."
-                checked={values.chimeOnTimerComplete}
-                onToggle={() =>
-                  setFieldValue(
-                    "chimeOnTimerComplete",
-                    !values.chimeOnTimerComplete,
-                  )
-                }
-              />
-              <CompletionSoundPreview />
-            </div>
+            </fieldset>
           </Form>
         </>
       )}

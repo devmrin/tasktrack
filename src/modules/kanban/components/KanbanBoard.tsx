@@ -10,7 +10,7 @@ import type { Ticket } from "@/db/database";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { MAX_COLUMN_TITLE_LENGTH } from "@/modules/kanban/constants";
 import { INBOX_COLUMN_ID } from "@/modules/inbox/types";
-import { FocusZone, useFocusZone } from "@/modules/focus";
+import { FocusZone, useFocusZone, usePomodoroSettings } from "@/modules/focus";
 import { useKanban } from "@/modules/kanban/hooks/useKanban";
 import { BoardSwitcher } from "@/modules/boards";
 import { useActiveBoard } from "@/modules/boards/hooks/useActiveBoard";
@@ -40,6 +40,8 @@ export function KanbanBoard() {
   const statusFilter = useStatusFilter();
   const terminology = useBoardTerminology(activeBoard);
   const { focusedData, focusActive, startFocus, endFocus } = useFocusZone();
+  const { settings: focusSettings, loaded: focusSettingsLoaded } = usePomodoroSettings();
+  const focusEnabled = focusSettings.enabled;
   const isMobileLayout = useMediaQuery("(max-width: 1023px)");
   const [mobileView, setMobileView] = useState<MobileView>(() =>
     isMobileLayout && focusActive ? "focus" : "board",
@@ -57,14 +59,21 @@ export function KanbanBoard() {
 
   const handleStartFocus = useCallback(
     (ticket: Ticket) => {
-      if (focusActive) return;
+      if (!focusEnabled || focusActive) return;
       if (isMobileLayout) {
         setMobileView("focus");
       }
       startFocus(ticket);
     },
-    [focusActive, isMobileLayout, startFocus],
+    [focusEnabled, focusActive, isMobileLayout, startFocus],
   );
+
+  useEffect(() => {
+    if (!focusSettingsLoaded || focusEnabled || !focusActive) {
+      return;
+    }
+    void endFocus();
+  }, [focusSettingsLoaded, focusEnabled, focusActive, endFocus]);
 
   useEffect(() => {
     if (showCreateColumnInput) {
@@ -179,7 +188,7 @@ export function KanbanBoard() {
                     onTicketMove={handleTicketMove}
                     onTicketDelete={handleTicketDelete}
                     deletingTicket={deletingTicket}
-                    onStartFocus={handleStartFocus}
+                    onStartFocus={focusEnabled ? handleStartFocus : undefined}
                     focusActive={focusActive}
                     focusedTicketId={focusedData?.ticket.id}
                     itemPluralWord={terminology.items}
@@ -261,9 +270,10 @@ export function KanbanBoard() {
     </>
   );
 
-  const shouldShowMobileSegmentedControl = isMobileLayout && focusActive;
+  const shouldShowMobileSegmentedControl =
+    isMobileLayout && focusEnabled && focusActive;
   const resolvedMobileView: MobileView =
-    isMobileLayout && focusActive ? mobileView : "board";
+    isMobileLayout && focusEnabled && focusActive ? mobileView : "board";
   const focusZoneMode: "full" | "hidden" =
     isMobileLayout && resolvedMobileView === "board" ? "hidden" : "full";
 
@@ -296,11 +306,13 @@ export function KanbanBoard() {
         </div>
       )}
 
-      <FocusZone
-        focusedData={focusedData}
-        onEndFocus={endFocus}
-        mode={focusZoneMode}
-      />
+      {focusEnabled && (
+        <FocusZone
+          focusedData={focusedData}
+          onEndFocus={endFocus}
+          mode={focusZoneMode}
+        />
+      )}
 
       {(!isMobileLayout || resolvedMobileView === "board") &&
         renderBoardContent()}

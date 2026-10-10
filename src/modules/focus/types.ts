@@ -3,6 +3,7 @@ import type { Ticket } from '@/db/database';
 export type PomodoroPhase = 'work' | 'shortBreak' | 'longBreak';
 
 export interface PomodoroSettings {
+  enabled: boolean;
   workDuration: number;
   shortBreakDuration: number;
   longBreakDuration: number;
