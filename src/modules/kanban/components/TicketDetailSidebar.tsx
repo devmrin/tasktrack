@@ -18,6 +18,7 @@ import { TicketDescriptionEditor } from "@/components/TicketDescriptionEditor";
 import { Tooltip } from "@/components/Tooltip";
 import { isEmptyEditorHtml } from "@/utils/editorHtml";
 import { JiraAdfRenderer } from "@/modules/kanban/components/JiraAdfRenderer";
+import { JiraAttachmentsSection } from "@/modules/kanban/components/JiraAttachmentsSection";
 import { SanitizedHtml } from "@/modules/kanban/components/SanitizedHtml";
 import type { BoardTerminology } from "@/modules/boards/types/board.types";
 
@@ -658,6 +659,12 @@ export function TicketDetailSidebar({
                       </div>
                     )}
                   </div>
+
+                  {isJira && (selectedTicket.jiraData?.attachments?.length ?? 0) > 0 && (
+                    <JiraAttachmentsSection
+                      attachments={selectedTicket.jiraData?.attachments ?? []}
+                    />
+                  )}
 
                   {isEditable && showDueDate && (
                     <TicketKeyField

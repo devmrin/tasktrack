@@ -34,6 +34,7 @@ export interface Ticket {
     assignee?: string;
     priority?: string;
     comments?: JiraComment[];
+    attachments?: JiraAttachment[];
   };
   customKey?: string;
   createdAt: number;
@@ -47,6 +48,17 @@ export interface JiraComment {
   createdAt?: string;
   updatedAt?: string;
   body?: unknown;
+}
+
+export interface JiraAttachment {
+  id: string;
+  filename: string;
+  mimeType: string;
+  size: number;
+  createdAt?: string;
+  authorName?: string;
+  /** Resized image stored during sync so cards can render offline. */
+  previewDataUrl?: string;
 }
 
 export interface Column {

@@ -1,7 +1,16 @@
-import type { JiraComment, Ticket, TransactionTicketRef } from '@/db/database';
+import type { JiraAttachment, JiraComment, Ticket, TransactionTicketRef } from '@/db/database';
 import { recordHistoryTransaction } from '@/modules/history/services/history.service';
 import type { AtlassianConfig } from '@/modules/settings';
-import { createTicket, updateTicket, getAllTickets, getJiraTickets, deleteTickets } from '@/modules/tickets';
+import {
+  createTicket,
+  updateTicket,
+  getAllTickets,
+  getJiraTickets,
+  deleteTickets,
+  extractJiraAttachments,
+  retainAttachmentPreviews,
+  withAttachmentPreviews,
+} from '@/modules/tickets';
 import {
   getValidAccessToken,
   getAtlassianConfig,
@@ -68,6 +77,7 @@ async function issuesToTickets(
   issues: JiraIssue[],
   config: AtlassianConfig,
   boardId: string,
+  attachmentsByIssue: ReadonlyMap<string, JiraAttachment[]>,
 ): Promise<JiraSyncResult> {
   const freshJiraKeys = new Set(issues.map((i) => i.key));
   const removedTickets = await removeStaleJiraTickets(freshJiraKeys, boardId);
@@ -88,6 +98,11 @@ async function issuesToTickets(
     const description = descriptionToHtml(issue);
     const comments = extractIssueComments(issue);
     const dueDate = issue.fields.duedate?.trim() || undefined;
+    const existing = existingByJiraKey.get(issue.key);
+    const syncedAttachments = attachmentsByIssue.get(issue.key);
+    const attachments = syncedAttachments === undefined
+      ? undefined
+      : retainAttachmentPreviews(existing?.jiraData?.attachments, syncedAttachments);
     const jiraData = {
       jiraId: issue.id,
       jiraUrl: `${config.instanceUrl}/browse/${issue.key}`,
@@ -96,10 +111,10 @@ async function issuesToTickets(
       assignee: issue.fields.assignee?.displayName,
       priority: issue.fields.priority?.name,
       comments,
+      ...(attachments !== undefined ? { attachments } : {}),
     };
     const priority = normalizeTicketPriority(issue.fields.priority?.name);
 
-    const existing = existingByJiraKey.get(issue.key);
     if (existing) {
       await updateTicket(existing.id, {
         title: issue.fields.summary,
@@ -202,6 +217,7 @@ export interface JiraIssue {
       name: string;
     };
     comment?: JiraIssueCommentCollection;
+    attachment?: unknown;
   };
   renderedFields?: Record<string, unknown>;
   self: string;
@@ -211,7 +227,7 @@ export interface JiraSearchResponse {
   issues: JiraIssue[];
 }
 
-const SEARCH_FIELDS = '*navigable';
+const SEARCH_FIELDS = '*navigable,attachment';
 
 function buildApiBase(cloudId: string | undefined, instanceUrl: string): string {
   return cloudId ? getJiraCloudExApiBase(cloudId) : instanceUrl;
@@ -355,7 +371,17 @@ export async function fetchJiraTickets(jql: string | undefined, boardId: string)
 
   const data: JiraSearchResponse = await response.json();
   const issuesWithComments = await hydrateIssueComments(data.issues, config, accessToken);
-  const syncResult = await issuesToTickets(issuesWithComments, config, boardId);
+  const attachmentsByIssue = await withAttachmentPreviews(
+    issuesWithComments.map((issue) => ({
+      key: issue.key,
+      attachments: Object.hasOwn(issue.fields, 'attachment')
+        ? extractJiraAttachments(issue.fields.attachment)
+        : undefined,
+    })),
+    config,
+    accessToken,
+  );
+  const syncResult = await issuesToTickets(issuesWithComments, config, boardId, attachmentsByIssue);
   await recordHistoryTransaction({
     eventType: 'jira_sync_summary',
     boardId,

@@ -12,6 +12,7 @@ import type { CollisionDetection } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
+import { TicketAttachmentCount } from "@/components/TicketAttachmentCount";
 import type { Ticket } from "@/db/database";
 import { queryKeys } from "@/hooks/queryKeys";
 import { useActiveBoard } from "@/modules/boards/hooks/useActiveBoard";
@@ -20,6 +21,8 @@ import { INBOX_COLUMN_ID } from "@/modules/inbox/types";
 import { getAllColumns, getColumn, reorderColumns } from "@/modules/kanban";
 import {
   getTicket,
+  getTicketAttachmentCount,
+  getTicketCoverImage,
   moveTicket,
   reorderTicketInColumn,
 } from "@/modules/tickets";
@@ -255,18 +258,35 @@ export function DndProvider({ children }: DndProviderProps) {
     : [];
   let overlayContent: React.ReactNode = null;
   if (activeTicket) {
+    const cover = getTicketCoverImage(activeTicket);
+    const attachmentCount = getTicketAttachmentCount(activeTicket);
     overlayContent = (
       <div className="rotate-3 opacity-90 w-72">
-        <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-sm border border-neutral-200 dark:border-neutral-700 p-3">
-          <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 line-clamp-4">
-            {activeTicket.title}
-          </p>
-          {activeTicket.description &&
-            typeof activeTicket.description === "string" && (
-              <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-1 line-clamp-2">
-                {stripHtml(activeTicket.description)}
-              </p>
+        <div className="overflow-hidden bg-white dark:bg-neutral-800 rounded-lg shadow-sm border border-neutral-200 dark:border-neutral-700">
+          {cover && (
+            <img
+              src={cover.src}
+              alt=""
+              draggable={false}
+              className="h-24 w-full object-cover"
+            />
+          )}
+          <div className="p-3">
+            <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 line-clamp-4">
+              {activeTicket.title}
+            </p>
+            {activeTicket.description &&
+              typeof activeTicket.description === "string" && (
+                <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-1 line-clamp-2">
+                  {stripHtml(activeTicket.description)}
+                </p>
+              )}
+            {attachmentCount > 0 && (
+              <div className="mt-2">
+                <TicketAttachmentCount count={attachmentCount} />
+              </div>
             )}
+          </div>
         </div>
       </div>
     );

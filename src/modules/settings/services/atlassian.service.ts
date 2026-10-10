@@ -38,6 +38,26 @@ function getAccessibleResourcesUrl(): string {
   return API_ATLASSIAN_ACCESSIBLE_RESOURCES;
 }
 
+/**
+ * Attachment bytes on Jira Cloud are served from a media host after a redirect.
+ * On localhost the dev server follows that redirect; elsewhere the app calls the API directly.
+ */
+export function getJiraAttachmentUrl(
+  cloudId: string | undefined,
+  instanceUrl: string,
+  attachmentId: string,
+  variant: 'content' | 'thumbnail',
+): string {
+  const id = encodeURIComponent(attachmentId);
+  if (cloudId && isLocalAtlassianProxyHost()) {
+    return `/api/jira-attachment/${variant}/${encodeURIComponent(cloudId)}/${id}`;
+  }
+  const base = cloudId
+    ? getJiraCloudExApiBase(cloudId)
+    : instanceUrl.trim().replace(/\/$/, '');
+  return `${base}/rest/api/3/attachment/${variant}/${id}`;
+}
+
 /** Jira Cloud REST calls via `api.atlassian.com/ex/jira/{cloudId}`. */
 export function getJiraCloudExApiBase(cloudId: string): string {
   if (isLocalAtlassianProxyHost()) {

@@ -9,12 +9,13 @@ import {
   PlayCircle,
   Trash2,
 } from "lucide-react";
+import { TicketAttachmentCount } from "@/components/TicketAttachmentCount";
 import { Tooltip } from "@/components/Tooltip";
 import { useEffect, useState } from "react";
 import type { Ticket } from "@/db/database";
 import { registerTicket, unregisterTicket } from "@/contexts/ticketRegistry";
 import { useTicketDetail } from "@/hooks/useTicketDetail";
-import { formatDueDate } from "@/modules/tickets";
+import { formatDueDate, getTicketAttachmentCount, getTicketCoverImage } from "@/modules/tickets";
 import { stripHtml } from "@/utils/sanitizeHtml";
 import { DeleteConfirmationDialog } from "./DeleteConfirmationDialog";
 
@@ -84,6 +85,8 @@ export function TicketCard({
       : [];
   const isFocusedTicket = focusedTicketId === ticket.id;
   const formattedDueDate = formatDueDate(ticket.dueDate);
+  const cover = getTicketCoverImage(ticket);
+  const attachmentCount = getTicketAttachmentCount(ticket);
 
   const sortableHandleProps = { ...attributes, ...listeners };
 
@@ -91,13 +94,22 @@ export function TicketCard({
     <div
       ref={setNodeRef}
       style={style}
-      className={`bg-white dark:bg-neutral-800 rounded-lg shadow-sm border border-neutral-200 dark:border-neutral-700 p-3 mb-2 hover:shadow-md transition-shadow flex flex-col cursor-move ${
+      className={`bg-white dark:bg-neutral-800 rounded-lg shadow-sm border border-neutral-200 dark:border-neutral-700 mb-2 hover:shadow-md transition-shadow flex flex-col cursor-move overflow-hidden ${
         isFocusedTicket
           ? "ring-2 ring-inset ring-amber-400 dark:ring-amber-500"
           : ""
       }`}
       {...sortableHandleProps}
     >
+      {cover && (
+        <img
+          src={cover.src}
+          alt={cover.alt}
+          draggable={false}
+          className="h-36 w-full object-cover bg-neutral-100 dark:bg-neutral-900"
+        />
+      )}
+      <div className="p-3 flex flex-col">
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           <button
@@ -116,7 +128,7 @@ export function TicketCard({
             </p>
           )}
           {ticket.type === "jira" && ticket.jiraData && (
-            <div className="mt-2 flex items-start flex-wrap gap-2">
+            <div className="mt-2 flex items-center flex-wrap gap-2">
               <span className="text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded break-words whitespace-normal max-w-full">
                 {ticket.jiraData.jiraKey}
               </span>
@@ -135,6 +147,7 @@ export function TicketCard({
                   Due {formattedDueDate}
                 </span>
               )}
+              <TicketAttachmentCount count={attachmentCount} />
             </div>
           )}
           {ticket.type === "local" && ticket.customKey && (
@@ -278,6 +291,7 @@ export function TicketCard({
           }}
         />
       )}
+      </div>
     </div>
   );
 }

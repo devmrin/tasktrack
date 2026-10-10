@@ -1,7 +1,8 @@
+import { TicketAttachmentCount } from '@/components/TicketAttachmentCount';
 import { Tooltip } from '@/components/Tooltip';
 import type { Ticket } from '@/db/database';
 import { SanitizedHtml } from '@/modules/kanban/components/SanitizedHtml';
-import { formatDueDate } from '@/modules/tickets';
+import { formatDueDate, getTicketAttachmentCount, getTicketCoverImage } from '@/modules/tickets';
 
 interface FocusTicketCardProps {
   readonly ticket: Ticket;
@@ -10,9 +11,19 @@ interface FocusTicketCardProps {
 
 export function FocusTicketCard({ ticket, onDismiss }: FocusTicketCardProps) {
   const formattedDueDate = formatDueDate(ticket.dueDate);
+  const cover = getTicketCoverImage(ticket);
+  const attachmentCount = getTicketAttachmentCount(ticket);
 
   return (
     <div className="flex h-full min-h-0 flex-col">
+      {cover && (
+        <img
+          src={cover.src}
+          alt={cover.alt}
+          draggable={false}
+          className="mb-3 h-40 w-full shrink-0 rounded-lg object-cover bg-neutral-100 dark:bg-neutral-900"
+        />
+      )}
       <div className="shrink-0">
         <div className="flex items-start justify-between gap-3 min-w-0">
           <div className="min-w-0 flex-1">
@@ -20,7 +31,7 @@ export function FocusTicketCard({ ticket, onDismiss }: FocusTicketCardProps) {
               {ticket.title}
             </h3>
             {ticket.type === 'jira' && ticket.jiraData && (
-              <div className="mt-1.5 flex flex-wrap items-start gap-2">
+              <div className="mt-1.5 flex flex-wrap items-center gap-2">
                 <span className="text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded break-words whitespace-normal max-w-full">
                   {ticket.jiraData.jiraKey}
                 </span>
@@ -39,6 +50,7 @@ export function FocusTicketCard({ ticket, onDismiss }: FocusTicketCardProps) {
                     Due {formattedDueDate}
                   </span>
                 )}
+                <TicketAttachmentCount count={attachmentCount} />
               </div>
             )}
             {ticket.type === 'local' && ticket.customKey && (
