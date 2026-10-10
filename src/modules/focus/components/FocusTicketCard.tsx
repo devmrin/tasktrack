@@ -1,8 +1,9 @@
 import { TicketAttachmentCount } from '@/components/TicketAttachmentCount';
+import { TicketSubtaskCount } from '@/components/TicketSubtaskCount';
 import { Tooltip } from '@/components/Tooltip';
 import type { Ticket } from '@/db/database';
 import { SanitizedHtml } from '@/modules/kanban/components/SanitizedHtml';
-import { formatDueDate, getTicketAttachmentCount, getTicketCoverImage } from '@/modules/tickets';
+import { formatDueDate, getTicketAttachmentCount, getTicketCoverImage, getTicketSubtaskCount } from '@/modules/tickets';
 
 interface FocusTicketCardProps {
   readonly ticket: Ticket;
@@ -13,6 +14,7 @@ export function FocusTicketCard({ ticket, onDismiss }: FocusTicketCardProps) {
   const formattedDueDate = formatDueDate(ticket.dueDate);
   const cover = getTicketCoverImage(ticket);
   const attachmentCount = getTicketAttachmentCount(ticket);
+  const subtaskCount = getTicketSubtaskCount(ticket);
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -51,6 +53,7 @@ export function FocusTicketCard({ ticket, onDismiss }: FocusTicketCardProps) {
                   </span>
                 )}
                 <TicketAttachmentCount count={attachmentCount} />
+                <TicketSubtaskCount count={subtaskCount} />
               </div>
             )}
             {ticket.type === 'local' && ticket.customKey && (

@@ -10,12 +10,13 @@ import {
   Trash2,
 } from "lucide-react";
 import { TicketAttachmentCount } from "@/components/TicketAttachmentCount";
+import { TicketSubtaskCount } from "@/components/TicketSubtaskCount";
 import { Tooltip } from "@/components/Tooltip";
 import { useEffect, useState } from "react";
 import type { Ticket } from "@/db/database";
 import { registerTicket, unregisterTicket } from "@/contexts/ticketRegistry";
 import { useTicketDetail } from "@/hooks/useTicketDetail";
-import { formatDueDate, getTicketAttachmentCount, getTicketCoverImage } from "@/modules/tickets";
+import { formatDueDate, getTicketAttachmentCount, getTicketCoverImage, getTicketSubtaskCount } from "@/modules/tickets";
 import { stripHtml } from "@/utils/sanitizeHtml";
 import { DeleteConfirmationDialog } from "./DeleteConfirmationDialog";
 
@@ -87,6 +88,7 @@ export function TicketCard({
   const formattedDueDate = formatDueDate(ticket.dueDate);
   const cover = getTicketCoverImage(ticket);
   const attachmentCount = getTicketAttachmentCount(ticket);
+  const subtaskCount = getTicketSubtaskCount(ticket);
 
   const sortableHandleProps = { ...attributes, ...listeners };
 
@@ -258,9 +260,10 @@ export function TicketCard({
         )}
       </div>
 
-      {(attachmentCount > 0 || (onStartFocus && !focusActive)) && (
-        <div className="flex items-center mt-2 pt-2 border-t border-neutral-100 dark:border-neutral-700/50">
+      {(attachmentCount > 0 || subtaskCount > 0 || (onStartFocus && !focusActive)) && (
+        <div className="flex items-center gap-3 mt-2 pt-2 border-t border-neutral-100 dark:border-neutral-700/50">
           {attachmentCount > 0 && <TicketAttachmentCount count={attachmentCount} />}
+          {subtaskCount > 0 && <TicketSubtaskCount count={subtaskCount} />}
           {onStartFocus && !focusActive && (
             <div className="ml-auto">
               <Tooltip content="Start focused work session">

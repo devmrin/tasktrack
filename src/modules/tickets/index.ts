@@ -3,6 +3,7 @@ export * from './services/ticket.service';
 export * from './hooks/useTicketsQuery';
 export * from './services/jiraAttachment.service';
 export * from './utils/jiraAttachments';
+export * from './utils/jiraSubtasks';
 export * from './utils/validateTicketKey';
 export * from './utils/formatDueDate';
 export * from './utils/statusFilter';

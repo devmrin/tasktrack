@@ -13,6 +13,7 @@ import { arrayMove } from "@dnd-kit/sortable";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 import { TicketAttachmentCount } from "@/components/TicketAttachmentCount";
+import { TicketSubtaskCount } from "@/components/TicketSubtaskCount";
 import type { Ticket } from "@/db/database";
 import { queryKeys } from "@/hooks/queryKeys";
 import { useActiveBoard } from "@/modules/boards/hooks/useActiveBoard";
@@ -23,6 +24,7 @@ import {
   getTicket,
   getTicketAttachmentCount,
   getTicketCoverImage,
+  getTicketSubtaskCount,
   moveTicket,
   reorderTicketInColumn,
 } from "@/modules/tickets";
@@ -260,6 +262,7 @@ export function DndProvider({ children }: DndProviderProps) {
   if (activeTicket) {
     const cover = getTicketCoverImage(activeTicket);
     const attachmentCount = getTicketAttachmentCount(activeTicket);
+    const subtaskCount = getTicketSubtaskCount(activeTicket);
     overlayContent = (
       <div className="rotate-3 opacity-90 w-72">
         <div className="overflow-hidden bg-white dark:bg-neutral-800 rounded-lg shadow-sm border border-neutral-200 dark:border-neutral-700">
@@ -281,9 +284,10 @@ export function DndProvider({ children }: DndProviderProps) {
                   {stripHtml(activeTicket.description)}
                 </p>
               )}
-            {attachmentCount > 0 && (
-              <div className="mt-2 pt-2 border-t border-neutral-100 dark:border-neutral-700/50">
+            {(attachmentCount > 0 || subtaskCount > 0) && (
+              <div className="mt-2 flex items-center gap-3 border-t border-neutral-100 pt-2 dark:border-neutral-700/50">
                 <TicketAttachmentCount count={attachmentCount} />
+                <TicketSubtaskCount count={subtaskCount} />
               </div>
             )}
           </div>

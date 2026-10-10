@@ -1,4 +1,4 @@
-import type { JiraAttachment, JiraComment, Ticket, TransactionTicketRef } from '@/db/database';
+import type { JiraAttachment, JiraComment, JiraSubtask, Ticket, TransactionTicketRef } from '@/db/database';
 import { recordHistoryTransaction } from '@/modules/history/services/history.service';
 import type { AtlassianConfig } from '@/modules/settings';
 import {
@@ -18,6 +18,7 @@ import {
   refreshCloudIdFromToken,
   isJiraCloud,
 } from '@/modules/settings';
+import { resolveJiraSubtasks } from '@/modules/inbox/services/jiraSubtasks.service';
 import { INBOX_COLUMN_ID } from '@/modules/inbox/types';
 import { normalizeTicketPriority } from '@/utils/ticketPriority';
 
@@ -78,6 +79,7 @@ async function issuesToTickets(
   config: AtlassianConfig,
   boardId: string,
   attachmentsByIssue: ReadonlyMap<string, JiraAttachment[]>,
+  subtasksByIssue: ReadonlyMap<string, JiraSubtask[]> | undefined,
 ): Promise<JiraSyncResult> {
   const freshJiraKeys = new Set(issues.map((i) => i.key));
   const removedTickets = await removeStaleJiraTickets(freshJiraKeys, boardId);
@@ -103,6 +105,7 @@ async function issuesToTickets(
     const attachments = syncedAttachments === undefined
       ? undefined
       : retainAttachmentPreviews(existing?.jiraData?.attachments, syncedAttachments);
+    const syncedSubtasks = subtasksByIssue?.get(issue.key);
     const jiraData = {
       jiraId: issue.id,
       jiraUrl: `${config.instanceUrl}/browse/${issue.key}`,
@@ -112,6 +115,7 @@ async function issuesToTickets(
       priority: issue.fields.priority?.name,
       comments,
       ...(attachments !== undefined ? { attachments } : {}),
+      ...(syncedSubtasks !== undefined ? { subtasks: syncedSubtasks } : {}),
     };
     const priority = normalizeTicketPriority(issue.fields.priority?.name);
 
@@ -218,6 +222,7 @@ export interface JiraIssue {
     };
     comment?: JiraIssueCommentCollection;
     attachment?: unknown;
+    subtasks?: unknown;
   };
   renderedFields?: Record<string, unknown>;
   self: string;
@@ -227,7 +232,7 @@ export interface JiraSearchResponse {
   issues: JiraIssue[];
 }
 
-const SEARCH_FIELDS = '*navigable,attachment';
+const SEARCH_FIELDS = '*navigable,attachment,subtasks';
 
 function buildApiBase(cloudId: string | undefined, instanceUrl: string): string {
   return cloudId ? getJiraCloudExApiBase(cloudId) : instanceUrl;
@@ -381,7 +386,14 @@ export async function fetchJiraTickets(jql: string | undefined, boardId: string)
     config,
     accessToken,
   );
-  const syncResult = await issuesToTickets(issuesWithComments, config, boardId, attachmentsByIssue);
+  const subtasksByIssue = await resolveJiraSubtasks(issuesWithComments, config, accessToken);
+  const syncResult = await issuesToTickets(
+    issuesWithComments,
+    config,
+    boardId,
+    attachmentsByIssue,
+    subtasksByIssue,
+  );
   await recordHistoryTransaction({
     eventType: 'jira_sync_summary',
     boardId,

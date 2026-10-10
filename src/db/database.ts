@@ -43,6 +43,7 @@ export interface Ticket {
     priority?: string;
     comments?: JiraComment[];
     attachments?: JiraAttachment[];
+    subtasks?: JiraSubtask[];
   };
   customKey?: string;
   createdAt: number;
@@ -67,6 +68,16 @@ export interface JiraAttachment {
   authorName?: string;
   /** Resized image stored during sync so cards can render offline. */
   previewDataUrl?: string;
+}
+
+export interface JiraSubtask {
+  id: string;
+  key: string;
+  summary: string;
+  status?: string;
+  /** Jira status category: `new`, `indeterminate`, or `done`. */
+  statusCategory?: string;
+  assignee?: string;
 }
 
 export interface Column {
