@@ -94,9 +94,9 @@ export function TicketCard({
     <div
       ref={setNodeRef}
       style={style}
-      className={`bg-white dark:bg-neutral-800 rounded-lg shadow-sm border border-neutral-200 dark:border-neutral-700 mb-2 hover:shadow-md transition-shadow flex flex-col cursor-move overflow-hidden ${
+      className={`relative bg-white dark:bg-neutral-800 rounded-lg shadow-sm border border-neutral-200 dark:border-neutral-700 mb-2 hover:shadow-md transition-shadow flex flex-col cursor-move overflow-hidden ${
         isFocusedTicket
-          ? "ring-2 ring-inset ring-amber-400 dark:ring-amber-500"
+          ? "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-lg after:border-2 after:border-amber-400 dark:after:border-amber-500"
           : ""
       }`}
       {...sortableHandleProps}

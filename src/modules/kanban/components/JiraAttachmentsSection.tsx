@@ -5,10 +5,10 @@ import {
   FileImage,
   FileText,
   FileVideo,
-  X,
 } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import type { JiraAttachment } from "@/db/database";
+import { AttachmentLightbox } from "@/modules/kanban/components/AttachmentLightbox";
 import {
   downloadJiraAttachment,
   formatAttachmentSize,
@@ -21,7 +21,7 @@ interface JiraAttachmentsSectionProps {
 }
 
 export function JiraAttachmentsSection({ attachments }: JiraAttachmentsSectionProps) {
-  const [preview, setPreview] = useState<JiraAttachment | null>(null);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const images = attachments.filter((attachment) =>
@@ -30,6 +30,8 @@ export function JiraAttachmentsSection({ attachments }: JiraAttachmentsSectionPr
   const files = attachments.filter(
     (attachment) => !isJiraImageAttachment(attachment.mimeType, attachment.filename),
   );
+  const activeImage =
+    lightboxIndex === null ? undefined : images[Math.min(lightboxIndex, images.length - 1)];
 
   const downloadAttachment = async (attachment: JiraAttachment) => {
     setError(null);
@@ -45,12 +47,29 @@ export function JiraAttachmentsSection({ attachments }: JiraAttachmentsSectionPr
   };
 
   const openImage = (attachment: JiraAttachment) => {
-    if (attachment.previewDataUrl) {
-      setPreview(attachment);
+    const index = images.findIndex((item) => item.id === attachment.id);
+    if (index < 0) {
       return;
     }
-    void downloadAttachment(attachment);
+    setError(null);
+    setLightboxIndex(index);
   };
+
+  const closeLightbox = useCallback(() => {
+    setLightboxIndex(null);
+    setError(null);
+  }, []);
+
+  const stepLightbox = useCallback((direction: -1 | 1) => {
+    setError(null);
+    setLightboxIndex((current) => {
+      if (current === null || images.length < 2) {
+        return current;
+      }
+      const base = Math.min(current, images.length - 1);
+      return (base + direction + images.length) % images.length;
+    });
+  }, [images.length]);
 
   return (
     <div>
@@ -87,15 +106,18 @@ export function JiraAttachmentsSection({ attachments }: JiraAttachmentsSectionPr
           ))}
         </ul>
       )}
-      {error && (
+      {error && lightboxIndex === null && (
         <p className="mt-2 text-xs text-red-600 dark:text-red-400">{error}</p>
       )}
-      {preview?.previewDataUrl && (
-        <AttachmentPreview
-          attachment={preview}
-          busy={downloadingId === preview.id}
-          onClose={() => setPreview(null)}
-          onDownload={() => void downloadAttachment(preview)}
+      {activeImage && lightboxIndex !== null && (
+        <AttachmentLightbox
+          images={images}
+          index={Math.min(lightboxIndex, images.length - 1)}
+          downloading={downloadingId === activeImage.id}
+          error={error}
+          onStep={stepLightbox}
+          onClose={closeLightbox}
+          onDownload={() => void downloadAttachment(activeImage)}
         />
       )}
     </div>
@@ -118,7 +140,7 @@ function ImageTile({
       disabled={busy}
       title={`${attachment.filename} · ${formatAttachmentSize(attachment.size)}`}
       aria-label={`Open ${attachment.filename}`}
-      className="overflow-hidden rounded-md border border-neutral-200 bg-neutral-50 text-left dark:border-neutral-700 dark:bg-neutral-800 disabled:opacity-60"
+      className="cursor-zoom-in overflow-hidden rounded-md border border-neutral-200 bg-neutral-50 text-left hover:border-neutral-300 disabled:opacity-60 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:border-neutral-500"
     >
       <span className="block aspect-[4/3] bg-neutral-100 dark:bg-neutral-900">
         {attachment.previewDataUrl ? (
@@ -169,65 +191,6 @@ function FileRow({
       </span>
       <Download className="size-3.5 shrink-0 text-neutral-400" aria-hidden />
     </button>
-  );
-}
-
-function AttachmentPreview({
-  attachment,
-  busy,
-  onClose,
-  onDownload,
-}: {
-  readonly attachment: JiraAttachment;
-  readonly busy: boolean;
-  readonly onClose: () => void;
-  readonly onDownload: () => void;
-}) {
-  return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label={attachment.filename}
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 p-4"
-      onClick={onClose}
-      onKeyDown={(event) => {
-        if (event.key === "Escape") {
-          event.stopPropagation();
-          onClose();
-        }
-      }}
-    >
-      <div
-        className="flex max-h-full max-w-full flex-col gap-3"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="flex items-center justify-end gap-2">
-          <button
-            type="button"
-            onClick={onDownload}
-            disabled={busy}
-            className="inline-flex items-center gap-1 rounded-md bg-white/10 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-white/20 disabled:opacity-60"
-          >
-            <Download className="size-3.5" aria-hidden />
-            Download
-          </button>
-          <button
-            type="button"
-            autoFocus
-            onClick={onClose}
-            className="rounded-md p-1.5 text-white hover:bg-white/10"
-            aria-label="Close preview"
-          >
-            <X className="size-5" aria-hidden />
-          </button>
-        </div>
-        <img
-          src={attachment.previewDataUrl}
-          alt={attachment.filename}
-          className="max-h-[80vh] max-w-full rounded-md object-contain"
-        />
-      </div>
-    </div>
   );
 }
 

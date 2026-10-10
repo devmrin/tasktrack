@@ -519,7 +519,7 @@ export function TicketDetailSidebar({
           >
             {({ isSubmitting, dirty }) => (
               <Form className="flex flex-col h-full">
-                <div className="flex items-center justify-between px-4 sm:px-5 py-4 border-b border-neutral-200 dark:border-neutral-700 shrink-0">
+                <div className="flex h-12 items-center justify-between px-4 sm:px-5 border-b border-neutral-200 dark:border-neutral-700 shrink-0">
                   <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100 truncate pr-2">
                     {isJira ? `JIRA ${terminology.Item}` : `Local ${terminology.item}`}
                   </h2>
@@ -645,7 +645,7 @@ export function TicketDetailSidebar({
                     {isEditable ? (
                       <TicketDescriptionField id="ticket-description" />
                     ) : (
-                      <div className="text-sm bg-neutral-50 dark:bg-neutral-800/50 rounded-md px-3 py-2 border-l-4 border-neutral-300 dark:border-neutral-600 min-h-[5rem] overflow-hidden cursor-auto select-text [&_.ticket-description-content]:text-neutral-900 [&_.ticket-description-content]:dark:text-neutral-200">
+                      <div className="text-sm bg-neutral-50 dark:bg-neutral-800/50 rounded-md px-3 py-2 border border-neutral-200 dark:border-neutral-700 min-h-[5rem] overflow-hidden cursor-auto select-text [&_.ticket-description-content]:text-neutral-900 [&_.ticket-description-content]:dark:text-neutral-200">
                         {selectedTicket.description ? (
                           <SanitizedHtml
                             html={selectedTicket.description}
