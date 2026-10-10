@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import { X, Paintbrush, Plug, Timer, Keyboard, History, LayoutGrid } from 'lucide-react';
+import { X, Paintbrush, Plug, Timer, Keyboard, History, LayoutGrid, AppWindow } from 'lucide-react';
 import { AppearanceSettings } from './AppearanceSettings';
+import { ApplicationSettings } from './ApplicationSettings';
 import { JiraSettings } from './JiraSettings';
 import { KeyboardShortcutsSettings } from './KeyboardShortcutsSettings';
 import { HistorySettings } from './HistorySettings';
@@ -9,7 +10,14 @@ import { FocusSettings } from '@/modules/focus/components/FocusSettings';
 import { BoardManagementSettings } from '@/modules/settings/components/BoardManagementSettings';
 import { SettingsDialogFooterLayout } from '@/contexts/settings-dialog-footer-layout';
 
-export type SectionId = 'appearance' | 'focus' | 'jira' | 'keyboard' | 'history' | 'boards';
+export type SectionId =
+  | 'appearance'
+  | 'focus'
+  | 'jira'
+  | 'keyboard'
+  | 'history'
+  | 'boards'
+  | 'application';
 
 interface NavItem {
   id: SectionId;
@@ -32,6 +40,10 @@ const SECTIONS: Array<{ heading: string; items: NavItem[] }> = [
     heading: 'Integrations',
     items: [{ id: 'jira', label: 'JIRA', icon: Plug }],
   },
+  {
+    heading: 'Application',
+    items: [{ id: 'application', label: 'Application', icon: AppWindow }],
+  },
 ];
 
 const SECTION_TITLES: Record<SectionId, string> = {
@@ -41,6 +53,7 @@ const SECTION_TITLES: Record<SectionId, string> = {
   jira: 'JIRA',
   keyboard: 'Keyboard Shortcuts',
   history: 'History',
+  application: 'Application',
 };
 
 function SectionContent({ section }: { readonly section: SectionId }) {
@@ -57,6 +70,8 @@ function SectionContent({ section }: { readonly section: SectionId }) {
       return <KeyboardShortcutsSettings />;
     case 'history':
       return <HistorySettings />;
+    case 'application':
+      return <ApplicationSettings />;
   }
 }
 
@@ -80,7 +95,7 @@ export function SettingsDialog({ open, onOpenChange, initialSection }: SettingsD
               Settings
             </Dialog.Title>
 
-            <div className="space-y-4 flex-1">
+            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto">
               {SECTIONS.map((section) => (
                 <div key={section.heading}>
                   <span className="block text-[11px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 px-2 mb-1">
@@ -111,17 +126,19 @@ export function SettingsDialog({ open, onOpenChange, initialSection }: SettingsD
               ))}
             </div>
 
-            <p className="text-xs text-neutral-400 dark:text-neutral-500 px-2 pt-3 border-t border-neutral-200 dark:border-neutral-700">
-              Crafted with ♥ by{' '}
-              <a
-                href="https://mrinmay.dev"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
-              >
-                Mrinmay
-              </a>
-            </p>
+            <div className="-mx-4 border-t border-neutral-200 px-4 pt-3 dark:border-neutral-700">
+              <p className="px-2 text-xs text-neutral-400 dark:text-neutral-500">
+                Crafted with ♥ by{' '}
+                <a
+                  href="https://mrinmay.dev"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline transition-colors hover:text-neutral-600 dark:hover:text-neutral-300"
+                >
+                  Mrinmay
+                </a>
+              </p>
+            </div>
           </nav>
 
           {/* Right content */}

@@ -3,6 +3,7 @@ export * from './components/SettingsDialog';
 export * from './components/GettingStartedDialog';
 export * from './components/JiraSettings';
 export * from './components/AppearanceSettings';
+export * from './components/ApplicationSettings';
 export * from './components/KeyboardShortcutsSettings';
 export * from './components/HistorySettings';
 export * from './services/atlassian.service';

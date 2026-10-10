@@ -6,6 +6,7 @@ import { useSettingsDialogFooter } from "@/contexts/settings-dialog-footer-conte
 import { useToast } from "@/hooks/useToast";
 import { usePomodoroSettings } from "@/modules/focus/hooks/usePomodoroSettings";
 import type { PomodoroSettings } from "@/modules/focus/types";
+import { SETTINGS_PANEL_SECTION_DIVIDER_CLASSNAME } from "@/modules/settings/constants/settings-layout.constants";
 
 const FOCUS_SETTINGS_FORM_ID = "focus-pomodoro-settings-form";
 
@@ -265,7 +266,7 @@ export function FocusSettings() {
               </div>
             </div>
 
-            <div className="border-t border-neutral-200 dark:border-neutral-700 pt-6">
+            <div className={SETTINGS_PANEL_SECTION_DIVIDER_CLASSNAME}>
               <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 mb-1">
                 Auto-start
               </h3>
@@ -295,7 +296,7 @@ export function FocusSettings() {
               </div>
             </div>
 
-            <div className="border-t border-neutral-200 dark:border-neutral-700 pt-6">
+            <div className={SETTINGS_PANEL_SECTION_DIVIDER_CLASSNAME}>
               <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 mb-1">
                 Sounds
               </h3>

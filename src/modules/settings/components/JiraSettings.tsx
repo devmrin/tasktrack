@@ -17,6 +17,7 @@ import { useBoardsQuery } from "@/modules/boards/hooks/useBoardsQuery";
 import { setBoardJiraEnabled } from "@/modules/boards/services/board.service";
 import { useToast } from "@/hooks/useToast";
 import { useSettingsDialogFooter } from "@/contexts/settings-dialog-footer-context";
+import { SETTINGS_PANEL_RULE_CLASSNAME } from "@/modules/settings/constants/settings-layout.constants";
 import { Tooltip } from "@/components/Tooltip";
 
 const JIRA_SETTINGS_FORM_ID = "jira-settings-form";
@@ -593,7 +594,7 @@ function JiraSettingsForm({
               </div>
             </div>
 
-            <hr className="border-neutral-200 dark:border-neutral-700" />
+            <hr className={SETTINGS_PANEL_RULE_CLASSNAME} />
 
             <div>
               <h3 className="text-base font-semibold text-neutral-900 dark:text-neutral-100 mb-4">
