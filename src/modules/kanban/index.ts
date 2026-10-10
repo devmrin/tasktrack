@@ -4,5 +4,6 @@ export * from './components/KanbanBoard';
 export * from './components/KanbanColumn';
 export * from './components/TicketCard';
 export * from './components/TicketDetailSidebar';
+export * from './components/StatusFilter';
 export * from './hooks/useColumnsQuery';
 export * from './hooks/useKanban';

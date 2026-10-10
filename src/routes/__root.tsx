@@ -65,12 +65,19 @@ function RootComponent() {
 
   const handleInboxToggle = useCallback(() => {
     if (isHistoryRoute) {
-      void navigate({ to: '/' });
+      if (activeBoard?.slug) {
+        void navigate({
+          to: '/$boardSlug/$view',
+          params: { boardSlug: activeBoard.slug, view: 'board' },
+        });
+      } else {
+        void navigate({ to: '/' });
+      }
       setIsInboxOpen(true);
       return;
     }
     setIsInboxOpen((prev) => !prev);
-  }, [isHistoryRoute, navigate, setIsInboxOpen]);
+  }, [isHistoryRoute, navigate, setIsInboxOpen, activeBoard]);
 
   const handleOpenHistory = useCallback(() => {
     if (isHistoryRoute) return;

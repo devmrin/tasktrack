@@ -1,6 +1,7 @@
 import { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { useNavigate, useParams } from "@tanstack/react-router";
 import {
   Check,
   ChevronDown,
@@ -17,13 +18,36 @@ import {
   useDeleteBoardMutation,
   useRenameBoardMutation,
 } from "@/modules/boards/hooks/useBoardsQuery";
+import { buildBoardSlug } from "@/modules/boards/utils/boardSlug";
+
+type BoardRouteView = "summary" | "list" | "board";
+
+function resolveRouteView(view: string | undefined): BoardRouteView {
+  if (view === "summary" || view === "list" || view === "board") {
+    return view;
+  }
+  return "board";
+}
 
 export function BoardSwitcher() {
+  const navigate = useNavigate();
+  const params = useParams({ strict: false }) as {
+    boardSlug?: string;
+    view?: string;
+  };
+  const currentView = resolveRouteView(params.view);
   const { boards, activeBoard, activeBoardId, setActiveBoardId, isLoading } =
     useActiveBoard();
   const createBoardMutation = useCreateBoardMutation();
   const renameBoardMutation = useRenameBoardMutation();
   const deleteBoardMutation = useDeleteBoardMutation();
+
+  function navigateToBoard(boardSlug: string, view: BoardRouteView = currentView) {
+    void navigate({
+      to: "/$boardSlug/$view",
+      params: { boardSlug, view },
+    });
+  }
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -50,6 +74,7 @@ export function BoardSwitcher() {
         setNewBoardName("");
         setCreateDialogOpen(false);
         setMenuOpen(false);
+        navigateToBoard(created.slug, "board");
       },
     });
   }
@@ -69,8 +94,12 @@ export function BoardSwitcher() {
       { boardId: renameBoardId, name },
       {
         onSuccess: () => {
+          const renamed = boards.find((b) => b.id === renameBoardId);
           setRenameDialogOpen(false);
           setRenameBoardId(null);
+          if (renamed && renameBoardId === activeBoardId) {
+            navigateToBoard(buildBoardSlug(name, renamed.slugSuffix), currentView);
+          }
         },
       },
     );
@@ -97,10 +126,19 @@ export function BoardSwitcher() {
       return;
     }
 
+    const deletingActive = boardToDelete.id === activeBoardId;
+    const remaining = boards.filter((b) => b.id !== boardToDelete.id);
     deleteBoardMutation.mutate(boardToDelete.id, {
       onSuccess: () => {
         setDeleteDialogOpen(false);
         setBoardToDelete(null);
+        if (deletingActive) {
+          const next = remaining.find((b) => b.isDefault) ?? remaining[0];
+          if (next) {
+            setActiveBoardId(next.id);
+            navigateToBoard(next.slug, currentView);
+          }
+        }
       },
     });
   }
@@ -140,6 +178,7 @@ export function BoardSwitcher() {
                     className="flex min-w-0 flex-1 items-center gap-2 rounded-sm px-2 py-2 text-sm outline-none cursor-default text-neutral-800 dark:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-800"
                     onSelect={() => {
                       setActiveBoardId(b.id);
+                      navigateToBoard(b.slug, currentView);
                       setMenuOpen(false);
                     }}
                   >

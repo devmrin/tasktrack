@@ -12,13 +12,11 @@ import { MAX_COLUMN_TITLE_LENGTH } from "@/modules/kanban/constants";
 import { INBOX_COLUMN_ID } from "@/modules/inbox/types";
 import { FocusZone, useFocusZone, usePomodoroSettings } from "@/modules/focus";
 import { useKanban } from "@/modules/kanban/hooks/useKanban";
-import { BoardSwitcher } from "@/modules/boards";
 import { useActiveBoard } from "@/modules/boards/hooks/useActiveBoard";
 import { useBoardTerminology } from "@/modules/boards/hooks/useBoardTerminology";
 import { ticketMatchesStatusFilter } from "@/modules/tickets";
 import { useStatusFilter } from "@/hooks/useStatusFilter";
 import { KanbanColumn } from "./KanbanColumn";
-import { StatusFilter } from "./StatusFilter";
 
 type MobileView = "focus" | "board";
 
@@ -83,7 +81,7 @@ export function KanbanBoard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex items-center justify-center flex-1">
         <div className="text-neutral-600 dark:text-neutral-400">Loading...</div>
       </div>
     );
@@ -99,73 +97,69 @@ export function KanbanBoard() {
     setShowCreateColumnInput(false);
   };
 
+  const addColumnControls = hasColumns ? (
+    <div className="flex shrink-0 justify-end px-3 sm:px-4 lg:px-6 pb-2">
+      {showCreateColumnInput ? (
+        <div className="flex w-full basis-full sm:basis-auto sm:w-auto flex-col sm:flex-row sm:items-center gap-2">
+          <input
+            type="text"
+            value={newColumnTitle}
+            onChange={(e) => setNewColumnTitle(e.target.value)}
+            maxLength={MAX_COLUMN_TITLE_LENGTH}
+            placeholder="New column title"
+            className="h-9 sm:h-8 w-full sm:w-52 px-3 text-sm text-neutral-900 dark:text-neutral-100 bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-600 rounded focus:outline-none focus:ring-2 focus:ring-neutral-400 dark:focus:ring-neutral-500"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                handleCreateSubmit();
+              } else if (e.key === "Escape") {
+                setShowCreateColumnInput(false);
+                setNewColumnTitle("");
+              }
+            }}
+            ref={createColumnInputRef}
+          />
+          <button
+            type="button"
+            onClick={handleCreateSubmit}
+            disabled={creatingColumn}
+            className="h-9 sm:h-8 px-3 text-sm font-medium rounded border border-neutral-200 dark:border-neutral-900 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            Add
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setShowCreateColumnInput(false);
+              setNewColumnTitle("");
+            }}
+            className="h-9 sm:h-8 px-3 text-sm font-medium rounded border border-neutral-300 dark:border-neutral-600 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-800"
+          >
+            Cancel
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setShowCreateColumnInput(true)}
+          className="inline-flex items-center justify-center gap-2 h-9 sm:h-8 px-3 text-sm font-medium rounded border border-neutral-200 dark:border-neutral-900 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 whitespace-nowrap"
+        >
+          <Plus className="size-4" aria-hidden />
+          Add column
+        </button>
+      )}
+    </div>
+  ) : null;
+
   const renderBoardContent = () => (
     <>
-      <div className="px-3 sm:px-4 lg:px-6 pt-3 sm:pt-4 pb-2 flex items-center justify-between gap-2 sm:gap-4 min-h-12 flex-wrap sm:flex-nowrap">
-        <div className="min-w-0 flex-1 flex items-center gap-3">
-          <BoardSwitcher />
-          <StatusFilter key={activeBoard?.id} />
-        </div>
-        {hasColumns && (
-          <div className="flex shrink-0 justify-end">
-            {showCreateColumnInput ? (
-              <div className="flex w-full basis-full sm:basis-auto sm:w-auto flex-col sm:flex-row sm:items-center gap-2">
-                <input
-                  type="text"
-                  value={newColumnTitle}
-                  onChange={(e) => setNewColumnTitle(e.target.value)}
-                  maxLength={MAX_COLUMN_TITLE_LENGTH}
-                  placeholder="New column title"
-                  className="h-9 sm:h-8 w-full sm:w-52 px-3 text-sm text-neutral-900 dark:text-neutral-100 bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-600 rounded focus:outline-none focus:ring-2 focus:ring-neutral-400 dark:focus:ring-neutral-500"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      handleCreateSubmit();
-                    } else if (e.key === "Escape") {
-                      setShowCreateColumnInput(false);
-                      setNewColumnTitle("");
-                    }
-                  }}
-                  ref={createColumnInputRef}
-                />
-                <button
-                  type="button"
-                  onClick={handleCreateSubmit}
-                  disabled={creatingColumn}
-                  className="h-9 sm:h-8 px-3 text-sm font-medium rounded border border-neutral-200 dark:border-neutral-900 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  Add
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowCreateColumnInput(false);
-                    setNewColumnTitle("");
-                  }}
-                  className="h-9 sm:h-8 px-3 text-sm font-medium rounded border border-neutral-300 dark:border-neutral-600 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-800"
-                >
-                  Cancel
-                </button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setShowCreateColumnInput(true)}
-                className="inline-flex items-center justify-center gap-2 h-9 sm:h-8 px-3 text-sm font-medium rounded border border-neutral-200 dark:border-neutral-900 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 whitespace-nowrap"
-              >
-                <Plus className="size-4" aria-hidden />
-                Add column
-              </button>
-            )}
-          </div>
-        )}
-      </div>
+      {addColumnControls}
 
       {hasColumns ? (
         <SortableContext
           items={columns.map((column) => column.id)}
           strategy={horizontalListSortingStrategy}
         >
-          <div className="flex-1 flex gap-3 sm:gap-4 px-3 sm:px-4 lg:px-6 pb-4 sm:pb-6 overflow-x-auto">
+          <div className="flex-1 flex gap-3 sm:gap-4 px-3 sm:px-4 lg:px-6 pb-4 sm:pb-6 overflow-x-auto min-h-0">
             {columns.map((column) => {
               const columnTickets = getTicketsForColumn(column.id);
               const visibleTickets = columnTickets.filter((ticket) =>
@@ -278,9 +272,9 @@ export function KanbanBoard() {
     isMobileLayout && resolvedMobileView === "board" ? "hidden" : "full";
 
   return (
-    <div className="h-screen bg-neutral-100 dark:bg-neutral-900 flex flex-col">
+    <div className="flex-1 min-h-0 flex flex-col">
       {shouldShowMobileSegmentedControl && (
-        <div className="shrink-0 px-3 pt-3 pb-2 border-b border-neutral-200 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-900">
+        <div className="shrink-0 px-3 pt-0 pb-2 border-b border-neutral-200 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-900">
           <Tabs.Root
             value={resolvedMobileView}
             onValueChange={(value) => setMobileView(value as MobileView)}

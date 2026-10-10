@@ -1,6 +1,11 @@
 import { db, type Board } from '@/db/database';
 import type { BoardExport } from '@/modules/boards/types/board.types';
 import { DEFAULT_BOARD_ID } from '@/modules/boards/constants/board.constants';
+import {
+  buildBoardSlug,
+  createSlugSuffix,
+  resolveBoardFromSlugParam,
+} from '@/modules/boards/utils/boardSlug';
 import { recordHistoryTransaction } from '@/modules/history/services/history.service';
 
 const SETTINGS_ACCESS_TOKEN_KEY = 'atlassian_access_token';
@@ -8,6 +13,17 @@ const SETTINGS_ACCESS_TOKEN_KEY = 'atlassian_access_token';
 async function settingsHasNonEmptyAccessToken(): Promise<boolean> {
   const row = await db.settings.get(SETTINGS_ACCESS_TOKEN_KEY);
   return typeof row?.value === 'string' && row.value.trim().length > 0;
+}
+
+async function allocateUniqueSlugSuffix(): Promise<string> {
+  for (let attempt = 0; attempt < 20; attempt++) {
+    const suffix = createSlugSuffix();
+    const existing = await db.boards.where('slugSuffix').equals(suffix).first();
+    if (!existing) {
+      return suffix;
+    }
+  }
+  throw new Error('Failed to allocate unique board slug suffix');
 }
 
 export async function listBoards(): Promise<Board[]> {
@@ -21,6 +37,11 @@ export async function getBoardById(id: string): Promise<Board | undefined> {
 
 export async function getDefaultBoard(): Promise<Board | undefined> {
   return db.boards.filter((b) => b.isDefault).first();
+}
+
+export async function getBoardBySlugParam(boardSlugParam: string): Promise<Board | undefined> {
+  const boards = await db.boards.toArray();
+  return resolveBoardFromSlugParam(boards, boardSlugParam);
 }
 
 async function reorderBoardOrdersFromList(boardsOrdered: Board[]): Promise<void> {
@@ -46,9 +67,13 @@ export async function ensureDefaultBoardBootstrap(): Promise<void> {
 
   const hasToken = await settingsHasNonEmptyAccessToken();
   const now = Date.now();
+  const slugSuffix = await allocateUniqueSlugSuffix();
+  const name = 'Board';
   await db.boards.add({
     id: DEFAULT_BOARD_ID,
-    name: 'Board',
+    name,
+    slug: buildBoardSlug(name, slugSuffix),
+    slugSuffix,
     order: 0,
     isDefault: true,
     jiraEnabled: hasToken,
@@ -72,11 +97,15 @@ export async function createBoard(rawName: string): Promise<Board> {
   const nextOrderBoard = typeof maxOrderBoard?.order === 'number' ? maxOrderBoard.order + 1 : 0;
 
   const boardId = crypto.randomUUID();
+  const slugSuffix = await allocateUniqueSlugSuffix();
+  const slug = buildBoardSlug(trimmed, slugSuffix);
 
   await db.transaction('rw', db.boards, db.columns, async () => {
     await db.boards.add({
       id: boardId,
       name: trimmed,
+      slug,
+      slugSuffix,
       order: nextOrderBoard,
       isDefault: false,
       jiraEnabled: false,
@@ -122,13 +151,19 @@ export async function renameBoard(boardId: string, rawName: string): Promise<voi
   }
 
   const existingBoard = await db.boards.get(boardId);
+  if (!existingBoard) {
+    throw new Error('Board not found');
+  }
+
+  const slug = buildBoardSlug(trimmed, existingBoard.slugSuffix);
 
   await db.boards.update(boardId, {
     name: trimmed,
+    slug,
     updatedAt: Date.now(),
   });
 
-  if (existingBoard && existingBoard.name !== trimmed) {
+  if (existingBoard.name !== trimmed) {
     await recordHistoryTransaction({
       eventType: 'board_updated',
       boardId,

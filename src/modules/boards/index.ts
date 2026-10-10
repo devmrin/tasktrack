@@ -6,3 +6,10 @@ export * from '@/modules/boards/hooks/useActiveBoard';
 export * from '@/modules/boards/hooks/useBoardTerminology';
 export { BoardSwitcher } from '@/modules/boards/components/BoardSwitcher';
 export { boardTerminologyFromJiraEnabled } from '@/modules/boards/utils/boardTerminology';
+export {
+  buildBoardSlug,
+  createSlugSuffix,
+  parseSlugSuffixFromParam,
+  resolveBoardFromSlugParam,
+  slugifyName,
+} from '@/modules/boards/utils/boardSlug';

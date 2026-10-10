@@ -1,5 +1,9 @@
 import Dexie, { type Table } from 'dexie';
 import {
+  buildBoardSlug,
+  createSlugSuffix,
+} from '@/modules/boards/utils/boardSlug';
+import {
   normalizeTicketPriority,
   type TicketPriority,
 } from '@/utils/ticketPriority';
@@ -7,6 +11,10 @@ import {
 export interface Board {
   id: string;
   name: string;
+  /** Full URL segment: `{slugified-name}-{slugSuffix}`. */
+  slug: string;
+  /** Stable 8-char id; never changes on rename. */
+  slugSuffix: string;
   order: number;
   isDefault: boolean;
   jiraEnabled: boolean;
@@ -329,6 +337,38 @@ export class TaskTrackDatabase extends Dexie {
           board.showPriority ??= true;
           board.showDueDate ??= true;
         });
+      });
+
+    this.version(11)
+      .stores({
+        boards: 'id, slug, slugSuffix, order, isDefault',
+        tickets:
+          'id, columnId, boardId, type, createdAt, order, [columnId+order], [boardId+columnId+order]',
+        columns: 'id, boardId, order, [boardId+order]',
+        settings: 'key',
+        transactions:
+          'id, createdAt, ticketId, eventType, boardId, [ticketId+createdAt], [createdAt+eventType]',
+      })
+      .upgrade(async (transaction) => {
+        const boardsTable = transaction.table<Board, string>('boards');
+        const boards = await boardsTable.toArray();
+        const usedSuffixes = new Set<string>();
+
+        for (const board of boards) {
+          let suffix =
+            typeof board.slugSuffix === 'string' && board.slugSuffix.length === 8
+              ? board.slugSuffix.toLowerCase()
+              : createSlugSuffix();
+          while (usedSuffixes.has(suffix)) {
+            suffix = createSlugSuffix();
+          }
+          usedSuffixes.add(suffix);
+          const slug =
+            typeof board.slug === 'string' && board.slug.endsWith(`-${suffix}`)
+              ? board.slug
+              : buildBoardSlug(board.name, suffix);
+          await boardsTable.update(board.id, { slug, slugSuffix: suffix });
+        }
       });
   }
 }
