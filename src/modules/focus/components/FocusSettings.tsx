@@ -4,6 +4,7 @@ import * as Yup from "yup";
 import { Check, ChevronDown, ChevronUp } from "lucide-react";
 import { useSettingsDialogFooter } from "@/contexts/settings-dialog-footer-context";
 import { useToast } from "@/hooks/useToast";
+import { CompletionSoundPreview } from "@/modules/focus/components/CompletionSoundPreview";
 import { usePomodoroSettings } from "@/modules/focus/hooks/usePomodoroSettings";
 import type { PomodoroSettings } from "@/modules/focus/types";
 import { SETTINGS_PANEL_SECTION_DIVIDER_CLASSNAME } from "@/modules/settings/constants/settings-layout.constants";
@@ -314,6 +315,7 @@ export function FocusSettings() {
                   )
                 }
               />
+              <CompletionSoundPreview />
             </div>
           </Form>
         </>
