@@ -49,7 +49,8 @@ export function KeyboardShortcutsSettings() {
         shortcuts: [
           { label: 'Search', keys: [MOD_KEY, 'K'] },
           { label: 'Open Settings', keys: [MOD_KEY, '.'] },
-          { label: 'Toggle sidebar', keys: [MOD_KEY, '\\'] },
+          { label: 'Toggle inbox', keys: [MOD_KEY, '\\'] },
+          { label: 'Open History', keys: [MOD_KEY, ']'] },
           { label: 'Toggle theme', keys: [MOD_KEY, 'Shift', 'M'] },
         ],
       },

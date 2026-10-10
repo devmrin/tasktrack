@@ -18,6 +18,7 @@ export const SHORTCUT_DISPLAY = {
   search: formatShortcut([MOD_KEY, 'K']),
   settings: formatShortcut([MOD_KEY, '.']),
   toggleSidebar: formatShortcut([MOD_KEY, '\\']),
+  openHistory: formatShortcut([MOD_KEY, ']']),
   toggleTheme: formatShortcut([MOD_KEY, 'Shift', 'M']),
   jiraQuickOpen: formatShortcut([MOD_KEY, 'J']),
   syncJira: formatShortcut([MOD_KEY, 'Shift', 'J']),

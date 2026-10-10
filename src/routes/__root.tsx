@@ -1,6 +1,7 @@
-import { createRootRoute, Outlet, useRouterState } from '@tanstack/react-router';
+import { createRootRoute, Outlet, useNavigate, useRouterState } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo, useRef, useState } from 'react';
+import { AppRail } from '@/components/AppRail';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useTheme } from '@/hooks/useTheme';
@@ -35,6 +36,7 @@ function hasOAuthCallback(): boolean {
 
 function RootComponent() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
   const { showToast } = useToast();
   const isMobileLayout = useMediaQuery('(max-width: 1023px)');
@@ -61,14 +63,30 @@ function RootComponent() {
   const handleSearchOpen = useCallback(() => setIsSearchOpen(true), []);
   const handleSearchOpenChange = useCallback((open: boolean) => setIsSearchOpen(open), []);
 
+  const handleInboxToggle = useCallback(() => {
+    if (isHistoryRoute) {
+      void navigate({ to: '/' });
+      setIsInboxOpen(true);
+      return;
+    }
+    setIsInboxOpen((prev) => !prev);
+  }, [isHistoryRoute, navigate, setIsInboxOpen]);
+
+  const handleOpenHistory = useCallback(() => {
+    if (isHistoryRoute) return;
+    void navigate({ to: '/history' });
+  }, [isHistoryRoute, navigate]);
+
   const shortcuts = useMemo(
     () => [
       { key: 'k', metaKey: true, handler: () => setIsSearchOpen((prev) => !prev) },
       { key: 'k', ctrlKey: true, handler: () => setIsSearchOpen((prev) => !prev) },
       { key: '.', metaKey: true, handler: () => setIsSettingsOpen((prev) => !prev) },
       { key: '.', ctrlKey: true, handler: () => setIsSettingsOpen((prev) => !prev) },
-      { key: '\\', metaKey: true, handler: () => setIsInboxOpen((prev) => !prev) },
-      { key: '\\', ctrlKey: true, handler: () => setIsInboxOpen((prev) => !prev) },
+      { key: '\\', metaKey: true, handler: handleInboxToggle },
+      { key: '\\', ctrlKey: true, handler: handleInboxToggle },
+      { key: ']', metaKey: true, handler: handleOpenHistory },
+      { key: ']', ctrlKey: true, handler: handleOpenHistory },
       {
         key: 'j',
         metaKey: true,
@@ -131,7 +149,8 @@ function RootComponent() {
       setTheme,
       jiraSyncMutation,
       showToast,
-      setIsInboxOpen,
+      handleInboxToggle,
+      handleOpenHistory,
       jiraBoardShortcutsEnabled,
       activeBoardId,
     ],
@@ -155,21 +174,32 @@ function RootComponent() {
     [handleSettingsOpen],
   );
 
+  const mainMarginClass = (() => {
+    if (isMobileLayout || isHistoryRoute || !isInboxOpen) {
+      return 'ml-12 transition-[margin] duration-200';
+    }
+    return 'ml-[23rem] transition-[margin] duration-200';
+  })();
+
   return (
     <TicketDetailProvider>
       <StatusFilterProvider>
       <SettingsContext.Provider value={settingsContextValue}>
         <DndProvider>
           <div className="min-h-screen bg-neutral-100 dark:bg-neutral-900">
+            <AppRail
+              isInboxOpen={isInboxOpen}
+              onInboxToggle={handleInboxToggle}
+              onSearchOpen={handleSearchOpen}
+              onSettingsOpen={handleSettingsOpen}
+            />
             {!isHistoryRoute && (
               <>
                 <InboxSidebar
                   isOpen={isInboxOpen}
                   isMobile={isMobileLayout}
                   onOpen={() => setIsInboxOpen(true)}
-                  onClose={() => setIsInboxOpen(false)}
                   onSettingsOpen={handleSettingsOpen}
-                  onSearchOpen={handleSearchOpen}
                   imperativeRef={inboxRef}
                 />
                 {isMobileLayout && isInboxOpen && (
@@ -177,46 +207,25 @@ function RootComponent() {
                     type="button"
                     aria-label="Close inbox sidebar"
                     className="fixed inset-0 z-40 bg-black/25"
+                    style={{ left: 48 }}
                     onClick={() => setIsInboxOpen(false)}
                   />
                 )}
-                {isMobileLayout && !isInboxOpen && (
-                  <button
-                    type="button"
-                    aria-label="Open inbox sidebar"
-                    className="fixed bottom-3 left-3 z-[55] rounded-md bg-[#FDFC74] px-2.5 py-1.5 text-sm font-semibold text-black shadow-md transition-opacity hover:opacity-90"
-                    onClick={() => setIsInboxOpen(true)}
-                  >
-                    tt
-                  </button>
-                )}
               </>
             )}
-            <main
-              className={
-                isHistoryRoute
-                  ? 'ml-0 transition-[margin] duration-200'
-                  : isMobileLayout
-                  ? 'ml-0 transition-[margin] duration-200'
-                  : isInboxOpen
-                  ? 'ml-80 transition-[margin] duration-200'
-                  : 'ml-12 transition-[margin] duration-200'
-              }
-            >
+            <main className={mainMarginClass}>
               <Outlet />
             </main>
             {!isHistoryRoute && (
-              <>
-                <TicketDetailSidebar onSaved={handleTicketSaved} />
-                <SearchDialog open={isSearchOpen} onOpenChange={handleSearchOpenChange} />
-                <SettingsDialog
-                  key={settingsSection ?? 'default'}
-                  open={isSettingsOpen}
-                  onOpenChange={handleSettingsOpenChange}
-                  initialSection={settingsSection}
-                />
-              </>
+              <TicketDetailSidebar onSaved={handleTicketSaved} />
             )}
+            <SearchDialog open={isSearchOpen} onOpenChange={handleSearchOpenChange} />
+            <SettingsDialog
+              key={settingsSection ?? 'default'}
+              open={isSettingsOpen}
+              onOpenChange={handleSettingsOpenChange}
+              initialSection={settingsSection}
+            />
           </div>
         </DndProvider>
       </SettingsContext.Provider>

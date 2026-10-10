@@ -1,13 +1,10 @@
 import { useMemo, useState } from "react";
 import {
-  ArrowLeft,
   ChevronDown,
   ChevronRight,
   Check,
-  History,
   SquareKanban,
 } from "lucide-react";
-import { Link } from "@tanstack/react-router";
 import * as Select from "@/components/Select";
 import type { TransactionRecord, TransactionTicketRef } from "@/db/database";
 import { useBoardsQuery } from "@/modules/boards/hooks/useBoardsQuery";
@@ -218,25 +215,6 @@ export function HistoryPage() {
   return (
     <div className="h-screen overflow-y-auto px-6 py-6">
       <div className="mx-auto w-full max-w-5xl">
-        <div className="mb-6 space-y-4">
-          <Link
-            to="/"
-            className="inline-flex h-9 items-center rounded-md border border-neutral-200 bg-white px-3 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700"
-          >
-            <ArrowLeft className="mr-1 size-4" aria-hidden />
-            Back to board
-          </Link>
-          <div>
-            <h1 className="flex items-center gap-2 text-xl font-semibold text-neutral-900 dark:text-neutral-100">
-              <History className="size-5" aria-hidden />
-              History
-            </h1>
-            <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-              Review ticket journeys and daily work summary.
-            </p>
-          </div>
-        </div>
-
         <div className="mb-5 grid gap-3 rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-700 dark:bg-neutral-900 md:grid-cols-3">
           <div className="space-y-1.5">
             <span className="text-xs font-medium uppercase tracking-wide text-neutral-400 dark:text-neutral-500">

@@ -5,7 +5,7 @@ import { useEffect } from 'react';
  * omitting `shiftKey` / `ctrlKey` / `metaKey` requires those modifiers to be **off**.
  *
  * App shortcuts (registered in `routes/__root.tsx`) include Search (⌘K), Settings (⌘.),
- * sidebar (⌘\\), theme (⌘⇧M), Quick open JIRA / Sync JIRA when the active board has JIRA enabled (⌘J / ⌘⇧J),
+ * inbox (⌘\\), history (⌘]), theme (⌘⇧M), Quick open JIRA / Sync JIRA when the active board has JIRA enabled (⌘J / ⌘⇧J),
  * and new local ticket or task (⌘⇧C) following each board’s wording.
  */
 
