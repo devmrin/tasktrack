@@ -1,12 +1,13 @@
-import * as Dialog from "@radix-ui/react-dialog";
-import { X } from "lucide-react";
-import { useActiveBoard } from "@/modules/boards/hooks/useActiveBoard";
-import { useBoardTerminology } from "@/modules/boards/hooks/useBoardTerminology";
+import * as Dialog from '@radix-ui/react-dialog';
+import { X } from 'lucide-react';
+import type { ReactNode } from 'react';
 
 interface GettingStartedDialogProps {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
 }
+
+const bodyClass = 'text-sm leading-6 text-neutral-700 dark:text-neutral-300';
 
 function TasktrackWordmark() {
   return (
@@ -16,13 +17,27 @@ function TasktrackWordmark() {
   );
 }
 
+function GuideSection({
+  title,
+  children,
+}: {
+  readonly title: ReactNode;
+  readonly children: ReactNode;
+}) {
+  return (
+    <section className="space-y-1.5">
+      <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+        {title}
+      </h3>
+      {children}
+    </section>
+  );
+}
+
 export function GettingStartedDialog({
   open,
   onOpenChange,
 }: GettingStartedDialogProps) {
-  const { activeBoard } = useActiveBoard();
-  const terminology = useBoardTerminology(activeBoard);
-
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
@@ -34,7 +49,7 @@ export function GettingStartedDialog({
                 Getting Started
               </Dialog.Title>
               <Dialog.Description className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-                A quick guide for general-purpose tasktrack usage.
+                How the pieces fit together.
               </Dialog.Description>
             </div>
             <Dialog.Close asChild>
@@ -49,119 +64,113 @@ export function GettingStartedDialog({
           </div>
 
           <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-4">
-            <section className="space-y-1.5">
-              <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
-                What is <TasktrackWordmark />?
-              </h3>
-              <p className="text-sm leading-6 text-neutral-700 dark:text-neutral-300">
-                tasktrack is a focused workspace for managing your assigned
-                work.{" "}
-                {`It presents your ${terminology.items} in a clean, local Kanban board`}
-                designed for clarity, prioritization, and execution without the
-                typical overhead.
+            <GuideSection
+              title={
+                <>
+                  What <TasktrackWordmark /> is
+                </>
+              }
+            >
+              <p className={bodyClass}>
+                A quiet place for the work you mean to finish. Boards, tasks,
+                and history stay in this browser. There is no account to create.
               </p>
-            </section>
+            </GuideSection>
 
-            <section className="space-y-1.5">
-              <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
-                Why <TasktrackWordmark />?
-              </h3>
-              <p className="text-sm leading-6 text-neutral-700 dark:text-neutral-300">
-                Opening JIRA often means navigating layers of UI before reaching
-                the work that matters. tasktrack removes that friction by giving you{" "}
-                {`a fast, distraction-free view of your ${terminology.items}.`}
+            <GuideSection title="A board">
+              <p className={bodyClass}>
+                A board is one body of work. A new one starts as To Do, In
+                Progress, and Done. Rename those columns, or add your own, when
+                that shape does not fit. Keep another board when the work is
+                different, and switch between them at the top.
               </p>
-            </section>
+              <p className={bodyClass}>
+                Settings, then Boards, is where you rename a board, reorder
+                them, choose which one opens by default, or export one.
+              </p>
+            </GuideSection>
 
-            <section className="space-y-1.5">
-              <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
-                Read-Only by Design
-              </h3>
-              <p className="text-sm leading-6 text-neutral-700 dark:text-neutral-300">
-                tasktrack never modifies your JIRA data. The integration is
-                intentionally read-only.
+            <GuideSection title="The inbox">
+              <p className={bodyClass}>
+                The inbox sits beside the board. A task waits there until you
+                decide it belongs in a column. Open it from the left rail, write
+                a title, and add a description, priority, or due date when you
+                already know them.
               </p>
-              <p className="text-sm leading-6 text-neutral-700 dark:text-neutral-300">
-                Required permissions:
+              <p className={bodyClass}>
+                Drag a card back to the inbox when you are not ready for it.
+                Drag it onto a column when you are.
               </p>
-              <ul className="list-disc pl-5 space-y-1 text-sm leading-6 text-neutral-700 dark:text-neutral-300">
+            </GuideSection>
+
+            <GuideSection title="Three ways to look">
+              <p className={bodyClass}>
+                The switcher at the top is the same board, seen three ways.
+              </p>
+              <ul className={`list-disc pl-5 space-y-1 ${bodyClass}`}>
                 <li>
-                  <strong>read:user</strong> — used only to identify your
-                  account
+                  <strong>Board</strong> — move cards as the work moves.
                 </li>
                 <li>
-                  <strong>read:work</strong> —{" "}
-                  {`used only to fetch assigned ${terminology.items}`}
+                  <strong>List</strong> — scan everything in one table, and sort
+                  by what you care about.
+                </li>
+                <li>
+                  <strong>Summary</strong> — a look at the last week: what you
+                  finished, what changed, what you added, and what is due soon.
+                  It also shows how work sits across columns and priorities, and
+                  a short trail of what happened recently.
                 </li>
               </ul>
-              <p className="text-sm leading-6 text-neutral-700 dark:text-neutral-300">
-                {`Nothing performed inside tasktrack affects your actual JIRA ${terminology.items}.`}
-              </p>
-            </section>
+            </GuideSection>
 
-            <section className="space-y-1.5">
-              <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
-                Core Workflow
-              </h3>
-              <p className="text-sm leading-6 text-neutral-700 dark:text-neutral-300">
-                {`Sync your JIRA ${terminology.items} and organize them into a local Kanban board. Prioritize what deserves attention, move items across columns, and focus on execution.`}
+            <GuideSection title="One task at a time">
+              <p className={bodyClass}>
+                Click a title to open it. That is where the description,
+                priority, and due date live.
               </p>
-            </section>
-
-            <section className="space-y-1.5">
-              <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
-                Built for Focus
-              </h3>
-              <ul className="list-disc pl-5 space-y-1 text-sm leading-6 text-neutral-700 dark:text-neutral-300">
-                <li>First-class Pomodoro support</li>
-                <li>{`Sort ${terminology.items} by Updated, Created, or Priority`}</li>
-                <li>Fast search and keyboard navigation</li>
-                <li>{`Lightweight ${terminology.item} details on demand`}</li>
-              </ul>
-            </section>
-
-            <section className="space-y-1.5">
-              <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
-                {`Local ${terminology.Items}`}
-              </h3>
-              <p className="text-sm leading-6 text-neutral-700 dark:text-neutral-300">
-                Not all work originates in JIRA. tasktrack allows creation of
-                {`local-only ${terminology.items}.`}
+              <p className={bodyClass}>
+                If a timer helps you stay with one thing, turn Focus on in
+                Settings. From a card menu, start a session: a full-screen
+                timer you can also keep in a small floating window.
               </p>
-              <p className="text-sm leading-6 text-neutral-700 dark:text-neutral-300">
-                You can:
-              </p>
-              <ul className="list-disc pl-5 space-y-1 text-sm leading-6 text-neutral-700 dark:text-neutral-300">
-                <li>Add descriptions</li>
-                <li>Assign priority</li>
-                <li>{`Link them to JIRA ${terminology.items} when needed`}</li>
-              </ul>
-            </section>
+            </GuideSection>
 
-            <section className="space-y-1.5">
-              <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
-                {`${terminology.Item} Details`}
-              </h3>
-              <p className="text-sm leading-6 text-neutral-700 dark:text-neutral-300">
-                {`Click any ${terminology.item} title to view its details instantly, without leaving your workflow.`}
+            <GuideSection title="Finding your way back">
+              <p className={bodyClass}>
+                The clock on the left is History. It remembers what you created,
+                moved, and renamed, grouped by day or by task. The magnifying
+                glass finds a task by name when you do not want to hunt through
+                columns.
               </p>
-            </section>
+            </GuideSection>
 
-            <section className="space-y-1.5">
-              <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
-                How to Get Started
-              </h3>
-              <ol className="list-decimal pl-5 space-y-1 text-sm leading-6 text-neutral-700 dark:text-neutral-300">
-                <li>Connect tasktrack to JIRA</li>
-                <li>{`Sync your assigned ${terminology.items}`}</li>
-                <li>Prioritize and organize your board</li>
-                <li>Start focused execution</li>
+            <GuideSection title="Jira, if you use it">
+              <p className={bodyClass}>
+                Jira is optional, and you choose it per board. Connect it in
+                Settings, then Jira, and turn it on only for the boards that
+                should include that work. tasktrack reads the issues assigned
+                to you. Changes you make here stay here.
+              </p>
+              <p className={bodyClass}>
+                Boards with Jira call items tickets. Every other board stays
+                tasks. You can still write your own tasks on a connected board.
+              </p>
+            </GuideSection>
+
+            <GuideSection title="A way to begin">
+              <ol className={`list-decimal pl-5 space-y-1 ${bodyClass}`}>
+                <li>Open the inbox and write down what is actually on your mind.</li>
+                <li>Drag the ones you are doing onto the board. Leave the rest.</li>
+                <li>
+                  Use the board while you work, the list when you want to scan,
+                  and Summary when you want a sense of the week.
+                </li>
+                <li>
+                  Connect Jira later, only if a board should include that work.
+                </li>
               </ol>
-              <p className="text-sm leading-6 text-neutral-700 dark:text-neutral-300">
-                tasktrack is designed to reduce cognitive load, minimize context
-                switching, and keep your attention on completing work.
-              </p>
-            </section>
+            </GuideSection>
           </div>
         </Dialog.Content>
       </Dialog.Portal>

@@ -133,19 +133,6 @@ export function AppRail({
         <div className="flex-1 min-h-0" />
 
         <div className="shrink-0 border-t border-neutral-100 p-2 flex flex-col items-center gap-1 dark:border-neutral-800">
-          <Tooltip
-            content={`Settings (${SHORTCUT_DISPLAY.settings})`}
-            side="right"
-          >
-            <button
-              type="button"
-              onClick={() => onSettingsOpen()}
-              className={`${railButtonClass} ${idleButtonClass}`}
-              aria-label="Settings"
-            >
-              <Settings2 className="size-5" aria-hidden />
-            </button>
-          </Tooltip>
           <Tooltip content="Getting started" side="right">
             <button
               type="button"
@@ -171,6 +158,19 @@ export function AppRail({
               ) : (
                 <Moon className="size-5" aria-hidden />
               )}
+            </button>
+          </Tooltip>
+          <Tooltip
+            content={`Settings (${SHORTCUT_DISPLAY.settings})`}
+            side="right"
+          >
+            <button
+              type="button"
+              onClick={() => onSettingsOpen()}
+              className={`${railButtonClass} ${idleButtonClass}`}
+              aria-label="Settings"
+            >
+              <Settings2 className="size-5" aria-hidden />
             </button>
           </Tooltip>
         </div>
