@@ -57,7 +57,8 @@ export function useBoardSummaryMetrics(): {
       columns: columnsQuery.data,
       transactions: historyQuery.data ?? [],
       focusEnabled: focusSettings.enabled,
-      focusedTicket: focusedData?.ticket ?? null,
+      focusedTicket:
+        focusedData?.kind === 'ticket' ? focusedData.ticket : null,
     });
   }, [
     activeBoardId,
@@ -65,7 +66,7 @@ export function useBoardSummaryMetrics(): {
     columnsQuery.data,
     historyQuery.data,
     focusSettings.enabled,
-    focusedData?.ticket,
+    focusedData,
   ]);
 
   const recentActivity = useMemo(() => {

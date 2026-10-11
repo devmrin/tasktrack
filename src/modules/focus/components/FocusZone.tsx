@@ -1,16 +1,16 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import type { useFocusZone } from '@/modules/focus/hooks/useFocusZone';
+import type { FocusedData } from '@/modules/focus/types';
 import { useDocumentTitle } from '@/modules/focus/hooks/useDocumentTitle';
 import { usePomodoroSettings } from '@/modules/focus/hooks/usePomodoroSettings';
 import { usePomodoroTimer } from '@/modules/focus/hooks/usePomodoroTimer';
-import { getFocusWorkLabel } from '@/modules/focus/utils/focusWorkLabel';
+import { getFocusedSessionWorkLabel } from '@/modules/focus/utils/focusWorkLabel';
 import { useToast } from '@/hooks/useToast';
 import { usePomodoroDocumentPictureInPicture } from '@/modules/focus/hooks/usePomodoroDocumentPictureInPicture';
 import { FocusFullscreen } from './FocusFullscreen';
 import { playPhaseCompletionSound } from '@/modules/focus/utils/playPhaseCompletionSound';
 
 interface FocusZoneProps {
-  readonly focusedData: ReturnType<typeof useFocusZone>['focusedData'];
+  readonly focusedData: FocusedData | null;
   readonly onEndFocus: () => Promise<void>;
 }
 
@@ -29,7 +29,7 @@ export function FocusZone({ focusedData, onEndFocus }: FocusZoneProps) {
   });
   const isFocused = focusedData !== null;
   const workContextLabel = useMemo(
-    () => (focusedData ? getFocusWorkLabel(focusedData.ticket) : undefined),
+    () => (focusedData ? getFocusedSessionWorkLabel(focusedData) : undefined),
     [focusedData],
   );
   useDocumentTitle(timer.display, timer.phase, isFocused, workContextLabel);
@@ -89,7 +89,7 @@ export function FocusZone({ focusedData, onEndFocus }: FocusZoneProps) {
 
   return (
     <FocusFullscreen
-      ticket={focusedData.ticket}
+      focusedData={focusedData}
       onDismiss={handleDismiss}
       phase={timer.phase}
       display={timer.display}

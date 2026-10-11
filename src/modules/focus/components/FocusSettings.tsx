@@ -226,12 +226,12 @@ export function FocusSettings() {
                 Focus
               </h3>
               <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-4">
-                Turn Focus off to hide it from the board. Pomodoro settings stay
-                saved and apply again when you turn it back on.
+                Turn Focus off to hide it from the rail and board. Pomodoro
+                settings stay saved and apply again when you turn it back on.
               </p>
               <ToggleField
                 label="Enable Focus"
-                description="Show Start focused work session in each card's options menu. Starting focus opens the full-screen session."
+                description="Show Focus in the app rail and Start focused work session in each card's options menu. Starting focus opens the full-screen session."
                 checked={values.enabled}
                 onToggle={() => setFieldValue("enabled", !values.enabled)}
               />

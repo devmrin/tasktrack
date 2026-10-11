@@ -19,6 +19,14 @@ export interface FocusState {
 }
 
 export interface FocusedTicketData {
+  kind: 'ticket';
   ticket: Ticket;
   originalColumnId: string;
 }
+
+export interface FocusedCustomData {
+  kind: 'custom';
+  label: string;
+}
+
+export type FocusedData = FocusedTicketData | FocusedCustomData;

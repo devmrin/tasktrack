@@ -8,7 +8,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Ticket } from "@/db/database";
 import { MAX_COLUMN_TITLE_LENGTH } from "@/modules/kanban/constants";
 import { INBOX_COLUMN_ID } from "@/modules/inbox/types";
-import { FocusZone, useFocusZone, usePomodoroSettings } from "@/modules/focus";
+import { useFocusZone, usePomodoroSettings } from "@/modules/focus";
 import { useKanban } from "@/modules/kanban/hooks/useKanban";
 import { useActiveBoard } from "@/modules/boards/hooks/useActiveBoard";
 import { useBoardTerminology } from "@/modules/boards/hooks/useBoardTerminology";
@@ -33,14 +33,16 @@ export function KanbanBoard() {
   const { activeBoard } = useActiveBoard();
   const statusFilter = useStatusFilter();
   const terminology = useBoardTerminology(activeBoard);
-  const { focusedData, focusActive, startFocus, endFocus } = useFocusZone();
-  const { settings: focusSettings, loaded: focusSettingsLoaded } = usePomodoroSettings();
+  const { focusedData, focusActive, startFocus } = useFocusZone();
+  const { settings: focusSettings } = usePomodoroSettings();
   const focusEnabled = focusSettings.enabled;
   const [newColumnTitle, setNewColumnTitle] = useState("");
   const [showCreateColumnInput, setShowCreateColumnInput] = useState(false);
   const createColumnInputRef = useRef<HTMLInputElement>(null);
 
   const hasColumns = columns.length > 0;
+  const focusedTicketId =
+    focusedData?.kind === "ticket" ? focusedData.ticket.id : undefined;
 
   const moveTargets = useMemo(
     () => [{ id: INBOX_COLUMN_ID, title: "Inbox" }, ...columns],
@@ -50,17 +52,10 @@ export function KanbanBoard() {
   const handleStartFocus = useCallback(
     (ticket: Ticket) => {
       if (!focusEnabled || focusActive) return;
-      startFocus(ticket);
+      void startFocus(ticket);
     },
     [focusEnabled, focusActive, startFocus],
   );
-
-  useEffect(() => {
-    if (!focusSettingsLoaded || focusEnabled || !focusActive) {
-      return;
-    }
-    void endFocus();
-  }, [focusSettingsLoaded, focusEnabled, focusActive, endFocus]);
 
   useEffect(() => {
     if (showCreateColumnInput) {
@@ -173,7 +168,7 @@ export function KanbanBoard() {
                     deletingTicket={deletingTicket}
                     onStartFocus={focusEnabled ? handleStartFocus : undefined}
                     focusActive={focusActive}
-                    focusedTicketId={focusedData?.ticket.id}
+                    focusedTicketId={focusedTicketId}
                     itemPluralWord={terminology.items}
                     itemSingularWord={terminology.item}
                   />
@@ -255,10 +250,6 @@ export function KanbanBoard() {
 
   return (
     <div className="flex-1 min-h-0 flex flex-col">
-      {focusEnabled && (
-        <FocusZone focusedData={focusedData} onEndFocus={endFocus} />
-      )}
-
       {renderBoardContent()}
     </div>
   );

@@ -8,12 +8,14 @@ import {
   Search,
   Settings2,
   Sun,
+  Timer,
 } from 'lucide-react';
 import { useState } from 'react';
 import { Tooltip } from '@/components/Tooltip';
 import { useTheme } from '@/hooks/useTheme';
 import { useActiveBoard } from '@/modules/boards/hooks/useActiveBoard';
 import { useBoardTerminology } from '@/modules/boards/hooks/useBoardTerminology';
+import { usePomodoroSettings } from '@/modules/focus';
 import { useInboxTicketsQuery } from '@/modules/inbox/hooks/useInboxTicketsQuery';
 import { INBOX_COLUMN_ID } from '@/modules/inbox/types';
 import {
@@ -46,19 +48,23 @@ export function AppRail({
     select: (state) => state.location.pathname,
   });
   const isHistoryRoute = pathname === '/history';
+  const isFocusRoute = pathname === '/focus';
+  const isStandaloneRoute = isHistoryRoute || isFocusRoute;
   const { activeBoard, activeBoardId } = useActiveBoard();
   const terminology = useBoardTerminology(activeBoard);
   const inboxQuery = useInboxTicketsQuery(activeBoardId);
   const inboxCount = inboxQuery.data?.length ?? 0;
   const [gettingStartedOpen, setGettingStartedOpen] = useState(false);
+  const { settings: focusSettings } = usePomodoroSettings();
+  const focusEnabled = focusSettings.enabled;
 
-  const dropEnabled = !isInboxOpen && !isHistoryRoute;
+  const dropEnabled = !isInboxOpen && !isStandaloneRoute;
   const { setNodeRef: setInboxDropRef, isOver } = useDroppable({
     id: INBOX_COLUMN_ID,
     disabled: !dropEnabled,
   });
 
-  const inboxActive = isInboxOpen && !isHistoryRoute;
+  const inboxActive = isInboxOpen && !isStandaloneRoute;
   const railButtonClass =
     'flex items-center justify-center p-2 rounded-md transition-colors';
   const idleButtonClass =
@@ -128,6 +134,21 @@ export function AppRail({
               <History className="size-5" aria-hidden />
             </Link>
           </Tooltip>
+
+          {focusEnabled && (
+            <Tooltip content="Focus" side="right">
+              <Link
+                to="/focus"
+                className={`${railButtonClass} ${
+                  isFocusRoute ? activeButtonClass : idleButtonClass
+                }`}
+                aria-label="Open focus page"
+                aria-current={isFocusRoute ? 'page' : undefined}
+              >
+                <Timer className="size-5" aria-hidden />
+              </Link>
+            </Tooltip>
+          )}
         </div>
 
         <div className="flex-1 min-h-0" />

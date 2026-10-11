@@ -14,6 +14,7 @@ import { StatusFilterProvider } from '@/contexts/StatusFilterContext';
 import { InboxSidebar, useJiraSyncMutation } from '@/modules/inbox';
 import type { InboxSidebarHandle } from '@/modules/inbox';
 import { TicketDetailSidebar } from '@/modules/kanban';
+import { FocusZoneProvider } from '@/modules/focus';
 import { SearchDialog } from '@/modules/search';
 import { SettingsDialog } from '@/modules/settings';
 import type { SectionId } from '@/modules/settings';
@@ -59,12 +60,14 @@ function RootComponent() {
     select: (state) => state.location.pathname,
   });
   const isHistoryRoute = pathname === '/history';
+  const isFocusRoute = pathname === '/focus';
+  const isStandaloneRoute = isHistoryRoute || isFocusRoute;
 
   const handleSearchOpen = useCallback(() => setIsSearchOpen(true), []);
   const handleSearchOpenChange = useCallback((open: boolean) => setIsSearchOpen(open), []);
 
   const handleInboxToggle = useCallback(() => {
-    if (isHistoryRoute) {
+    if (isStandaloneRoute) {
       if (activeBoard?.slug) {
         void navigate({
           to: '/$boardSlug/$view',
@@ -77,7 +80,7 @@ function RootComponent() {
       return;
     }
     setIsInboxOpen((prev) => !prev);
-  }, [isHistoryRoute, navigate, setIsInboxOpen, activeBoard]);
+  }, [isStandaloneRoute, navigate, setIsInboxOpen, activeBoard]);
 
   const handleOpenHistory = useCallback(() => {
     if (isHistoryRoute) return;
@@ -182,7 +185,7 @@ function RootComponent() {
   );
 
   const mainMarginClass = (() => {
-    if (isMobileLayout || isHistoryRoute || !isInboxOpen) {
+    if (isMobileLayout || isStandaloneRoute || !isInboxOpen) {
       return 'ml-12 transition-[margin] duration-200';
     }
     return 'ml-[23rem] transition-[margin] duration-200';
@@ -192,6 +195,7 @@ function RootComponent() {
     <TicketDetailProvider>
       <StatusFilterProvider>
       <SettingsContext.Provider value={settingsContextValue}>
+        <FocusZoneProvider>
         <DndProvider>
           <div className="min-h-screen bg-neutral-100 dark:bg-neutral-900">
             <AppRail
@@ -200,7 +204,7 @@ function RootComponent() {
               onSearchOpen={handleSearchOpen}
               onSettingsOpen={handleSettingsOpen}
             />
-            {!isHistoryRoute && (
+            {!isStandaloneRoute && (
               <>
                 <InboxSidebar
                   isOpen={isInboxOpen}
@@ -223,7 +227,7 @@ function RootComponent() {
             <main className={mainMarginClass}>
               <Outlet />
             </main>
-            {!isHistoryRoute && (
+            {!isStandaloneRoute && (
               <TicketDetailSidebar onSaved={handleTicketSaved} />
             )}
             <SearchDialog open={isSearchOpen} onOpenChange={handleSearchOpenChange} />
@@ -235,6 +239,7 @@ function RootComponent() {
             />
           </div>
         </DndProvider>
+        </FocusZoneProvider>
       </SettingsContext.Provider>
       </StatusFilterProvider>
     </TicketDetailProvider>

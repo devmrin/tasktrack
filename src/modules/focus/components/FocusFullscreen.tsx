@@ -3,15 +3,19 @@ import { createPortal } from 'react-dom';
 import { Minimize2, Moon, Sun } from 'lucide-react';
 import { Tooltip } from '@/components/Tooltip';
 import { useTheme } from '@/hooks/useTheme';
-import type { Ticket } from '@/db/database';
-import type { PomodoroPhase, PomodoroSettings } from '@/modules/focus/types';
-import { getFocusWorkLabel } from '@/modules/focus/utils/focusWorkLabel';
+import type {
+  FocusedData,
+  PomodoroPhase,
+  PomodoroSettings,
+} from '@/modules/focus/types';
+import { getFocusedSessionWorkLabel } from '@/modules/focus/utils/focusWorkLabel';
+import { FocusCustomCard } from './FocusCustomCard';
 import { FocusTicketCard } from './FocusTicketCard';
 import { PomodoroTimer } from './PomodoroTimer';
 import { PomodoroTimerPipPlaceholder } from './PomodoroTimerPipPlaceholder';
 
 interface FocusFullscreenProps {
-  readonly ticket: Ticket;
+  readonly focusedData: FocusedData;
   readonly onDismiss: () => void;
   readonly phase: PomodoroPhase;
   readonly display: string;
@@ -34,7 +38,7 @@ const PHASE_BACKGROUNDS: Record<PomodoroPhase, string> = {
 };
 
 export function FocusFullscreen({
-  ticket,
+  focusedData,
   onDismiss,
   phase,
   display,
@@ -51,7 +55,7 @@ export function FocusFullscreen({
 }: FocusFullscreenProps) {
   const [isClosing, setIsClosing] = useState(false);
   const { theme, setTheme } = useTheme();
-  const workContextLabel = getFocusWorkLabel(ticket);
+  const workContextLabel = getFocusedSessionWorkLabel(focusedData);
 
   const handleClose = useCallback(() => {
     setIsClosing(true);
@@ -122,10 +126,17 @@ export function FocusFullscreen({
       <div className="flex h-full items-center justify-center overflow-y-auto px-3 sm:px-6 lg:px-8 py-16 sm:py-12">
         <div className="flex h-full w-full max-w-6xl flex-col lg:flex-row gap-3 sm:gap-6 lg:gap-8 lg:max-h-[600px]">
           <div className="flex-1 lg:flex-[3] min-w-0 bg-white/60 dark:bg-neutral-800/60 backdrop-blur-sm rounded-2xl p-4 sm:p-6 lg:p-8 border border-neutral-200/50 dark:border-neutral-700/50 shadow-lg">
-            <FocusTicketCard
-              ticket={ticket}
-              onDismiss={onDismiss}
-            />
+            {focusedData.kind === 'ticket' ? (
+              <FocusTicketCard
+                ticket={focusedData.ticket}
+                onDismiss={onDismiss}
+              />
+            ) : (
+              <FocusCustomCard
+                label={focusedData.label}
+                onDismiss={onDismiss}
+              />
+            )}
           </div>
 
           <div className="flex-1 lg:flex-[2] min-w-0">

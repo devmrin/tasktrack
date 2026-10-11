@@ -182,7 +182,7 @@ export function computeBoardSummaryMetrics(
       id: 'focusNow',
       label: 'Focus now',
       value: resolvedFocus ? ticketDisplayLabel(resolvedFocus) : 'No active session',
-      hint: resolvedFocus ? 'current focus session' : 'start focus from the board',
+      hint: resolvedFocus ? 'current focus session' : 'start focus from the rail or board',
     });
 
     const inProgressColumn = findInProgressColumn(columns);

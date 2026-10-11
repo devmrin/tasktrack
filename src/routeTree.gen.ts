@@ -10,12 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as HistoryRouteImport } from './routes/history'
+import { Route as FocusRouteImport } from './routes/focus'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BoardSlugViewRouteImport } from './routes/$boardSlug.$view'
 
 const HistoryRoute = HistoryRouteImport.update({
   id: '/history',
   path: '/history',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FocusRoute = FocusRouteImport.update({
+  id: '/focus',
+  path: '/focus',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -31,30 +37,34 @@ const BoardSlugViewRoute = BoardSlugViewRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/focus': typeof FocusRoute
   '/history': typeof HistoryRoute
   '/$boardSlug/$view': typeof BoardSlugViewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/focus': typeof FocusRoute
   '/history': typeof HistoryRoute
   '/$boardSlug/$view': typeof BoardSlugViewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/focus': typeof FocusRoute
   '/history': typeof HistoryRoute
   '/$boardSlug/$view': typeof BoardSlugViewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/history' | '/$boardSlug/$view'
+  fullPaths: '/' | '/focus' | '/history' | '/$boardSlug/$view'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/history' | '/$boardSlug/$view'
-  id: '__root__' | '/' | '/history' | '/$boardSlug/$view'
+  to: '/' | '/focus' | '/history' | '/$boardSlug/$view'
+  id: '__root__' | '/' | '/focus' | '/history' | '/$boardSlug/$view'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  FocusRoute: typeof FocusRoute
   HistoryRoute: typeof HistoryRoute
   BoardSlugViewRoute: typeof BoardSlugViewRoute
 }
@@ -66,6 +76,13 @@ declare module '@tanstack/react-router' {
       path: '/history'
       fullPath: '/history'
       preLoaderRoute: typeof HistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/focus': {
+      id: '/focus'
+      path: '/focus'
+      fullPath: '/focus'
+      preLoaderRoute: typeof FocusRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -87,6 +104,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  FocusRoute: FocusRoute,
   HistoryRoute: HistoryRoute,
   BoardSlugViewRoute: BoardSlugViewRoute,
 }

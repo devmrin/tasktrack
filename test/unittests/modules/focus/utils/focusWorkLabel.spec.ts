@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import type { Ticket } from '@/db/database';
-import { getFocusWorkLabel } from '@/modules/focus/utils/focusWorkLabel';
+import {
+  getFocusWorkLabel,
+  getFocusedSessionWorkLabel,
+} from '@/modules/focus/utils/focusWorkLabel';
 
 function baseTicket(overrides: Partial<Ticket>): Ticket {
   return {
@@ -55,4 +58,33 @@ test('strips HTML from title fallback', () => {
 test('fallback when title empty', () => {
   const ticket = baseTicket({ title: '   ' });
   assert.equal(getFocusWorkLabel(ticket), 'Time to focus!');
+});
+
+test('session label uses custom text', () => {
+  assert.equal(
+    getFocusedSessionWorkLabel({ kind: 'custom', label: '  Deep work  ' }),
+    'Deep work',
+  );
+});
+
+test('session label falls back when custom empty', () => {
+  assert.equal(
+    getFocusedSessionWorkLabel({ kind: 'custom', label: '   ' }),
+    'Time to focus!',
+  );
+});
+
+test('session label uses ticket work label', () => {
+  const ticket = baseTicket({
+    type: 'jira',
+    jiraData: { jiraId: '1', jiraUrl: 'https://example/issue/1', jiraKey: 'KAN-1' },
+  });
+  assert.equal(
+    getFocusedSessionWorkLabel({
+      kind: 'ticket',
+      ticket,
+      originalColumnId: 'c',
+    }),
+    'KAN-1',
+  );
 });

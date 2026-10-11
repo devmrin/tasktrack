@@ -1,4 +1,5 @@
 import type { Ticket } from '@/db/database';
+import type { FocusedData } from '@/modules/focus/types';
 import { isValidTicketKey } from '@/modules/tickets';
 import { stripHtml } from '@/utils/sanitizeHtml';
 
@@ -18,4 +19,13 @@ export function getFocusWorkLabel(ticket: Ticket): string {
   if (plainTitle) return plainTitle;
 
   return FALLBACK_WORK_LABEL;
+}
+
+/** Work-phase label for a ticket or custom focus session. */
+export function getFocusedSessionWorkLabel(focused: FocusedData): string {
+  if (focused.kind === 'custom') {
+    const label = focused.label.trim().replace(/\s+/g, ' ');
+    return label || FALLBACK_WORK_LABEL;
+  }
+  return getFocusWorkLabel(focused.ticket);
 }
