@@ -4,14 +4,15 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import {
   ArrowRightLeft,
   ChevronRight,
+  Clock,
   Eye,
   MoreVertical,
-  PlayCircle,
+  Play,
   Trash2,
 } from "lucide-react";
 import { TicketAttachmentCount } from "@/components/TicketAttachmentCount";
+import { TicketCoverImage } from "@/components/TicketCoverImage";
 import { TicketSubtaskCount } from "@/components/TicketSubtaskCount";
-import { Tooltip } from "@/components/Tooltip";
 import { useEffect, useState } from "react";
 import type { Ticket } from "@/db/database";
 import { registerTicket, unregisterTicket } from "@/contexts/ticketRegistry";
@@ -78,14 +79,14 @@ export function TicketCard({
     opacity: isDragging ? 0.5 : 1,
   };
 
-  const hasMenuActions = Boolean(onMove || onDelete);
-  const showMenu = Boolean(moveTargets && hasMenuActions);
+  const showFocus = Boolean(onStartFocus && !focusActive);
+  const showMenu = Boolean(moveTargets && (onMove || onDelete)) || showFocus;
   const moveDestinations =
     showMenu && moveTargets
       ? moveTargets.filter((t) => t.id !== ticket.columnId)
       : [];
   const isFocusedTicket = focusedTicketId === ticket.id;
-  const formattedDueDate = formatDueDate(ticket.dueDate);
+  const formattedDueDate = formatDueDate(ticket.dueDate, { compact: true });
   const cover = getTicketCoverImage(ticket);
   const attachmentCount = getTicketAttachmentCount(ticket);
   const subtaskCount = getTicketSubtaskCount(ticket);
@@ -104,19 +105,102 @@ export function TicketCard({
       {...sortableHandleProps}
     >
       {cover && (
-        <img
+        <TicketCoverImage
           src={cover.src}
           alt={cover.alt}
-          draggable={false}
-          className="h-36 w-full object-cover bg-neutral-100 dark:bg-neutral-900"
+          className="h-36 w-full"
         />
       )}
-      <div className="p-3 flex flex-col">
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex-1 min-w-0">
+      <div className="p-3">
+          {showMenu && (
+            <div className="float-right -mr-1 -mt-1 ml-2 flex items-center">
+                <DropdownMenu.Root>
+                  <DropdownMenu.Trigger asChild>
+                    <button
+                      type="button"
+                      className="shrink-0 rounded p-1 text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-700 hover:text-neutral-700 dark:hover:text-neutral-200 focus:outline-none focus:ring-2 focus:ring-neutral-400 dark:focus:ring-neutral-500"
+                      aria-label="Ticket options"
+                      onClick={(e) => e.stopPropagation()}
+                      onPointerDown={(e) => e.stopPropagation()}
+                    >
+                      <MoreVertical className="size-4" aria-hidden />
+                    </button>
+                  </DropdownMenu.Trigger>
+                  <DropdownMenu.Portal>
+                    <DropdownMenu.Content
+                      className="z-[60] min-w-[10rem] rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 py-1 shadow-lg"
+                      side="right"
+                      sideOffset={8}
+                      align="start"
+                    >
+                      <DropdownMenu.Item
+                        className="flex items-center gap-2 px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 cursor-pointer data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700 outline-none"
+                        onSelect={() => openTicketDetail(ticket)}
+                      >
+                        <Eye className="size-3.5" aria-hidden />
+                        View details
+                      </DropdownMenu.Item>
+                      {showFocus && (
+                        <DropdownMenu.Item
+                          className="flex items-center gap-2 px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 cursor-pointer data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700 outline-none"
+                          onSelect={() => onStartFocus?.(ticket)}
+                        >
+                          <Play className="size-3.5" aria-hidden />
+                          Start focused work session
+                        </DropdownMenu.Item>
+                      )}
+                      {onMove && moveDestinations.length > 0 && (
+                        <DropdownMenu.Sub>
+                          <DropdownMenu.SubTrigger className="flex items-center justify-between gap-2 px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700 outline-none">
+                            <span className="flex items-center gap-2">
+                              <ArrowRightLeft className="size-3.5" aria-hidden />
+                              Move to…
+                            </span>
+                            <ChevronRight className="size-3.5 shrink-0" aria-hidden />
+                          </DropdownMenu.SubTrigger>
+                          <DropdownMenu.Portal>
+                            <DropdownMenu.SubContent
+                              className="z-[60] min-w-[10rem] rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 py-1 shadow-lg"
+                              sideOffset={4}
+                              avoidCollisions={false}
+                            >
+                              {moveDestinations.map((dest) => (
+                                <DropdownMenu.Item
+                                  key={dest.id}
+                                  className="px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 cursor-pointer data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700 outline-none"
+                                  onSelect={() => onMove(ticket.id, dest.id)}
+                                >
+                                  {dest.title}
+                                </DropdownMenu.Item>
+                              ))}
+                            </DropdownMenu.SubContent>
+                          </DropdownMenu.Portal>
+                        </DropdownMenu.Sub>
+                      )}
+                      {onDelete && (
+                        <>
+                          <DropdownMenu.Separator className="my-1 h-px bg-neutral-200 dark:bg-neutral-700" />
+                          <DropdownMenu.Item
+                            className="flex items-center gap-2 px-3 py-1.5 text-sm text-red-600 dark:text-red-400 cursor-pointer data-[highlighted]:bg-red-50 dark:data-[highlighted]:bg-red-950/40 outline-none disabled:opacity-60"
+                            disabled={deleting}
+                            onSelect={(event) => {
+                              event.preventDefault();
+                              setDeleteDialogOpen(true);
+                            }}
+                          >
+                            <Trash2 className="size-3.5" aria-hidden />
+                            Delete
+                          </DropdownMenu.Item>
+                        </>
+                      )}
+                    </DropdownMenu.Content>
+                  </DropdownMenu.Portal>
+                </DropdownMenu.Root>
+            </div>
+          )}
           <button
             type="button"
-            className="inline-block max-w-full cursor-move text-left align-top text-sm font-semibold text-neutral-900 dark:text-neutral-100 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors line-clamp-4"
+            className="block cursor-move text-left text-sm font-semibold leading-snug text-neutral-900 dark:text-neutral-100 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors break-words line-clamp-4"
             onDoubleClick={(e) => {
               e.stopPropagation();
               openTicketDetail(ticket);
@@ -125,12 +209,12 @@ export function TicketCard({
             {ticket.title}
           </button>
           {ticket.description && typeof ticket.description === "string" && (
-            <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-1 line-clamp-2">
+            <p className="clear-both text-xs text-neutral-600 dark:text-neutral-400 mt-1 line-clamp-2">
               {stripHtml(ticket.description)}
             </p>
           )}
           {ticket.type === "jira" && ticket.jiraData && (
-            <div className="mt-2 flex items-center flex-wrap gap-2">
+            <div className="clear-both mt-2 flex items-center flex-wrap gap-2">
               <span className="text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded break-words whitespace-normal max-w-full">
                 {ticket.jiraData.jiraKey}
               </span>
@@ -144,15 +228,10 @@ export function TicketCard({
                   {ticket.jiraData.priority}
                 </span>
               )}
-              {formattedDueDate && (
-                <span className="text-xs px-2 py-0.5 border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300 rounded font-medium break-words whitespace-normal max-w-full">
-                  Due {formattedDueDate}
-                </span>
-              )}
             </div>
           )}
           {ticket.type === "local" && ticket.customKey && (
-            <div className="mt-2 flex items-start flex-wrap gap-2">
+            <div className="clear-both mt-2 flex items-start flex-wrap gap-2">
               <span className="text-xs px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded break-words whitespace-normal max-w-full">
                 {ticket.customKey}
               </span>
@@ -161,126 +240,28 @@ export function TicketCard({
                   {ticket.priority}
                 </span>
               )}
-              {formattedDueDate && (
-                <span className="text-xs px-2 py-0.5 border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300 rounded font-medium break-words whitespace-normal max-w-full">
-                  Due {formattedDueDate}
-                </span>
-              )}
             </div>
           )}
-          {ticket.type === "local" && !ticket.customKey && (ticket.priority || formattedDueDate) && (
-            <div className="mt-2 flex items-start flex-wrap gap-2">
-              {ticket.priority && (
-                <span className="text-xs px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300 rounded font-medium break-words whitespace-normal max-w-full">
-                  {ticket.priority}
-                </span>
-              )}
-              {formattedDueDate && (
-                <span className="text-xs px-2 py-0.5 border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300 rounded font-medium break-words whitespace-normal max-w-full">
-                  Due {formattedDueDate}
-                </span>
-              )}
+          {ticket.type === "local" && !ticket.customKey && ticket.priority && (
+            <div className="clear-both mt-2 flex items-start flex-wrap gap-2">
+              <span className="text-xs px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300 rounded font-medium break-words whitespace-normal max-w-full">
+                {ticket.priority}
+              </span>
             </div>
           )}
-        </div>
-        {showMenu && (
-          <DropdownMenu.Root>
-            <DropdownMenu.Trigger asChild>
-              <button
-                type="button"
-                className="shrink-0 p-1 rounded text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-700 hover:text-neutral-700 dark:hover:text-neutral-200 focus:outline-none focus:ring-2 focus:ring-neutral-400 dark:focus:ring-neutral-500"
-                aria-label="Ticket options"
-                onClick={(e) => e.stopPropagation()}
-                onPointerDown={(e) => e.stopPropagation()}
-              >
-                <MoreVertical className="size-4" aria-hidden />
-              </button>
-            </DropdownMenu.Trigger>
-            <DropdownMenu.Portal>
-              <DropdownMenu.Content
-                className="z-[60] min-w-[10rem] rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 py-1 shadow-lg"
-                side="right"
-                sideOffset={8}
-                align="start"
-              >
-                <DropdownMenu.Item
-                  className="flex items-center gap-2 px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 cursor-pointer data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700 outline-none"
-                  onSelect={() => openTicketDetail(ticket)}
-                >
-                  <Eye className="size-3.5" aria-hidden />
-                  View details
-                </DropdownMenu.Item>
-                {onMove && moveDestinations.length > 0 && (
-                  <DropdownMenu.Sub>
-                    <DropdownMenu.SubTrigger className="flex items-center justify-between gap-2 px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700 outline-none">
-                      <span className="flex items-center gap-2">
-                        <ArrowRightLeft className="size-3.5" aria-hidden />
-                        Move to…
-                      </span>
-                      <ChevronRight className="size-3.5 shrink-0" aria-hidden />
-                    </DropdownMenu.SubTrigger>
-                    <DropdownMenu.Portal>
-                      <DropdownMenu.SubContent
-                        className="z-[60] min-w-[10rem] rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 py-1 shadow-lg"
-                        sideOffset={4}
-                        avoidCollisions={false}
-                      >
-                        {moveDestinations.map((dest) => (
-                          <DropdownMenu.Item
-                            key={dest.id}
-                            className="px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 cursor-pointer data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700 outline-none"
-                            onSelect={() => onMove(ticket.id, dest.id)}
-                          >
-                            {dest.title}
-                          </DropdownMenu.Item>
-                        ))}
-                      </DropdownMenu.SubContent>
-                    </DropdownMenu.Portal>
-                  </DropdownMenu.Sub>
-                )}
-                {onDelete && (
-                  <>
-                    <DropdownMenu.Separator className="my-1 h-px bg-neutral-200 dark:bg-neutral-700" />
-                    <DropdownMenu.Item
-                      className="flex items-center gap-2 px-3 py-1.5 text-sm text-red-600 dark:text-red-400 cursor-pointer data-[highlighted]:bg-red-50 dark:data-[highlighted]:bg-red-950/40 outline-none disabled:opacity-60"
-                      disabled={deleting}
-                      onSelect={(event) => {
-                        event.preventDefault();
-                        setDeleteDialogOpen(true);
-                      }}
-                    >
-                      <Trash2 className="size-3.5" aria-hidden />
-                      Delete
-                    </DropdownMenu.Item>
-                  </>
-                )}
-              </DropdownMenu.Content>
-            </DropdownMenu.Portal>
-          </DropdownMenu.Root>
-        )}
-      </div>
 
-      {(attachmentCount > 0 || subtaskCount > 0 || (onStartFocus && !focusActive)) && (
-        <div className="flex items-center gap-3 mt-2 pt-2 border-t border-neutral-100 dark:border-neutral-700/50">
+      {(attachmentCount > 0 || subtaskCount > 0 || formattedDueDate) && (
+        <div className="clear-both flex items-center gap-3 mt-2 pt-2 border-t border-neutral-100 dark:border-neutral-700/50">
           {attachmentCount > 0 && <TicketAttachmentCount count={attachmentCount} />}
           {subtaskCount > 0 && <TicketSubtaskCount count={subtaskCount} />}
-          {onStartFocus && !focusActive && (
-            <div className="ml-auto">
-              <Tooltip content="Start focused work session">
-                <button
-                  type="button"
-                  onPointerDown={(e) => e.stopPropagation()}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onStartFocus(ticket);
-                  }}
-                  className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
-                >
-                  <PlayCircle className="size-3.5" aria-hidden />
-                  Focus
-                </button>
-              </Tooltip>
-            </div>
+          {formattedDueDate && (
+            <span
+              className="ml-auto inline-flex items-center gap-1 text-xs font-medium text-rose-500 dark:text-rose-400"
+              title={`Due ${formattedDueDate}`}
+            >
+              <Clock className="size-3.5" aria-hidden />
+              {formattedDueDate}
+            </span>
           )}
         </div>
       )}

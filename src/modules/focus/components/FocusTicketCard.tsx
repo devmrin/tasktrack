@@ -1,4 +1,5 @@
 import { TicketAttachmentCount } from '@/components/TicketAttachmentCount';
+import { TicketCoverImage } from '@/components/TicketCoverImage';
 import { TicketSubtaskCount } from '@/components/TicketSubtaskCount';
 import { Tooltip } from '@/components/Tooltip';
 import type { Ticket } from '@/db/database';
@@ -19,11 +20,10 @@ export function FocusTicketCard({ ticket, onDismiss }: FocusTicketCardProps) {
   return (
     <div className="flex h-full min-h-0 flex-col">
       {cover && (
-        <img
+        <TicketCoverImage
           src={cover.src}
           alt={cover.alt}
-          draggable={false}
-          className="mb-3 h-40 w-full shrink-0 rounded-lg object-cover bg-neutral-100 dark:bg-neutral-900"
+          className="mb-3 h-40 w-full shrink-0 rounded-lg"
         />
       )}
       <div className="shrink-0">

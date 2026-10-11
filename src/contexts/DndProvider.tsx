@@ -13,6 +13,7 @@ import { arrayMove } from "@dnd-kit/sortable";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 import { TicketAttachmentCount } from "@/components/TicketAttachmentCount";
+import { TicketCoverImage } from "@/components/TicketCoverImage";
 import { TicketSubtaskCount } from "@/components/TicketSubtaskCount";
 import type { Ticket } from "@/db/database";
 import { queryKeys } from "@/hooks/queryKeys";
@@ -267,12 +268,7 @@ export function DndProvider({ children }: DndProviderProps) {
       <div className="rotate-3 opacity-90 w-72">
         <div className="overflow-hidden bg-white dark:bg-neutral-800 rounded-lg shadow-sm border border-neutral-200 dark:border-neutral-700">
           {cover && (
-            <img
-              src={cover.src}
-              alt=""
-              draggable={false}
-              className="h-24 w-full object-cover"
-            />
+            <TicketCoverImage src={cover.src} alt="" className="h-24 w-full" />
           )}
           <div className="p-3">
             <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 line-clamp-4">

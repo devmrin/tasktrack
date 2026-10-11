@@ -1,4 +1,11 @@
-export function formatDueDate(dueDate?: string): string | undefined {
+interface FormatDueDateOptions {
+  readonly compact?: boolean;
+}
+
+export function formatDueDate(
+  dueDate?: string,
+  options?: FormatDueDateOptions,
+): string | undefined {
   if (!dueDate) {
     return undefined;
   }
@@ -22,9 +29,10 @@ export function formatDueDate(dueDate?: string): string | undefined {
     return undefined;
   }
 
-  return date.toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
+  return date.toLocaleDateString(
+    undefined,
+    options?.compact
+      ? { month: 'short', day: 'numeric' }
+      : { year: 'numeric', month: 'short', day: 'numeric' },
+  );
 }
