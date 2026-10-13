@@ -52,17 +52,22 @@ export function retainAttachmentPreviews(
   });
 }
 
-/** First image in Jira's attachment order. Later images are not used as a fallback cover. */
+/**
+ * First image in Jira's attachment order. Later images are not used as a fallback cover.
+ * When the ticket has no image attachments, the first image in the description is used.
+ */
 export function getTicketCoverImage(
-  ticket: Pick<Ticket, 'jiraData'>,
+  ticket: Pick<Ticket, 'jiraData' | 'description'>,
 ): { src: string; alt: string } | undefined {
   const firstImage = ticket.jiraData?.attachments?.find((attachment) =>
     isJiraImageAttachment(attachment.mimeType, attachment.filename),
   );
-  if (!firstImage?.previewDataUrl) {
-    return undefined;
+  if (firstImage) {
+    return firstImage.previewDataUrl
+      ? { src: firstImage.previewDataUrl, alt: firstImage.filename }
+      : undefined;
   }
-  return { src: firstImage.previewDataUrl, alt: firstImage.filename };
+  return firstDescriptionImage(ticket.description);
 }
 
 export function formatAttachmentSize(size: number): string {
@@ -117,6 +122,67 @@ function parseJiraAttachment(item: unknown): JiraAttachment | undefined {
     ...(createdAt ? { createdAt } : {}),
     ...(authorName ? { authorName } : {}),
   };
+}
+
+const DESCRIPTION_IMAGE_SRC =
+  /\bsrc\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>]+))/i;
+const DESCRIPTION_IMAGE_ALT =
+  /\balt\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>]+))/i;
+const SAFE_DATA_IMAGE =
+  /^data:image\/(?:png|jpe?g|gif|webp|bmp|avif|heic|heif)(?:[;,]|$)/i;
+
+function firstDescriptionImage(
+  html: string | undefined,
+): { src: string; alt: string } | undefined {
+  if (!html) {
+    return undefined;
+  }
+  const tags = html.match(/<img\b[^>]*>/gi);
+  if (!tags) {
+    return undefined;
+  }
+  for (const tag of tags) {
+    const src = readHtmlAttribute(tag, DESCRIPTION_IMAGE_SRC);
+    if (!src || !isDescriptionCoverSrc(src)) {
+      continue;
+    }
+    return {
+      src,
+      alt: readHtmlAttribute(tag, DESCRIPTION_IMAGE_ALT) ?? 'Description image',
+    };
+  }
+  return undefined;
+}
+
+function readHtmlAttribute(tag: string, pattern: RegExp): string | undefined {
+  const match = pattern.exec(tag);
+  const raw = match?.[1] ?? match?.[2] ?? match?.[3];
+  if (!raw) {
+    return undefined;
+  }
+  const decoded = decodeHtmlAttribute(raw).trim();
+  return decoded || undefined;
+}
+
+function decodeHtmlAttribute(value: string): string {
+  return value
+    .replaceAll('&quot;', '"')
+    .replaceAll('&#39;', "'")
+    .replaceAll('&apos;', "'")
+    .replaceAll('&lt;', '<')
+    .replaceAll('&gt;', '>')
+    .replaceAll('&amp;', '&');
+}
+
+function isDescriptionCoverSrc(src: string): boolean {
+  if (SAFE_DATA_IMAGE.test(src)) {
+    return true;
+  }
+  if (!/^https?:\/\//i.test(src)) {
+    return false;
+  }
+  const path = src.split(/[?#]/)[0]?.toLowerCase() ?? '';
+  return !path.endsWith('.svg');
 }
 
 function readAuthorName(author: unknown): string | undefined {

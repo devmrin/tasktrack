@@ -6,5 +6,6 @@ export * from './utils/jiraAttachments';
 export * from './utils/jiraSubtasks';
 export * from './utils/validateTicketKey';
 export * from './utils/formatDueDate';
+export * from './utils/dueDateTone';
 export * from './utils/statusFilter';
 export * from '@/utils/ticketPriority';

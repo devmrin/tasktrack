@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { Board } from '@/db/database';
 import { queryKeys } from '@/hooks/queryKeys';
 import {
   createBoard as createBoardSvc,
@@ -123,9 +124,31 @@ export function useSetDefaultBoardMutation() {
 
 export function useReorderBoardsMutation() {
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
   return useMutation({
     mutationFn: (orderedIds: string[]) => reorderBoardsSvc(orderedIds),
-    onSuccess: () => {
+    onMutate: async (orderedIds) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.boards });
+      const previous = queryClient.getQueryData<Board[]>(queryKeys.boards);
+      if (previous) {
+        const byId = new Map(previous.map((board) => [board.id, board]));
+        const next = orderedIds.flatMap((id, index) => {
+          const board = byId.get(id);
+          return board ? [{ ...board, order: index }] : [];
+        });
+        if (next.length === orderedIds.length) {
+          queryClient.setQueryData(queryKeys.boards, next);
+        }
+      }
+      return { previous };
+    },
+    onError: (_error, _orderedIds, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(queryKeys.boards, context.previous);
+      }
+      showToast('Failed to reorder boards');
+    },
+    onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.boards });
     },
   });

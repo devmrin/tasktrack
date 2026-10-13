@@ -39,6 +39,7 @@ import {
   normalizeInboxSortMode,
   type InboxSortMode,
 } from "@/modules/inbox/types";
+import { formatJiraSyncSummary } from "@/modules/inbox/utils/formatJiraSyncSummary";
 import { sortInboxTickets } from "@/modules/inbox/utils/sortInboxTickets";
 import { SHORTCUT_DISPLAY, type SectionId } from "@/modules/settings";
 import { TICKET_PRIORITY_VALUES, type TicketPriority } from "@/modules/tickets";
@@ -218,15 +219,8 @@ export function InboxSidebar({
     if (syncing) {
       return;
     }
-    syncFromJira(({ created, updated }) => {
-      const parts: string[] = [];
-      if (created.length > 0) parts.push(`${created.length} new`);
-      if (updated.length > 0) parts.push(`${updated.length} updated`);
-      showToast(
-        parts.length > 0
-          ? `Synced from JIRA: ${parts.join(", ")}`
-          : "JIRA sync complete — everything up to date",
-      );
+    syncFromJira((result) => {
+      showToast("JIRA sync complete", formatJiraSyncSummary(result));
       setLastSyncedAt(new Date().toISOString());
     });
   };

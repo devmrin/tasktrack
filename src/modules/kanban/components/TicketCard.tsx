@@ -17,7 +17,14 @@ import { useEffect, useState } from "react";
 import type { Ticket } from "@/db/database";
 import { registerTicket, unregisterTicket } from "@/contexts/ticketRegistry";
 import { useTicketDetail } from "@/hooks/useTicketDetail";
-import { formatDueDate, getTicketAttachmentCount, getTicketCoverImage, getTicketSubtaskCount } from "@/modules/tickets";
+import {
+  formatDueDate,
+  getDueDateTone,
+  getTicketAttachmentCount,
+  getTicketCoverImage,
+  getTicketSubtaskCount,
+  type DueDateTone,
+} from "@/modules/tickets";
 import { stripHtml } from "@/utils/sanitizeHtml";
 import { DeleteConfirmationDialog } from "./DeleteConfirmationDialog";
 
@@ -25,6 +32,12 @@ export interface MoveTarget {
   id: string;
   title: string;
 }
+
+const DUE_DATE_TONE_CLASS: Record<DueDateTone, string> = {
+  urgent: "text-rose-500 dark:text-rose-400",
+  soon: "text-amber-500 dark:text-amber-400",
+  normal: "text-neutral-500 dark:text-neutral-400",
+};
 
 interface TicketCardProps {
   readonly ticket: Ticket;
@@ -87,6 +100,7 @@ export function TicketCard({
       : [];
   const isFocusedTicket = focusedTicketId === ticket.id;
   const formattedDueDate = formatDueDate(ticket.dueDate, { compact: true });
+  const dueDateTone = getDueDateTone(ticket.dueDate) ?? "normal";
   const cover = getTicketCoverImage(ticket);
   const attachmentCount = getTicketAttachmentCount(ticket);
   const subtaskCount = getTicketSubtaskCount(ticket);
@@ -256,7 +270,7 @@ export function TicketCard({
           {subtaskCount > 0 && <TicketSubtaskCount count={subtaskCount} />}
           {formattedDueDate && (
             <span
-              className="ml-auto inline-flex items-center gap-1 text-xs font-medium text-rose-500 dark:text-rose-400"
+              className={`ml-auto inline-flex items-center gap-1 text-xs font-medium ${DUE_DATE_TONE_CLASS[dueDateTone]}`}
               title={`Due ${formattedDueDate}`}
             >
               <Clock className="size-3.5" aria-hidden />

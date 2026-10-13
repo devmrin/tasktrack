@@ -20,6 +20,7 @@ import {
 import { getBoardStats, type BoardStats } from '@/modules/boards/services/board.service';
 import type { Board } from '@/db/database';
 import { BoardDeleteConfirmationDialog } from '@/modules/boards/components/BoardDeleteConfirmationDialog';
+import { moveBoardInOrder } from '@/modules/boards';
 
 export function BoardManagementSettings() {
   const boardsQuery = useBoardsQuery();
@@ -59,12 +60,8 @@ export function BoardManagementSettings() {
     const ids = [...boards]
       .sort((a, b) => a.order - b.order)
       .map((b) => b.id);
-    const index = ids.indexOf(boardId);
-    const target = index + direction;
-    if (target < 0 || target >= ids.length) return;
-    const reordered = [...ids];
-    const [removed] = reordered.splice(index, 1);
-    reordered.splice(target, 0, removed);
+    const reordered = moveBoardInOrder(ids, boardId, direction);
+    if (!reordered) return;
     reorderMutation.mutate(reordered);
   }
 

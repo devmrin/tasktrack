@@ -8,6 +8,7 @@ import type { Column } from "@/modules/kanban/types";
 import type { Ticket } from "@/db/database";
 import type { MoveTarget } from "@/modules/kanban/components/TicketCard";
 import { MAX_COLUMN_TITLE_LENGTH } from "@/modules/kanban/constants";
+import { isColumnTicketDropTarget } from "@/modules/kanban/utils/isColumnTicketDropTarget";
 import { DeleteConfirmationDialog } from "./DeleteConfirmationDialog";
 import { TicketCard } from "./TicketCard";
 
@@ -65,7 +66,7 @@ export function KanbanColumn({
     disabled: isEditing,
   });
 
-  const { active } = useDndContext();
+  const { active, over } = useDndContext();
   const isTicketDragActive = active?.data.current?.type === "ticket";
   const isColumnDragActive = active?.data.current?.type === "column";
   const activeColumnDragId =
@@ -74,7 +75,13 @@ export function KanbanColumn({
   const { setNodeRef: setDropRef, isOver } = useDroppable({
     id: column.id,
   });
-  const isTicketDropOver = isOver && isTicketDragActive;
+  const overData = over?.data.current;
+  const isTicketDropOver = isColumnTicketDropTarget(
+    column.id,
+    isTicketDragActive,
+    isOver,
+    overData ? { type: overData.type, columnId: overData.columnId } : null,
+  );
   const isColumnDropOver =
     isOver && isColumnDragActive && activeColumnDragId !== column.id;
 

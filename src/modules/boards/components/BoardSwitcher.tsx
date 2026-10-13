@@ -5,6 +5,7 @@ import { useNavigate, useParams } from "@tanstack/react-router";
 import {
   Check,
   ChevronDown,
+  ChevronUp,
   Loader2,
   Pencil,
   Plus,
@@ -17,8 +18,10 @@ import {
   useCreateBoardMutation,
   useDeleteBoardMutation,
   useRenameBoardMutation,
+  useReorderBoardsMutation,
 } from "@/modules/boards/hooks/useBoardsQuery";
 import { buildBoardSlug } from "@/modules/boards/utils/boardSlug";
+import { moveBoardInOrder } from "@/modules/boards/utils/moveBoardInOrder";
 
 type BoardRouteView = "summary" | "list" | "board";
 
@@ -41,6 +44,7 @@ export function BoardSwitcher() {
   const createBoardMutation = useCreateBoardMutation();
   const renameBoardMutation = useRenameBoardMutation();
   const deleteBoardMutation = useDeleteBoardMutation();
+  const reorderBoardsMutation = useReorderBoardsMutation();
 
   function navigateToBoard(boardSlug: string, view: BoardRouteView = currentView) {
     void navigate({
@@ -64,6 +68,7 @@ export function BoardSwitcher() {
   } | null>(null);
 
   const displayName = activeBoard?.name ?? (isLoading ? "Loading…" : "Board");
+  const canReorder = boards.length > 1;
 
   function handleCreateSubmit() {
     const name = newBoardName.trim();
@@ -121,6 +126,18 @@ export function BoardSwitcher() {
     setMenuOpen(false);
   }
 
+  function moveBoard(boardId: string, direction: -1 | 1) {
+    const reordered = moveBoardInOrder(
+      boards.map((board) => board.id),
+      boardId,
+      direction,
+    );
+    if (!reordered) {
+      return;
+    }
+    reorderBoardsMutation.mutate(reordered);
+  }
+
   function handleDeleteConfirm() {
     if (!boardToDelete) {
       return;
@@ -163,11 +180,11 @@ export function BoardSwitcher() {
 
         <DropdownMenu.Portal>
           <DropdownMenu.Content
-            className="min-w-[15rem] z-[101] rounded-lg border border-neutral-200 bg-white py-1 shadow-lg dark:border-neutral-700 dark:bg-neutral-900"
+            className="min-w-[18rem] z-[101] rounded-lg border border-neutral-200 bg-white py-1 shadow-lg dark:border-neutral-700 dark:bg-neutral-900"
             align="start"
             sideOffset={6}
           >
-            {boards.map((b) => {
+            {boards.map((b, index) => {
               const selected = b.id === activeBoardId;
               const onlyBoard = boards.length <= 1;
               const blockedDelete = onlyBoard || b.isDefault;
@@ -190,6 +207,48 @@ export function BoardSwitcher() {
                     <span className="truncate text-left">{b.name}</span>
                   </DropdownMenu.Item>
                   <div className="flex shrink-0 items-center gap-0.5 pr-1 py-1">
+                    {canReorder ? (
+                      <>
+                        <button
+                          type="button"
+                          title="Move up"
+                          disabled={index === 0 || reorderBoardsMutation.isPending}
+                          className="rounded p-1 text-neutral-500 hover:bg-neutral-200 hover:text-neutral-800 disabled:opacity-40 dark:hover:bg-neutral-700 dark:hover:text-neutral-100"
+                          onPointerDown={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                          }}
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            moveBoard(b.id, -1);
+                          }}
+                        >
+                          <ChevronUp className="size-3.5" aria-hidden />
+                          <span className="sr-only">Move {b.name} up</span>
+                        </button>
+                        <button
+                          type="button"
+                          title="Move down"
+                          disabled={
+                            index === boards.length - 1 || reorderBoardsMutation.isPending
+                          }
+                          className="rounded p-1 text-neutral-500 hover:bg-neutral-200 hover:text-neutral-800 disabled:opacity-40 dark:hover:bg-neutral-700 dark:hover:text-neutral-100"
+                          onPointerDown={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                          }}
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            moveBoard(b.id, 1);
+                          }}
+                        >
+                          <ChevronDown className="size-3.5" aria-hidden />
+                          <span className="sr-only">Move {b.name} down</span>
+                        </button>
+                      </>
+                    ) : null}
                     <button
                       type="button"
                       title="Rename board"

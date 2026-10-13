@@ -6,6 +6,7 @@ export * from '@/modules/boards/hooks/useActiveBoard';
 export * from '@/modules/boards/hooks/useBoardTerminology';
 export { BoardSwitcher } from '@/modules/boards/components/BoardSwitcher';
 export { boardTerminologyFromJiraEnabled } from '@/modules/boards/utils/boardTerminology';
+export { moveBoardInOrder } from '@/modules/boards/utils/moveBoardInOrder';
 export {
   buildBoardSlug,
   createSlugSuffix,

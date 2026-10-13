@@ -80,6 +80,81 @@ test('cover image is the first image attachment', () => {
   assert.equal(getTicketAttachmentCount(ticket), 3);
 });
 
+test('uses the first description image when there are no image attachments', () => {
+  const src = 'data:image/png;base64,QQ==';
+  const ticket = {
+    description: `<p>notes</p><img src="${src}" alt="Shot"><img src="data:image/png;base64,Qg==" alt="Later">`,
+  };
+
+  assert.deepEqual(getTicketCoverImage(ticket), { src, alt: 'Shot' });
+});
+
+test('uses a description image when attachments are not images', () => {
+  const src = 'https://cdn.example/shot.png?a=1&b=2';
+  const ticket = {
+    description: `<p><img alt="Board" src="${src.replaceAll('&', '&amp;')}" /></p>`,
+    jiraData: {
+      jiraId: '1',
+      jiraUrl: 'https://example.atlassian.net/browse/KAN-1',
+      jiraKey: 'KAN-1',
+      attachments: [attachment({ id: '1', filename: 'notes.pdf', mimeType: 'application/pdf' })],
+    },
+  };
+
+  assert.deepEqual(getTicketCoverImage(ticket), { src, alt: 'Board' });
+});
+
+test('keeps the attachment cover when an image attachment exists', () => {
+  const cover = 'data:image/png;base64,QQ==';
+  const ticket = {
+    description: '<img src="data:image/png;base64,Qg==" alt="Desc">',
+    jiraData: {
+      jiraId: '1',
+      jiraUrl: 'https://example.atlassian.net/browse/KAN-1',
+      jiraKey: 'KAN-1',
+      attachments: [
+        attachment({ id: '2', filename: 'shot.png', mimeType: 'image/png', previewDataUrl: cover }),
+      ],
+    },
+  };
+
+  assert.deepEqual(getTicketCoverImage(ticket), { src: cover, alt: 'shot.png' });
+});
+
+test('does not use the description when the first image attachment has no preview', () => {
+  const ticket = {
+    description: '<img src="data:image/png;base64,Qg==" alt="Desc">',
+    jiraData: {
+      jiraId: '1',
+      jiraUrl: 'https://example.atlassian.net/browse/KAN-1',
+      jiraKey: 'KAN-1',
+      attachments: [attachment({ id: '1', filename: 'shot.png', mimeType: 'image/png' })],
+    },
+  };
+
+  assert.equal(getTicketCoverImage(ticket), undefined);
+});
+
+test('skips svg and unusable description images', () => {
+  const src = 'data:image/webp;base64,QQ==';
+  assert.deepEqual(
+    getTicketCoverImage({
+      description: `<img src="data:image/svg+xml;base64,PHN2Zz4=" alt="icon"><img src="${src}" alt="Photo">`,
+    }),
+    { src, alt: 'Photo' },
+  );
+  assert.equal(getTicketCoverImage({ description: '<p>no image</p>' }), undefined);
+  assert.equal(getTicketCoverImage({ description: '<img alt="missing">' }), undefined);
+  assert.equal(
+    getTicketCoverImage({ description: '<img src="javascript:alert(1)" alt="x">' }),
+    undefined,
+  );
+  assert.deepEqual(
+    getTicketCoverImage({ description: '<img src="data:image/png;base64,QQ==">' }),
+    { src: 'data:image/png;base64,QQ==', alt: 'Description image' },
+  );
+});
+
 test('does not use a later image when the first image has no preview', () => {
   const ticket = {
     jiraData: {

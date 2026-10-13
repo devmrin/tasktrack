@@ -12,6 +12,7 @@ import { SettingsContext } from '@/contexts/settings-context';
 import { TicketDetailProvider } from '@/contexts/TicketDetailContext';
 import { StatusFilterProvider } from '@/contexts/StatusFilterContext';
 import { InboxSidebar, useJiraSyncMutation } from '@/modules/inbox';
+import { formatJiraSyncSummary } from '@/modules/inbox/utils/formatJiraSyncSummary';
 import type { InboxSidebarHandle } from '@/modules/inbox';
 import { TicketDetailSidebar } from '@/modules/kanban';
 import { FocusZoneProvider } from '@/modules/focus';
@@ -132,7 +133,7 @@ function RootComponent() {
           }
           if (jiraSyncMutation.isPending || !activeBoardId) return;
           jiraSyncMutation.mutate(undefined, {
-            onSuccess: () => showToast('JIRA sync complete'),
+            onSuccess: (result) => showToast('JIRA sync complete', formatJiraSyncSummary(result)),
           });
         },
       },
@@ -147,7 +148,7 @@ function RootComponent() {
           }
           if (jiraSyncMutation.isPending || !activeBoardId) return;
           jiraSyncMutation.mutate(undefined, {
-            onSuccess: () => showToast('JIRA sync complete'),
+            onSuccess: (result) => showToast('JIRA sync complete', formatJiraSyncSummary(result)),
           });
         },
       },
