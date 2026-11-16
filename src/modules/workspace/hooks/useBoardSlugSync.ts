@@ -10,7 +10,8 @@ import type { BoardView } from '@/modules/workspace/types';
  */
 export function useBoardSlugSync(boardSlug: string, view: BoardView): void {
   const navigate = useNavigate();
-  const { boards, activeBoardId, setActiveBoardId, isLoading } = useActiveBoard();
+  const { boards, activeBoardId, setActiveBoardId, isLoading, isBoardsFetching } =
+    useActiveBoard();
 
   const resolved = useMemo(
     () => resolveBoardFromSlugParam(boards, boardSlug),
@@ -23,6 +24,9 @@ export function useBoardSlugSync(boardSlug: string, view: BoardView): void {
     }
 
     if (!resolved) {
+      if (isBoardsFetching) {
+        return;
+      }
       const fallback = boards.find((b) => b.isDefault) ?? boards[0];
       if (!fallback) {
         return;
@@ -48,6 +52,7 @@ export function useBoardSlugSync(boardSlug: string, view: BoardView): void {
     }
   }, [
     isLoading,
+    isBoardsFetching,
     boards,
     resolved,
     activeBoardId,
