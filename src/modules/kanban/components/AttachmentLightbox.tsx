@@ -185,21 +185,29 @@ function LightboxStage({
   const preview = attachment.previewDataUrl;
   const fullFailed = Boolean(source.src && source.src !== preview && rejectedSrc === source.src);
   const displaySrc = fullFailed ? preview : source.src;
-  if (source.loading) {
-    return <LightboxStatus title="Loading image" spinning />;
-  }
   if (source.failed || !displaySrc || rejectedSrc === displaySrc) {
     return <LightboxStatus title={`Could not load ${attachment.filename}`} />;
   }
   return (
-    <img
-      key={displaySrc}
-      src={displaySrc}
-      alt={attachment.filename}
-      draggable={false}
-      onError={() => setRejected({ id: attachment.id, src: displaySrc })}
-      className="max-h-full max-w-full rounded-md object-contain shadow-2xl"
-    />
+    <div className="relative flex max-h-full max-w-full items-center justify-center">
+      <img
+        key={displaySrc}
+        src={displaySrc}
+        alt={attachment.filename}
+        draggable={false}
+        onError={() => setRejected({ id: attachment.id, src: displaySrc })}
+        className="max-h-full max-w-full rounded-md object-contain shadow-2xl"
+      />
+      {source.loading && (
+        <span
+          role="status"
+          aria-label="Loading full-size image"
+          className="absolute right-3 top-3 rounded-full bg-black/65 p-1.5 text-white"
+        >
+          <Loader2 className="size-4 animate-spin" aria-hidden />
+        </span>
+      )}
+    </div>
   );
 }
 

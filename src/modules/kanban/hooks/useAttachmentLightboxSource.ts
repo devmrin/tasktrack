@@ -67,7 +67,7 @@ export function useAttachmentLightboxSource(
   const failed = !src && (Boolean(entry?.error) || tooLarge);
   return {
     src,
-    loading: Boolean(id) && !src && !failed,
+    loading: Boolean(id) && !entry && !failed,
     failed,
   };
 }
